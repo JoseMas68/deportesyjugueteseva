@@ -77,12 +77,12 @@ const hobbies = [
         <!-- Iconos de Acción -->
         <div class="flex items-center gap-4">
           <!-- Favoritos -->
-          <a href="/favoritos" class="hidden md:flex items-center gap-2 hover:text-primary transition-colors">
+          <a href="/favoritos" class="hidden md:flex items-center gap-2 hover:text-secondary transition-colors">
             <i class="material-icons text-2xl">favorite_border</i>
           </a>
 
           <!-- Carrito -->
-          <a href="/carrito" class="relative flex items-center gap-2 hover:text-primary transition-colors">
+          <a href="/carrito" class="relative flex items-center gap-2 hover:text-secondary transition-colors">
             <i class="material-icons text-2xl">shopping_cart</i>
             <span id="cart-count" class="absolute -top-2 -right-2 bg-accent text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center" style="display: none;">
               0
@@ -268,11 +268,38 @@ const hobbies = [
 </header>
 
 <script>
+  import { getCartCount } from '@/lib/cart';
+
   // Toggle mobile menu
   const btn = document.getElementById('mobile-menu-btn');
   const menu = document.getElementById('mobile-menu');
 
   btn?.addEventListener('click', () => {
     menu?.classList.toggle('hidden');
+  });
+
+  // Actualizar contador del carrito
+  function updateCartCounter() {
+    const cartCountElement = document.getElementById('cart-count');
+    if (!cartCountElement) return;
+
+    const count = getCartCount();
+
+    if (count > 0) {
+      cartCountElement.textContent = count.toString();
+      cartCountElement.style.display = 'flex';
+    } else {
+      cartCountElement.style.display = 'none';
+    }
+  }
+
+  // Inicializar contador al cargar la página
+  document.addEventListener('DOMContentLoaded', () => {
+    updateCartCounter();
+  });
+
+  // Escuchar cambios en el carrito
+  window.addEventListener('cart-updated', () => {
+    updateCartCounter();
   });
 </script>

@@ -5,9 +5,41 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import ProductCard from '@/components/ProductCard.astro';
+import { getProducts } from '@/lib/api';
 
-// Mock ofertas data - will be replaced with API call
-const ofertasDestacadas = [
+// Obtener ofertas desde la API (productos con descuento)
+let ofertasDestacadas = [];
+let todasLasOfertas = [];
+
+try {
+  // Obtener ofertas destacadas (primeras 4 con descuento)
+  const destacadasResult = await getProducts({
+    limit: 4,
+    // TODO: El backend debería tener un filtro para productos con descuento
+    // Por ahora obtenemos productos y filtraremos manualmente
+  });
+
+  // Filtrar solo productos con descuento (compareAtPrice > price)
+  ofertasDestacadas = destacadasResult.products.filter(
+    p => p.compareAtPrice && p.compareAtPrice > p.price
+  ).slice(0, 4);
+
+  // Obtener todas las ofertas
+  const todasResult = await getProducts({
+    limit: 20,
+  });
+
+  todasLasOfertas = todasResult.products.filter(
+    p => p.compareAtPrice && p.compareAtPrice > p.price
+  );
+} catch (error) {
+  console.error('Error al cargar ofertas:', error);
+  ofertasDestacadas = [];
+  todasLasOfertas = [];
+}
+
+// Mock data - REMOVE LATER
+const ofertasDestacadas_REMOVE_LATER = [
   {
     id: 1,
     name: 'Balón de Fútbol Pro',
@@ -16,7 +48,7 @@ const ofertasDestacadas = [
     originalPrice: 29.99,
     discount: 17,
     category: 'Deportes',
-    image: '/products/balon-futbol.jpg',
+    image: 'https://images.unsplash.com/photo-1614632537239-1f61f7e94638?w=300&h=300&fit=crop',
     badge: '-17%',
     endsIn: '2 días'
   },
@@ -28,7 +60,7 @@ const ofertasDestacadas = [
     originalPrice: 149.99,
     discount: 13,
     category: 'Deportes',
-    image: '/products/raqueta.jpg',
+    image: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=300&h=300&fit=crop',
     badge: '-13%',
     endsIn: '5 días'
   },
@@ -40,100 +72,101 @@ const ofertasDestacadas = [
     originalPrice: 189.99,
     discount: 16,
     category: 'Hobbies',
-    image: '/products/scalextric.jpg',
+    image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=300&h=300&fit=crop',
     badge: '-16%',
     endsIn: '3 días'
+  },
+  {
+    id: 4,
+    name: 'Bloques Construcción LEGO',
+    slug: 'bloques-lego',
+    price: 59.99,
+    originalPrice: 79.99,
+    discount: 25,
+    category: 'Juguetes',
+    image: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=300&h=300&fit=crop',
+    badge: '-25%',
+    endsIn: '1 día'
   }
 ];
 
-const todasLasOfertas = [
-  ...ofertasDestacadas,
+const todasLasOfertas_REMOVE_LATER = [
+  ...ofertasDestacadas_REMOVE_LATER,
   {
-    id: 4,
+    id: 5,
     name: 'Zapatillas Trail Running X2',
     slug: 'zapatillas-trail-x2',
     price: 119.99,
     originalPrice: 159.99,
     discount: 25,
     category: 'Deportes',
-    image: '/products/zapatillas-trail.jpg',
+    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop',
     badge: '-25%'
   },
   {
-    id: 5,
+    id: 6,
     name: 'Mochila Deportiva Pro',
     slug: 'mochila-deportiva-pro',
     price: 39.99,
     originalPrice: 54.99,
     discount: 27,
     category: 'Deportes',
-    image: '/products/mochila.jpg',
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&h=300&fit=crop',
     badge: '-27%'
   },
   {
-    id: 6,
-    name: 'Bloques Construcción 1000 piezas',
-    slug: 'bloques-construccion-1000',
-    price: 59.99,
-    originalPrice: 79.99,
-    discount: 25,
-    category: 'Juguetes',
-    image: '/products/lego-grande.jpg',
-    badge: '-25%'
-  },
-  {
     id: 7,
-    name: 'Muñeca con Accesorios',
+    name: 'Casa de Muñecas Deluxe',
     slug: 'muneca-accesorios',
     price: 34.99,
     originalPrice: 49.99,
     discount: 30,
     category: 'Juguetes',
-    image: '/products/muneca-deluxe.jpg',
+    image: 'https://images.unsplash.com/photo-1530325553241-4f6e7690cf36?w=300&h=300&fit=crop',
     badge: '-30%'
   },
   {
     id: 8,
-    name: 'Maqueta Avión Clásico',
-    slug: 'maqueta-avion',
-    price: 44.99,
-    originalPrice: 59.99,
+    name: 'Bicicleta Montaña MTB',
+    slug: 'bicicleta-mtb',
+    price: 449.99,
+    originalPrice: 599.99,
     discount: 25,
-    category: 'Hobbies',
-    image: '/products/maqueta-avion.jpg',
+    category: 'Deportes',
+    image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=300&h=300&fit=crop',
     badge: '-25%'
   },
   {
     id: 9,
-    name: 'Tren Eléctrico Deluxe Set',
-    slug: 'tren-electrico-deluxe',
-    price: 199.99,
-    originalPrice: 249.99,
-    discount: 20,
-    category: 'Hobbies',
-    image: '/products/tren-deluxe.jpg',
-    badge: '-20%'
-  },
-  {
-    id: 10,
-    name: 'Pelota Fitness 65cm',
-    slug: 'pelota-fitness',
+    name: 'Puzzle 1000 Piezas',
+    slug: 'puzzle-1000',
     price: 19.99,
     originalPrice: 29.99,
     discount: 33,
-    category: 'Deportes',
-    image: '/products/pelota-fitness.jpg',
+    category: 'Juguetes',
+    image: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=300&h=300&fit=crop',
     badge: '-33%'
   },
   {
+    id: 10,
+    name: 'Juego de Mesa Estrategia',
+    slug: 'juego-mesa-estrategia',
+    price: 44.99,
+    originalPrice: 59.99,
+    discount: 25,
+    category: 'Juguetes',
+    image: 'https://images.unsplash.com/photo-1606167668584-78701c57f13d?w=300&h=300&fit=crop',
+    badge: '-25%'
+  },
+  {
     id: 11,
-    name: 'Puzzle Educativo 200 piezas',
-    slug: 'puzzle-educativo-200',
+    name: 'Pelota Fitness 65cm',
+    slug: 'pelota-fitness',
     price: 14.99,
     originalPrice: 21.99,
     discount: 32,
-    category: 'Juguetes',
-    image: '/products/puzzle-grande.jpg',
+    category: 'Deportes',
+    image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=300&h=300&fit=crop',
     badge: '-32%'
   },
   {
@@ -144,7 +177,7 @@ const todasLasOfertas = [
     originalPrice: 69.99,
     discount: 29,
     category: 'Deportes',
-    image: '/products/guantes-boxeo.jpg',
+    image: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=300&h=300&fit=crop',
     badge: '-29%'
   }
 ];
@@ -190,7 +223,7 @@ const todasLasOfertas = [
     <div class="bg-white border-b border-gray-200">
       <div class="container mx-auto px-4 py-4">
         <nav class="flex items-center text-sm">
-          <a href="/" class="text-gray-500 hover:text-primary transition-colors">Inicio</a>
+          <a href="/" class="text-gray-500 hover:text-secondary transition-colors">Inicio</a>
           <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
           <span class="text-secondary font-medium">Ofertas</span>
         </nav>
@@ -202,9 +235,15 @@ const todasLasOfertas = [
       <section class="mb-16">
         <div class="flex items-center justify-between mb-8">
           <div>
-            <h2 class="text-3xl md:text-4xl font-display font-extrabold text-secondary mb-2">
-              Ofertas <span class="text-accent">Destacadas</span>
-            </h2>
+            <div class="mb-2">
+              <h2 class="text-3xl md:text-4xl font-display font-extrabold text-secondary inline">
+                Ofertas
+              </h2>
+              <h2 class="text-3xl md:text-4xl font-display font-extrabold text-accent inline ml-2">
+                Destacadas
+              </h2>
+            </div>
+            <div class="h-1 w-20 bg-accent mb-2"></div>
             <p class="text-gray-600">Los mejores descuentos que no puedes dejar pasar</p>
           </div>
           <div class="hidden md:flex items-center gap-2 text-accent">
@@ -213,64 +252,46 @@ const todasLasOfertas = [
           </div>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-8 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {ofertasDestacadas.map((producto) => (
-            <div class="group relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-              <!-- Badge de descuento grande -->
-              <div class="absolute top-4 right-4 z-20">
-                <div class="bg-accent text-white rounded-full w-20 h-20 flex flex-col items-center justify-center shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
-                  <span class="text-2xl font-black leading-none">-{producto.discount}%</span>
+            <div class="bg-surface-light rounded-xl shadow-sm border border-gray-100 hover:shadow-xl transition group">
+              <div class="relative">
+                {/* Timer de oferta */}
+                {producto.endsIn && (
+                  <div class="absolute top-3 left-3 z-20 bg-black/80 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                    <i class="material-icons text-xs">schedule</i>
+                    {producto.endsIn}
+                  </div>
+                )}
+
+                {/* Badge de descuento */}
+                <span class="absolute top-3 right-3 bg-accent text-white text-xs font-bold px-2 py-1 rounded z-10">
+                  {producto.badge}
+                </span>
+
+                <div class="aspect-square bg-gray-50 rounded-t-xl overflow-hidden">
+                  <img
+                    src={producto.image}
+                    alt={producto.name}
+                    class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  />
                 </div>
               </div>
 
-              {/* Timer de oferta */}
-              {producto.endsIn && (
-                <div class="absolute top-4 left-4 z-20 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                  <i class="material-icons text-xs">schedule</i>
-                  Termina en {producto.endsIn}
-                </div>
-              )}
-
-              <!-- Imagen -->
-              <div class="aspect-square bg-background-light overflow-hidden relative">
-                <img
-                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  src={producto.image}
-                  alt={producto.name}
-                />
-
-                <!-- Overlay con botón -->
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
-                  <a
-                    href={`/producto/${producto.slug}`}
-                    class="w-full bg-primary text-secondary font-bold py-3 rounded-lg text-center uppercase tracking-wider hover:bg-yellow-400 transition-colors"
-                  >
-                    Ver Oferta
-                  </a>
-                </div>
-              </div>
-
-              <!-- Info -->
-              <div class="p-6">
-                <p class="text-sm text-gray-500 mb-1">{producto.category}</p>
-                <h3 class="text-xl font-bold text-secondary mb-3 group-hover:text-primary transition-colors">
+              <div class="p-4">
+                <p class="text-xs text-gray-500 mb-1">{producto.category}</p>
+                <h3 class="font-bold text-secondary text-lg leading-tight mb-2 group-hover:text-gray-600 transition-colors">
                   {producto.name}
                 </h3>
 
-                <div class="flex items-end gap-3">
-                  <div>
-                    <p class="text-3xl font-black text-accent">{producto.price.toFixed(2)}€</p>
-                  </div>
-                  <div class="mb-1">
-                    <p class="text-lg text-gray-400 line-through">{producto.originalPrice.toFixed(2)}€</p>
-                  </div>
+                <div class="flex items-end gap-2 mb-2">
+                  <p class="text-2xl font-black text-accent">{producto.price.toFixed(2)}€</p>
+                  <p class="text-sm text-gray-400 line-through mb-1">{producto.originalPrice.toFixed(2)}€</p>
                 </div>
 
-                <div class="mt-4 pt-4 border-t border-gray-200">
-                  <p class="text-sm text-gray-600">
-                    <span class="font-bold text-green-600">Ahorras: {(producto.originalPrice - producto.price).toFixed(2)}€</span>
-                  </p>
-                </div>
+                <p class="text-xs text-green-600 font-bold">
+                  Ahorras: {(producto.originalPrice - producto.price).toFixed(2)}€
+                </p>
               </div>
             </div>
           ))}
@@ -281,19 +302,22 @@ const todasLasOfertas = [
       <section>
         <div class="flex items-center justify-between mb-8">
           <div>
-            <h2 class="text-3xl md:text-4xl font-display font-extrabold text-secondary mb-2">
-              Todas las <span class="text-primary">Ofertas</span>
-            </h2>
-            <p class="text-gray-600">Explora todos nuestros productos en promoción</p>
+            <div class="inline-block">
+              <h2 class="text-3xl md:text-4xl font-display font-extrabold text-secondary">
+                Todas las Ofertas
+              </h2>
+              <div class="h-1 w-20 bg-primary mt-2"></div>
+            </div>
+            <p class="text-gray-600 mt-2">Explora todos nuestros productos en promoción</p>
           </div>
 
           <!-- Ordenar -->
           <div class="hidden md:block">
-            <select class="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-primary">
-              <option>Mayor descuento</option>
-              <option>Menor precio</option>
-              <option>Mayor precio</option>
-              <option>Más recientes</option>
+            <select class="bg-white border-2 border-gray-200 text-secondary rounded-lg px-4 py-2 text-sm font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer hover:border-gray-300 transition-colors">
+              <option value="discount">Mayor descuento</option>
+              <option value="price-asc">Menor precio</option>
+              <option value="price-desc">Mayor precio</option>
+              <option value="recent">Más recientes</option>
             </select>
           </div>
         </div>
@@ -303,15 +327,15 @@ const todasLasOfertas = [
           <button class="px-4 py-2 bg-primary text-secondary font-bold rounded-lg hover:bg-yellow-400 transition-colors">
             Todos
           </button>
-          <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:border-primary hover:text-primary transition-colors">
+          <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-secondary hover:text-primary transition-colors">
             <i class="material-icons text-sm mr-1">sports_soccer</i>
             Deportes
           </button>
-          <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:border-primary hover:text-primary transition-colors">
+          <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-secondary hover:text-primary transition-colors">
             <i class="material-icons text-sm mr-1">toys</i>
             Juguetes
           </button>
-          <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:border-primary hover:text-primary transition-colors">
+          <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-secondary hover:text-primary transition-colors">
             <i class="material-icons text-sm mr-1">palette</i>
             Hobbies
           </button>
@@ -335,9 +359,9 @@ const todasLasOfertas = [
               <i class="material-icons text-sm">chevron_left</i>
             </button>
             <button class="px-4 py-2 bg-primary text-secondary font-bold rounded-lg">1</button>
-            <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">2</button>
-            <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">3</button>
-            <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">
+            <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">2</button>
+            <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">3</button>
+            <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">
               <i class="material-icons text-sm">chevron_right</i>
             </button>
           </nav>
@@ -345,27 +369,45 @@ const todasLasOfertas = [
       </section>
 
       <!-- Banner de Newsletter -->
-      <section class="mt-16 bg-gradient-to-r from-secondary to-black rounded-2xl p-8 md:p-12 text-white text-center">
-        <i class="material-icons text-5xl text-primary mb-4">notifications_active</i>
-        <h3 class="text-3xl font-display font-bold mb-3">
-          ¡No te pierdas nuestras <span class="text-primary">ofertas exclusivas</span>!
-        </h3>
-        <p class="text-lg mb-6 text-gray-300">
-          Suscríbete a nuestro newsletter y recibe un 10% de descuento en tu primera compra
-        </p>
-        <form class="max-w-md mx-auto flex gap-3">
-          <input
-            type="email"
-            placeholder="Tu email..."
-            class="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <button
-            type="submit"
-            class="bg-primary text-secondary font-bold px-6 py-3 rounded-lg hover:bg-yellow-400 transition-colors whitespace-nowrap"
-          >
-            Suscribirse
-          </button>
-        </form>
+      <section class="mt-16">
+        <div class="bg-primary rounded-xl p-8 md:p-12 relative overflow-hidden shadow-lg">
+          <!-- Elementos decorativos -->
+          <div class="absolute right-0 top-0 w-64 h-full bg-black opacity-10 transform skew-x-12 translate-x-12"></div>
+          <div class="absolute left-10 top-1/2 -translate-y-1/2 opacity-10">
+            <i class="material-icons" style="font-size: 120px;">mail</i>
+          </div>
+
+          <div class="relative z-10">
+            <div class="text-center mb-8">
+              <!-- Icono destacado -->
+              <div class="inline-flex items-center justify-center w-20 h-20 bg-secondary rounded-2xl shadow-xl mb-4 transform hover:scale-110 transition-transform">
+                <i class="material-icons text-primary" style="font-size: 48px;">campaign</i>
+              </div>
+
+              <h3 class="text-3xl md:text-4xl font-display font-extrabold text-secondary mb-3">
+                ¡No te pierdas nuestras <span class="inline-block">ofertas exclusivas</span>!
+              </h3>
+              <p class="text-secondary font-bold text-lg md:text-xl">
+                Suscríbete y recibe un <span class="bg-secondary text-primary px-2 py-1 rounded">10% OFF</span> en tu primera compra
+              </p>
+            </div>
+
+            <form class="max-w-2xl mx-auto flex flex-col sm:flex-row gap-3">
+              <input
+                type="email"
+                placeholder="Introduce tu email..."
+                class="flex-1 px-6 py-4 rounded-lg text-gray-900 font-medium focus:outline-none focus:ring-4 focus:ring-secondary/30 shadow-md"
+                required
+              />
+              <button
+                type="submit"
+                class="bg-secondary text-white hover:bg-black px-8 py-4 rounded-lg font-bold shadow-lg transition transform hover:-translate-y-1 whitespace-nowrap"
+              >
+                Suscribirse Ahora
+              </button>
+            </form>
+          </div>
+        </div>
       </section>
     </div>
   </main>

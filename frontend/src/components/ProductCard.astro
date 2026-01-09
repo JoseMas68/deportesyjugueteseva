@@ -8,9 +8,14 @@ interface Props {
 const { product } = Astro.props;
 
 const image = product.image || product.thumbnailUrl || (product.images && product.images[0]) || '/placeholder.jpg';
-const hasDiscount = product.compareAtPrice && product.compareAtPrice > product.price;
+
+// Convertir precios a números (Prisma Decimal se serializa como string)
+const price = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+const compareAtPrice = product.compareAtPrice ? (typeof product.compareAtPrice === 'string' ? parseFloat(product.compareAtPrice) : product.compareAtPrice) : null;
+
+const hasDiscount = compareAtPrice && compareAtPrice > price;
 const discountPercent = hasDiscount
-  ? Math.round(((product.compareAtPrice! - product.price) / product.compareAtPrice!) * 100)
+  ? Math.round(((compareAtPrice! - price) / compareAtPrice!) * 100)
   : 0;
 
 // Rating (mock por ahora)
@@ -22,29 +27,29 @@ const totalReviews = 42;
 
 <div class="bg-surface-light rounded-xl shadow-sm border border-gray-100 hover:shadow-xl transition group">
   <!-- Imagen con Badge -->
-  <div class="relative p-4">
+  <div class="relative">
     {hasDiscount && (
-      <span class="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded z-10">
+      <span class="absolute top-3 left-3 bg-accent text-white text-xs font-bold px-2 py-1 rounded z-10">
         -{discountPercent}%
       </span>
     )}
     {product.isNew && !hasDiscount && (
-      <span class="absolute top-2 left-2 bg-primary text-secondary text-xs font-bold px-2 py-1 rounded z-10">
+      <span class="absolute top-3 left-3 bg-primary text-secondary text-xs font-bold px-2 py-1 rounded z-10">
         NUEVO
       </span>
     )}
 
-    <div class="aspect-square bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden">
+    <div class="aspect-square bg-gray-50 rounded-t-xl overflow-hidden">
       <img
         src={image}
         alt={product.name}
-        class="object-contain h-40 group-hover:scale-110 transition duration-300"
+        class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
         loading="lazy"
       />
     </div>
 
     {product.stock === 0 && (
-      <div class="absolute inset-0 bg-black/70 flex items-center justify-center rounded-lg">
+      <div class="absolute inset-0 bg-black/70 flex items-center justify-center rounded-t-xl">
         <span class="text-white font-bold text-lg">AGOTADO</span>
       </div>
     )}
@@ -59,7 +64,7 @@ const totalReviews = 42;
 
     <!-- Nombre -->
     <a href={`/productos/${product.slug}`}>
-      <h3 class="font-bold text-secondary text-lg leading-tight mb-2 group-hover:text-primary transition-colors line-clamp-2">
+      <h3 class="font-bold text-secondary text-lg leading-tight mb-2 group-hover:text-gray-600 transition-colors line-clamp-2">
         {product.name}
       </h3>
     </a>
@@ -83,11 +88,11 @@ const totalReviews = 42;
       <div>
         {hasDiscount && (
           <div class="text-gray-400 line-through text-xs">
-            {product.compareAtPrice!.toFixed(2)}€
+            {compareAtPrice!.toFixed(2)}€
           </div>
         )}
         <div class="text-xl font-bold text-secondary">
-          {product.price.toFixed(2)}€
+          {price.toFixed(2)}€
         </div>
       </div>
       <button
@@ -109,6 +114,9 @@ const totalReviews = 42;
 </div>
 
 <script>
+  import { addToCart } from '@/lib/cart';
+  import type { Product } from '@/lib/types';
+
   // Añadir al carrito desde la tarjeta
   document.addEventListener('DOMContentLoaded', () => {
     const addToCartButtons = document.querySelectorAll('[data-product-id]');
@@ -118,12 +126,49 @@ const totalReviews = 42;
         e.preventDefault();
         const productId = (button as HTMLElement).dataset.productId;
 
-        // TODO: Implementar lógica de añadir al carrito
-        console.log('Añadir al carrito:', productId);
+        if (!productId) return;
+
+        // Obtener datos del producto desde el DOM
+        const card = button.closest('.bg-surface-light');
+        if (!card) return;
+
+        const productName = card.querySelector('h3')?.textContent?.trim() || '';
+        const priceText = card.querySelector('.text-xl.font-bold')?.textContent?.replace('€', '').trim();
+        const price = priceText ? parseFloat(priceText) : 0;
+        const imageUrl = card.querySelector('img')?.getAttribute('src') || '';
+        const productSlug = card.querySelector('a')?.getAttribute('href')?.split('/').pop() || '';
+
+        // Crear objeto del producto para el carrito
+        const cartItem = {
+          productId: parseInt(productId),
+          product: {
+            id: parseInt(productId),
+            name: productName,
+            slug: productSlug,
+            price: price,
+            image: imageUrl,
+            stock: 100, // El stock real se validará en el backend
+          } as Product,
+          quantity: 1,
+        };
+
+        // Añadir al carrito
+        addToCart(cartItem);
 
         // Feedback visual
         button.classList.add('scale-90');
-        setTimeout(() => button.classList.remove('scale-90'), 200);
+        setTimeout(() => {
+          button.classList.remove('scale-90');
+          // Mostrar mensaje de éxito (opcional)
+          const icon = button.querySelector('i');
+          if (icon) {
+            const originalIcon = icon.textContent;
+            icon.textContent = 'check';
+            setTimeout(() => {
+              icon.textContent = originalIcon;
+            }, 1000);
+          }
+        }, 200);
       });
     });
   });

@@ -5,82 +5,27 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import ProductCard from '@/components/ProductCard.astro';
+import { getProducts } from '@/lib/api';
 
-// Mock data - will be replaced with API calls
 const category = Astro.params.category || 'deportes';
 const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
 
-const products = [
-  {
-    id: 1,
-    name: 'Balón de Fútbol Pro',
-    slug: 'balon-futbol-pro',
-    price: 24.99,
-    originalPrice: 29.99,
-    category: 'Deportes',
-    image: '/products/balon-futbol.jpg',
-    badge: 'NUEVO'
-  },
-  {
-    id: 2,
-    name: 'Zapatillas Running X1',
-    slug: 'zapatillas-running-x1',
-    price: 89.99,
-    category: 'Deportes',
-    image: '/products/zapatillas.jpg'
-  },
-  {
-    id: 3,
-    name: 'Raqueta Tenis Pro',
-    slug: 'raqueta-tenis-pro',
-    price: 129.99,
-    originalPrice: 149.99,
-    category: 'Deportes',
-    image: '/products/raqueta.jpg',
-    badge: '-13%'
-  },
-  {
-    id: 4,
-    name: 'Balón Baloncesto',
-    slug: 'balon-baloncesto',
-    price: 34.99,
-    category: 'Deportes',
-    image: '/products/balon-basket.jpg'
-  },
-  {
-    id: 5,
-    name: 'Pelota Pádel Pack 3',
-    slug: 'pelota-padel-pack',
-    price: 12.99,
-    category: 'Deportes',
-    image: '/products/pelotas-padel.jpg'
-  },
-  {
-    id: 6,
-    name: 'Guantes Portero',
-    slug: 'guantes-portero',
-    price: 44.99,
-    category: 'Deportes',
-    image: '/products/guantes.jpg',
-    badge: 'NUEVO'
-  },
-  {
-    id: 7,
-    name: 'Mancuernas 10kg',
-    slug: 'mancuernas-10kg',
-    price: 39.99,
-    category: 'Deportes',
-    image: '/products/mancuernas.jpg'
-  },
-  {
-    id: 8,
-    name: 'Cuerda de Saltar',
-    slug: 'cuerda-saltar',
-    price: 9.99,
-    category: 'Deportes',
-    image: '/products/cuerda.jpg'
-  }
-];
+// Obtener productos desde la API
+let products = [];
+let total = 0;
+
+try {
+  const result = await getProducts({
+    sportType: category,
+    limit: 12
+  });
+  products = result.products;
+  total = result.total;
+} catch (error) {
+  console.error('Error al cargar productos de categoría:', error);
+  products = [];
+  total = 0;
+}
 
 const filters = {
   priceRanges: [
@@ -106,7 +51,7 @@ const filters = {
     <div class="bg-white border-b border-gray-200">
       <div class="container mx-auto px-4 py-4">
         <nav class="flex items-center text-sm">
-          <a href="/" class="text-gray-500 hover:text-primary transition-colors">Inicio</a>
+          <a href="/" class="text-gray-500 hover:text-secondary transition-colors">Inicio</a>
           <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
           <span class="text-secondary font-medium">{categoryName}</span>
         </nav>
@@ -181,7 +126,7 @@ const filters = {
           <!-- Barra de ordenación -->
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <p class="text-gray-600">
-              Mostrando <span class="font-bold text-secondary">{products.length}</span> productos
+              Mostrando <span class="font-bold text-secondary">{products.length}</span> de <span class="font-bold text-secondary">{total}</span> productos
             </p>
 
             <div class="flex items-center gap-4">
@@ -220,11 +165,11 @@ const filters = {
                 <i class="material-icons text-sm">chevron_left</i>
               </button>
               <button class="px-4 py-2 bg-primary text-secondary font-bold rounded-lg">1</button>
-              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">2</button>
-              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">3</button>
+              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">2</button>
+              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">3</button>
               <span class="px-2 text-gray-400">...</span>
-              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">10</button>
-              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">
+              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">10</button>
+              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">
                 <i class="material-icons text-sm">chevron_right</i>
               </button>
             </nav>

@@ -30,19 +30,53 @@
 - [x] Emails al cliente: Confirmación, Pagado, Enviado, Cancelado
 - [x] Emails al admin: Nuevo pedido, Pagado, Cancelado
 
+## ✅ Completado (Frontend - Astro)
+
+### 1. Configuración Base
+- [x] Setup proyecto Astro con TypeScript
+- [x] Configurar Tailwind CSS con paleta de colores EVA
+- [x] Estructura de carpetas (layouts, components, pages)
+- [x] Configuración de path aliases (@/)
+
+### 2. Componentes Compartidos
+- [x] Layout.astro (estructura base con SEO)
+- [x] Header.astro con megamenu responsive (Deportes/Juguetes/Hobbies)
+- [x] Footer.astro con links y redes sociales
+- [x] ProductCard.astro (con ratings, badges, stock)
+
+### 3. Páginas Principales
+- [x] index.astro (hero + categorías populares + más vendidos)
+- [x] [category].astro (grid de productos + filtros laterales)
+- [x] buscar.astro (búsqueda con filtros dinámicos)
+- [x] ofertas.astro (ofertas destacadas + todas las ofertas)
+- [x] producto/[slug].astro (detalle con galería + relacionados)
+- [x] carrito.astro (tabla de productos + resumen)
+- [x] checkout.astro (formulario + métodos de pago)
+- [x] confirmacion.astro (resumen de pedido)
+- [x] cuenta.astro (dashboard de usuario)
+
+### 4. Funcionalidades UI
+- [x] Megamenu con hover en desktop
+- [x] Mobile menu responsive
+- [x] Breadcrumbs en todas las páginas
+- [x] Paginación con estilos accesibles
+- [x] Sistema de filtros (categoría, precio, marca)
+- [x] Badges de descuento y "NUEVO"
+- [x] Estados de stock (agotado, bajo stock)
+- [x] Banners promocionales
+- [x] Newsletter signup
+- [x] Ratings con estrellas
+
 ## 🚧 Pendiente
 
-### Frontend (Astro)
-- [ ] Setup proyecto Astro
-- [ ] Configurar Tailwind en Astro
-- [ ] Header con megamenu (Deportes/Juguetes/Hobbies)
-- [ ] Footer con links
-- [ ] Página de inicio (hero + categorías destacadas)
-- [ ] Página de categoría (grid + filtros laterales)
-- [ ] Página de detalle de producto (galería + info + relacionados)
-- [ ] Carrito de compras (localStorage + persistencia)
-- [ ] Página de checkout (formulario + métodos de pago)
-- [ ] Página de confirmación
+### Frontend (Conexión con Backend)
+- [ ] Integrar API de productos (reemplazar mock data)
+- [ ] Integrar API de categorías
+- [ ] Implementar carrito funcional con localStorage
+- [ ] Conectar checkout con API backend
+- [ ] Gestión de estados de carga y errores
+- [ ] Implementar búsqueda en tiempo real
+- [ ] Sistema de favoritos funcional
 
 ### Panel Admin (Next.js)
 - [ ] Middleware de autenticación con Supabase
@@ -59,40 +93,73 @@
 - [ ] Stripe Payment Intent en checkout
 - [ ] Webhook de Stripe para actualizar estado de pago
 - [ ] Subida de imágenes a Supabase Storage
-- [ ] Optimización de imágenes
+- [ ] Optimización de imágenes con CDN
+- [ ] Sistema de notificaciones por email funcional
 
 ### Deploy
 - [ ] Configurar para Vercel (frontend + backend)
 - [ ] Variables de entorno en producción
 - [ ] Dominio personalizado
+- [ ] SSL y seguridad
+- [ ] Monitoreo y analytics
 
 ## 📋 Próximos Pasos Inmediatos
 
-1. **Crear proyecto Frontend Astro**
-   ```bash
-   cd frontend
-   npm create astro@latest . -- --template minimal --yes
-   npm install tailwindcss @astrojs/tailwind
-   npx astro add tailwind
-   ```
+### Opción A: Conectar Frontend con Backend (Recomendado)
+1. **Crear módulo de API cliente**
+   - Crear `frontend/src/lib/api.ts` con funciones para llamar al backend
+   - Implementar fetchProducts(), fetchCategories(), createOrder()
+   - Gestión de errores y estados de carga
 
-2. **Copiar configuración de Tailwind**
-   - Usar misma paleta de colores que backend
-   - Compartir componentes de estilos
+2. **Implementar carrito funcional**
+   - Sistema de localStorage para persistencia
+   - Añadir/quitar/actualizar cantidad
+   - Calcular totales con envío
+   - Sincronizar con UI en tiempo real
 
-3. **Crear componentes compartidos**
-   - Header.astro con megamenu
-   - Footer.astro
-   - ProductCard.astro
-   - Button.astro
+3. **Conectar páginas con API real**
+   - Reemplazar mock data en index.astro
+   - Conectar página de categoría con filtros
+   - Página de detalle con productos relacionados
+   - Búsqueda en tiempo real
 
-4. **Páginas Astro principales**
-   - src/pages/index.astro
-   - src/pages/[category]/index.astro
-   - src/pages/productos/[slug].astro
-   - src/pages/carrito.astro
-   - src/pages/checkout.astro
-   - src/pages/confirmacion.astro
+4. **Implementar checkout funcional**
+   - Validación de formulario
+   - Integración con Stripe
+   - Confirmación de pedido
+   - Redirección a página de confirmación
+
+### Opción B: Desarrollar Panel Admin
+1. **Setup de autenticación**
+   - Middleware de Supabase
+   - Protección de rutas admin
+   - Login/logout
+
+2. **Layout admin**
+   - Sidebar con navegación
+   - Header con usuario
+   - Dashboard principal
+
+3. **Gestión de productos**
+   - Lista con paginación
+   - Formulario crear/editar
+   - Subida de imágenes
+   - Control de stock
+
+### Opción C: Preparar para Deploy
+1. **Variables de entorno**
+   - Configurar .env para producción
+   - Secrets en Vercel
+
+2. **Optimizaciones**
+   - Imágenes optimizadas
+   - Caché de API
+   - Lazy loading
+
+3. **Deploy**
+   - Vercel para frontend y backend
+   - Configurar dominio
+   - SSL automático
 
 ## 🔑 Credenciales Necesarias
 
@@ -208,12 +275,24 @@ npm run dev
 6. **Stock**: Se reduce automáticamente al crear pedido
 7. **Envío gratis**: A partir de 50€ (configurable)
 
-## ⚠️ Faltan Implementar
+## ⚠️ Prioridad Alta - Faltan Implementar
 
-- Stripe Payment Intent real (actualmente simulado)
-- Webhook de Stripe para confirmar pagos
-- Panel admin completo (todas las vistas)
-- Frontend Astro completo
-- Autenticación admin
-- Subida de imágenes
-- Tests
+### Funcionalidad Crítica
+1. **Conexión Frontend-Backend**: Actualmente el frontend usa mock data
+2. **Carrito Funcional**: Implementar localStorage y sincronización
+3. **Checkout Real**: Integrar con Stripe y API de pedidos
+4. **Panel Admin**: Sin implementar (gestión de productos, pedidos, etc.)
+5. **Autenticación Admin**: Protección de rutas administrativas
+
+### Integraciones Pendientes
+- Stripe Payment Intent real (actualmente simulado en API)
+- Webhook de Stripe para confirmar pagos automáticamente
+- Subida de imágenes a Supabase Storage
+- Sistema de emails funcional (API lista, falta integrar)
+
+### Mejoras Futuras
+- Tests unitarios y de integración
+- Optimización de imágenes con CDN
+- Sistema de reviews y ratings reales
+- Analytics y monitoreo
+- Página de favoritos funcional

@@ -5,14 +5,37 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import ProductCard from '@/components/ProductCard.astro';
+import { getProducts } from '@/lib/api';
 
 // Get query parameters
 const url = new URL(Astro.request.url);
 const searchQuery = url.searchParams.get('q') || '';
 const categoryFilter = url.searchParams.get('categoria') || '';
 
-// Mock product data - will be replaced with API call
-const allProducts = [
+// Obtener productos desde la API con filtros
+let filteredProducts = [];
+let total = 0;
+
+try {
+  const result = await getProducts({
+    search: searchQuery,
+    category: categoryFilter,
+    limit: 20
+  });
+  filteredProducts = result.products;
+  total = result.total;
+} catch (error) {
+  console.error('Error al buscar productos:', error);
+  filteredProducts = [];
+  total = 0;
+}
+
+// Mock for brands - will be replaced with API when available
+const availableBrands: string[] = [];
+const availableSubcategories: string[] = [];
+
+// Temporary mock data structure - remove this later
+const allProducts_REMOVE_LATER = [
   {
     id: 1,
     name: 'Balón de Fútbol Pro',
@@ -155,27 +178,6 @@ const allProducts = [
   }
 ];
 
-// Filter products based on search query and category
-let filteredProducts = allProducts;
-
-if (categoryFilter) {
-  filteredProducts = filteredProducts.filter(p => p.category === categoryFilter);
-}
-
-if (searchQuery) {
-  const query = searchQuery.toLowerCase();
-  filteredProducts = filteredProducts.filter(p =>
-    p.name.toLowerCase().includes(query) ||
-    p.category.toLowerCase().includes(query) ||
-    p.subcategory.toLowerCase().includes(query) ||
-    p.brand.toLowerCase().includes(query)
-  );
-}
-
-// Get unique brands and subcategories from filtered products for filter sidebar
-const availableBrands = [...new Set(filteredProducts.map(p => p.brand))];
-const availableSubcategories = [...new Set(filteredProducts.map(p => p.subcategory))];
-
 const categoryNames: { [key: string]: string } = {
   'deportes': 'Deportes',
   'juguetes': 'Juguetes',
@@ -206,11 +208,11 @@ const filters = {
     <div class="bg-white border-b border-gray-200">
       <div class="container mx-auto px-4 py-4">
         <nav class="flex items-center text-sm flex-wrap">
-          <a href="/" class="text-gray-500 hover:text-primary transition-colors">Inicio</a>
+          <a href="/" class="text-gray-500 hover:text-secondary transition-colors">Inicio</a>
           <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
           {categoryFilter ? (
             <>
-              <a href="/buscar" class="text-gray-500 hover:text-primary transition-colors">Búsqueda</a>
+              <a href="/buscar" class="text-gray-500 hover:text-secondary transition-colors">Búsqueda</a>
               <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
               <span class="text-secondary font-medium">{categoryNames[categoryFilter]}</span>
             </>
@@ -313,7 +315,7 @@ const filters = {
           <!-- Barra de ordenación -->
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <p class="text-gray-600">
-              Mostrando <span class="font-bold text-secondary" id="product-count">{filteredProducts.length}</span> productos
+              Mostrando <span class="font-bold text-secondary" id="product-count">{filteredProducts.length}</span> de <span class="font-bold text-secondary">{total}</span> productos
             </p>
 
             <div class="flex items-center gap-4">
@@ -373,8 +375,8 @@ const filters = {
                   <i class="material-icons text-sm">chevron_left</i>
                 </button>
                 <button class="px-4 py-2 bg-primary text-secondary font-bold rounded-lg">1</button>
-                <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">2</button>
-                <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">
+                <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">2</button>
+                <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">
                   <i class="material-icons text-sm">chevron_right</i>
                 </button>
               </nav>

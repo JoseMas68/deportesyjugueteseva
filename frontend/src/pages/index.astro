@@ -3,8 +3,9 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import ProductCard from '@/components/ProductCard.astro';
+import { getProducts } from '@/lib/api';
 
-// Categorías populares con imágenes de Unsplash
+// Categorías populares con imágenes de Unsplash (mantenemos estáticas)
 const categoriasPopulares = [
   {
     name: 'Fútbol',
@@ -32,52 +33,19 @@ const categoriasPopulares = [
   }
 ];
 
-// Productos más vendidos (mock data con imágenes de Unsplash)
-const productosMasVendidos = [
-  {
-    id: 1,
-    name: 'Balón Pro League 2024',
-    slug: 'balon-pro-league',
-    category: 'Deportes',
-    price: 24.99,
-    originalPrice: 29.99,
-    image: 'https://images.unsplash.com/photo-1614632537239-1f61f7e94638?w=300&h=300&fit=crop',
-    rating: 4.5,
-    reviews: 42,
-    badge: '-15%'
-  },
-  {
-    id: 2,
-    name: 'Casa de Muñecas Deluxe',
-    slug: 'casa-munecas-deluxe',
-    category: 'Juguetes',
-    price: 89.95,
-    image: 'https://images.unsplash.com/photo-1530325553241-4f6e7690cf36?w=300&h=300&fit=crop',
-    rating: 4,
-    reviews: 18
-  },
-  {
-    id: 3,
-    name: 'Mega Castillo 1000 Pzs',
-    slug: 'mega-castillo',
-    category: 'Construcción',
-    price: 54.00,
-    image: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=300&h=300&fit=crop',
-    rating: 5,
-    reviews: 124,
-    badge: 'Nuevo'
-  },
-  {
-    id: 4,
-    name: 'Raqueta Speed Pro',
-    slug: 'raqueta-speed-pro',
-    category: 'Tenis',
-    price: 120.00,
-    image: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=300&h=300&fit=crop',
-    rating: 4,
-    reviews: 9
-  }
-];
+// Obtener productos destacados desde la API
+let productosMasVendidos = [];
+try {
+  const { products } = await getProducts({
+    featured: true,
+    limit: 4
+  });
+  productosMasVendidos = products;
+} catch (error) {
+  console.error('Error al cargar productos destacados:', error);
+  // Fallback a array vacío si falla la API
+  productosMasVendidos = [];
+}
 ---
 
 <Layout title="Deportes y Juguetes Eva - Tu tienda online">
@@ -203,60 +171,18 @@ const productosMasVendidos = [
       <div class="container mx-auto px-4">
         <h2 class="text-3xl font-display font-bold text-secondary mb-8 text-center">Los Más Vendidos</h2>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {productosMasVendidos.map((producto) => (
-            <div class="bg-surface-light rounded-xl shadow-sm border border-gray-100 hover:shadow-xl transition group">
-              <div class="relative">
-                {producto.badge && (
-                  <span class={`absolute top-3 left-3 text-white text-xs font-bold px-2 py-1 rounded z-10 ${
-                    producto.badge === 'Nuevo' ? 'bg-primary text-secondary' : 'bg-accent'
-                  }`}>
-                    {producto.badge}
-                  </span>
-                )}
-                <div class="aspect-square bg-gray-50 rounded-t-xl overflow-hidden">
-                  <img
-                    src={producto.image}
-                    alt={producto.name}
-                    class="w-full h-full object-cover group-hover:scale-110 transition duration-300"
-                  />
-                </div>
-              </div>
-
-              <div class="p-4">
-                <p class="text-xs text-gray-500 mb-1">{producto.category}</p>
-                <h3 class="font-bold text-secondary text-lg leading-tight mb-2 group-hover:text-gray-600 transition-colors">
-                  {producto.name}
-                </h3>
-
-                <div class="flex items-center gap-1 mb-3">
-                  {Array.from({ length: Math.floor(producto.rating) }).map(() => (
-                    <i class="material-icons text-amber-400 text-sm">star</i>
-                  ))}
-                  {producto.rating % 1 !== 0 && (
-                    <i class="material-icons text-amber-400 text-sm">star_half</i>
-                  )}
-                  {Array.from({ length: 5 - Math.ceil(producto.rating) }).map(() => (
-                    <i class="material-icons text-gray-300 text-sm">star</i>
-                  ))}
-                  <span class="text-xs text-gray-400 ml-1">({producto.reviews})</span>
-                </div>
-
-                <div class="flex items-center justify-between">
-                  <div class="flex flex-col">
-                    {producto.originalPrice && (
-                      <span class="text-gray-400 line-through text-xs">{producto.originalPrice.toFixed(2)}€</span>
-                    )}
-                    <span class="text-xl font-bold text-secondary">{producto.price.toFixed(2)}€</span>
-                  </div>
-                  <button class="bg-secondary text-primary hover:bg-black p-2 rounded-lg transition shadow-md">
-                    <i class="material-icons text-lg">add_shopping_cart</i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        {productosMasVendidos.length > 0 ? (
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {productosMasVendidos.map((producto) => (
+              <ProductCard product={producto} />
+            ))}
+          </div>
+        ) : (
+          <div class="text-center py-12">
+            <i class="material-icons text-6xl text-gray-300 mb-4">shopping_bag</i>
+            <p class="text-gray-500">No hay productos destacados disponibles en este momento.</p>
+          </div>
+        )}
       </div>
     </section>
 

@@ -5,9 +5,26 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import ProductCard from '@/components/ProductCard.astro';
+import { getProductBySlug } from '@/lib/api';
 
-// Mock product data - will be replaced with API call
-const product = {
+const slug = Astro.params.slug || '';
+
+// Obtener producto desde la API
+let product;
+let relatedProducts = [];
+
+try {
+  const result = await getProductBySlug(slug);
+  product = result.product;
+  relatedProducts = result.relatedProducts;
+} catch (error) {
+  console.error('Error al cargar producto:', error);
+  // Si el producto no existe, redirigir a 404 o mostrar error
+  return Astro.redirect('/404');
+}
+
+// Mock product - REMOVE LATER
+const product_REMOVE_LATER = {
   id: 1,
   name: 'Balón de Baloncesto Pro Grip Elite 7',
   slug: 'balon-baloncesto-pro-grip',
@@ -41,8 +58,8 @@ const product = {
   badge: 'NUEVO'
 };
 
-// Mock related products
-const relatedProducts = [
+// Mock related products - REMOVE LATER
+const relatedProducts_REMOVE_LATER = [
   {
     id: 2,
     name: 'Nike Air Zoom GT',
@@ -88,11 +105,11 @@ const relatedProducts = [
     <div class="bg-white border-b border-gray-200">
       <div class="container mx-auto px-4 py-4">
         <nav class="flex items-center text-sm flex-wrap">
-          <a href="/" class="text-gray-500 hover:text-primary transition-colors">Inicio</a>
+          <a href="/" class="text-gray-500 hover:text-secondary transition-colors">Inicio</a>
           <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
-          <a href="/deportes" class="text-gray-500 hover:text-primary transition-colors">Deportes</a>
+          <a href="/deportes" class="text-gray-500 hover:text-secondary transition-colors">Deportes</a>
           <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
-          <a href="/deportes/baloncesto" class="text-gray-500 hover:text-primary transition-colors">{product.subcategory}</a>
+          <a href="/deportes/baloncesto" class="text-gray-500 hover:text-secondary transition-colors">{product.subcategory}</a>
           <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
           <span class="text-secondary font-medium truncate">{product.name}</span>
         </nav>
