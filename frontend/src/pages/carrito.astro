@@ -311,11 +311,9 @@ import Footer from '@/components/Footer.astro';
         const id = target.getAttribute('data-id');
         if (!id) return;
 
-        if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-          removeFromCart(id);
-          toastInfo('Producto eliminado del carrito');
-          renderCart();
-        }
+        removeFromCart(id);
+        toastInfo('Producto eliminado del carrito');
+        renderCart();
       });
     });
   }
@@ -323,11 +321,9 @@ import Footer from '@/components/Footer.astro';
   function setupGlobalListeners() {
     // Clear cart button
     document.getElementById('clear-cart')?.addEventListener('click', () => {
-      if (confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
-        clearCart();
-        toastInfo('Carrito vaciado');
-        renderCart();
-      }
+      clearCart();
+      toastInfo('Carrito vaciado');
+      renderCart();
     });
 
     // Coupon button (placeholder)

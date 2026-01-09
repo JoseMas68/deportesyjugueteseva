@@ -10,194 +10,60 @@ import { getProducts } from '@/lib/api';
 // Get query parameters
 const url = new URL(Astro.request.url);
 const searchQuery = url.searchParams.get('q') || '';
-const categoryFilter = url.searchParams.get('categoria') || '';
+const sort = url.searchParams.get('sort') || 'relevance';
+const page = parseInt(url.searchParams.get('page') || '1');
+const limit = 12;
+const offset = (page - 1) * limit;
 
-// Obtener productos desde la API con filtros
-let filteredProducts = [];
+// Obtener productos iniciales desde la API
+let products = [];
 let total = 0;
 
 try {
-  const result = await getProducts({
+  const filters: Record<string, any> = {
     search: searchQuery,
-    category: categoryFilter,
-    limit: 20
-  });
-  filteredProducts = result.products;
+    limit,
+    offset
+  };
+
+  if (sort && sort !== 'relevance') filters.sort = sort;
+
+  const result = await getProducts(filters);
+  products = result.products;
   total = result.total;
 } catch (error) {
   console.error('Error al buscar productos:', error);
-  filteredProducts = [];
+  products = [];
   total = 0;
 }
 
-// Mock for brands - will be replaced with API when available
-const availableBrands: string[] = [];
-const availableSubcategories: string[] = [];
+// Calcular paginación
+const totalPages = Math.ceil(total / limit);
 
-// Temporary mock data structure - remove this later
-const allProducts_REMOVE_LATER = [
-  {
-    id: 1,
-    name: 'Balón de Fútbol Pro',
-    slug: 'balon-futbol-pro',
-    price: 24.99,
-    originalPrice: 29.99,
-    category: 'deportes',
-    subcategory: 'futbol',
-    brand: 'Nike',
-    image: '/products/balon-futbol.jpg',
-    badge: 'NUEVO',
-    inStock: true
-  },
-  {
-    id: 2,
-    name: 'Zapatillas Running X1',
-    slug: 'zapatillas-running-x1',
-    price: 89.99,
-    category: 'deportes',
-    subcategory: 'running',
-    brand: 'Adidas',
-    image: '/products/zapatillas.jpg',
-    inStock: true
-  },
-  {
-    id: 3,
-    name: 'Raqueta Tenis Pro',
-    slug: 'raqueta-tenis-pro',
-    price: 129.99,
-    originalPrice: 149.99,
-    category: 'deportes',
-    subcategory: 'tenis',
-    brand: 'Wilson',
-    image: '/products/raqueta.jpg',
-    badge: '-13%',
-    inStock: true
-  },
-  {
-    id: 4,
-    name: 'Muñeca Interactiva',
-    slug: 'muneca-interactiva',
-    price: 49.99,
-    category: 'juguetes',
-    subcategory: 'munecas-figuras',
-    brand: 'Mattel',
-    image: '/products/muneca.jpg',
-    inStock: true
-  },
-  {
-    id: 5,
-    name: 'Set Scalextric Rally',
-    slug: 'scalextric-rally',
-    price: 159.99,
-    originalPrice: 189.99,
-    category: 'hobbies',
-    subcategory: 'scalextric',
-    brand: 'Scalextric',
-    image: '/products/scalextric.jpg',
-    badge: '-16%',
-    inStock: true
-  },
-  {
-    id: 6,
-    name: 'Bloques Construcción 500 piezas',
-    slug: 'bloques-construccion',
-    price: 34.99,
-    category: 'juguetes',
-    subcategory: 'construccion',
-    brand: 'LEGO',
-    image: '/products/lego.jpg',
-    inStock: false
-  },
-  {
-    id: 7,
-    name: 'Maqueta Barco Pirata',
-    slug: 'maqueta-barco',
-    price: 79.99,
-    category: 'hobbies',
-    subcategory: 'maquetas',
-    brand: 'Revell',
-    image: '/products/maqueta.jpg',
-    inStock: true
-  },
-  {
-    id: 8,
-    name: 'Balón Baloncesto Pro Grip',
-    slug: 'balon-baloncesto',
-    price: 34.99,
-    category: 'deportes',
-    subcategory: 'baloncesto',
-    brand: 'Wilson',
-    image: '/products/balon-basket.jpg',
-    inStock: true
-  },
-  {
-    id: 9,
-    name: 'Tren Eléctrico Starter Pack',
-    slug: 'tren-electrico-starter',
-    price: 129.99,
-    category: 'hobbies',
-    subcategory: 'trenes-electricos',
-    brand: 'Märklin',
-    image: '/products/tren.jpg',
-    badge: 'NUEVO',
-    inStock: true
-  },
-  {
-    id: 10,
-    name: 'Pelota Pádel Pack 3',
-    slug: 'pelota-padel-pack',
-    price: 12.99,
-    category: 'deportes',
-    subcategory: 'padel',
-    brand: 'Dunlop',
-    image: '/products/pelotas-padel.jpg',
-    inStock: true
-  },
-  {
-    id: 11,
-    name: 'Puzzle Educativo ABC',
-    slug: 'puzzle-abc',
-    price: 19.99,
-    category: 'juguetes',
-    subcategory: 'educativos',
-    brand: 'Fisher-Price',
-    image: '/products/puzzle.jpg',
-    inStock: true
-  },
-  {
-    id: 12,
-    name: 'Guantes Portero Pro',
-    slug: 'guantes-portero',
-    price: 44.99,
-    category: 'deportes',
-    subcategory: 'futbol',
-    brand: 'Adidas',
-    image: '/products/guantes.jpg',
-    badge: 'NUEVO',
-    inStock: true
-  }
+// Filtros disponibles
+const priceRanges = [
+  { label: 'Menos de 25€', minPrice: 0, maxPrice: 25 },
+  { label: '25€ - 50€', minPrice: 25, maxPrice: 50 },
+  { label: '50€ - 100€', minPrice: 50, maxPrice: 100 },
+  { label: 'Más de 100€', minPrice: 100, maxPrice: 9999 }
 ];
 
-const categoryNames: { [key: string]: string } = {
-  'deportes': 'Deportes',
-  'juguetes': 'Juguetes',
-  'hobbies': 'Hobbies y Coleccionismo'
-};
+// Categorías principales
+const categoryList = [
+  { value: 'deportes', label: 'Deportes' },
+  { value: 'juguetes', label: 'Juguetes' },
+  { value: 'hobbies', label: 'Hobbies' },
+];
 
-const pageTitle = categoryFilter
-  ? `${categoryNames[categoryFilter]} - Búsqueda`
-  : searchQuery
-    ? `Resultados para "${searchQuery}"`
-    : 'Búsqueda de Productos';
+// Marcas
+const brandList = ['Nike', 'Adidas', 'Salomon', 'Arena', 'Speedo', 'Puma', 'The North Face', 'LEGO', 'Hasbro', 'Scalextric', 'Märklin'];
 
-const filters = {
-  priceRanges: [
-    { label: 'Menos de 25€', value: '0-25' },
-    { label: '25€ - 50€', value: '25-50' },
-    { label: '50€ - 100€', value: '50-100' },
-    { label: 'Más de 100€', value: '100+' }
-  ]
-};
+// Colores disponibles
+const colorList = ['Negro', 'Blanco', 'Azul', 'Rojo', 'Verde', 'Amarillo', 'Naranja', 'Rosa', 'Gris', 'Multicolor'];
+
+const pageTitle = searchQuery
+  ? `Resultados para "${searchQuery}"`
+  : 'Búsqueda de Productos';
 ---
 
 <Layout title={`${pageTitle} - Deportes y Juguetes Eva`} description="Encuentra los mejores productos de deportes, juguetes y hobbies">
@@ -210,15 +76,7 @@ const filters = {
         <nav class="flex items-center text-sm flex-wrap">
           <a href="/" class="text-gray-500 hover:text-secondary transition-colors">Inicio</a>
           <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
-          {categoryFilter ? (
-            <>
-              <a href="/buscar" class="text-gray-500 hover:text-secondary transition-colors">Búsqueda</a>
-              <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
-              <span class="text-secondary font-medium">{categoryNames[categoryFilter]}</span>
-            </>
-          ) : (
-            <span class="text-secondary font-medium">Búsqueda</span>
-          )}
+          <span class="text-secondary font-medium">Búsqueda</span>
         </nav>
       </div>
     </div>
@@ -234,9 +92,6 @@ const filters = {
             Mostrando resultados para: <span class="font-bold text-secondary">"{searchQuery}"</span>
           </p>
         )}
-        {categoryFilter && !searchQuery && (
-          <p class="text-gray-600 text-lg">Explora toda nuestra selección de {categoryNames[categoryFilter].toLowerCase()}</p>
-        )}
       </div>
 
       <div class="flex flex-col lg:flex-row gap-8">
@@ -245,67 +100,128 @@ const filters = {
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
             <div class="flex items-center justify-between mb-6">
               <h2 class="font-display font-bold text-lg">Filtros</h2>
-              <button class="text-sm text-primary hover:underline" onclick="window.location.href='/buscar'">
-                Limpiar
+              <button id="clear-filters" class="text-sm text-red-500 hover:text-red-700 hover:underline font-medium">Limpiar</button>
+            </div>
+
+            <!-- Categoría -->
+            <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+              <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                <span class="font-bold text-secondary text-sm">Categoría</span>
+                <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
               </button>
-            </div>
-
-            <!-- Categoría (si no hay filtro de categoría aplicado) -->
-            {!categoryFilter && (
-              <div class="mb-6 pb-6 border-b border-gray-200">
-                <h3 class="font-bold text-secondary mb-4">Categoría</h3>
-                <div class="space-y-2">
-                  <label class="flex items-center gap-2 cursor-pointer group">
-                    <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" data-filter="category" value="deportes" />
-                    <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">Deportes</span>
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer group">
-                    <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" data-filter="category" value="juguetes" />
-                    <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">Juguetes</span>
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer group">
-                    <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" data-filter="category" value="hobbies" />
-                    <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">Hobbies</span>
-                  </label>
-                </div>
-              </div>
-            )}
-
-            <!-- Precio -->
-            <div class="mb-6 pb-6 border-b border-gray-200">
-              <h3 class="font-bold text-secondary mb-4">Precio</h3>
-              <div class="space-y-2">
-                {filters.priceRanges.map((range) => (
-                  <label class="flex items-center gap-2 cursor-pointer group">
-                    <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" data-filter="price" value={range.value} />
-                    <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">{range.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <!-- Marca -->
-            {availableBrands.length > 0 && (
-              <div class="mb-6 pb-6 border-b border-gray-200">
-                <h3 class="font-bold text-secondary mb-4">Marca</h3>
-                <div class="space-y-2">
-                  {availableBrands.map((brand) => (
+              <div class="filter-accordion-content">
+                <div class="p-3 bg-white border-t border-gray-200 space-y-2">
+                  {categoryList.map((cat) => (
                     <label class="flex items-center gap-2 cursor-pointer group">
-                      <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" data-filter="brand" value={brand} />
-                      <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">{brand}</span>
+                      <input
+                        type="checkbox"
+                        class="filter-checkbox w-4 h-4 rounded border-gray-300 text-secondary focus:ring-secondary"
+                        data-filter="category"
+                        data-value={cat.value}
+                      />
+                      <span class="text-sm text-gray-700 group-hover:text-secondary transition-colors">{cat.label}</span>
                     </label>
                   ))}
                 </div>
               </div>
-            )}
+            </div>
+
+            <!-- Precio -->
+            <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+              <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                <span class="font-bold text-secondary text-sm">Precio</span>
+                <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
+              </button>
+              <div class="filter-accordion-content">
+                <div class="p-3 bg-white border-t border-gray-200 space-y-2">
+                  {priceRanges.map((range, index) => (
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        class="filter-checkbox w-4 h-4 rounded border-gray-300 text-secondary focus:ring-secondary"
+                        data-filter="price"
+                        data-min={range.minPrice}
+                        data-max={range.maxPrice}
+                        data-index={index}
+                      />
+                      <span class="text-sm text-gray-700 group-hover:text-secondary transition-colors">{range.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <!-- Marca -->
+            <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+              <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                <span class="font-bold text-secondary text-sm">Marca</span>
+                <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
+              </button>
+              <div class="filter-accordion-content">
+                <div class="p-3 bg-white border-t border-gray-200 space-y-2 max-h-48 overflow-y-auto">
+                  {brandList.map((brandName) => (
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        class="filter-checkbox w-4 h-4 rounded border-gray-300 text-secondary focus:ring-secondary"
+                        data-filter="brand"
+                        data-value={brandName}
+                      />
+                      <span class="text-sm text-gray-700 group-hover:text-secondary transition-colors">{brandName}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <!-- Color -->
+            <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+              <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                <span class="font-bold text-secondary text-sm">Color</span>
+                <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
+              </button>
+              <div class="filter-accordion-content">
+                <div class="p-3 bg-white border-t border-gray-200 space-y-2 max-h-48 overflow-y-auto">
+                  {colorList.map((colorName) => (
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        class="filter-checkbox w-4 h-4 rounded border-gray-300 text-secondary focus:ring-secondary"
+                        data-filter="color"
+                        data-value={colorName}
+                      />
+                      <span class="text-sm text-gray-700 group-hover:text-secondary transition-colors">{colorName}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
 
             <!-- Disponibilidad -->
-            <div>
-              <h3 class="font-bold text-secondary mb-4">Disponibilidad</h3>
-              <label class="flex items-center gap-2 cursor-pointer group">
-                <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" data-filter="stock" value="true" />
-                <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">En stock</span>
-              </label>
+            <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+              <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                <span class="font-bold text-secondary text-sm">Disponibilidad</span>
+                <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
+              </button>
+              <div class="filter-accordion-content">
+                <div class="p-3 bg-white border-t border-gray-200">
+                  <label class="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      class="filter-checkbox w-4 h-4 rounded border-gray-300 text-secondary focus:ring-secondary"
+                      data-filter="inStock"
+                      data-value="true"
+                    />
+                    <span class="text-sm text-gray-700 group-hover:text-secondary transition-colors">En stock</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filtros activos -->
+            <div id="active-filters" class="hidden mt-6 pt-6 border-t border-gray-200">
+              <p class="text-xs text-gray-500 mb-2">Filtros activos:</p>
+              <div id="active-filters-tags" class="flex flex-wrap gap-2"></div>
             </div>
           </div>
         </aside>
@@ -314,74 +230,65 @@ const filters = {
         <div class="flex-1">
           <!-- Barra de ordenación -->
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <p class="text-gray-600">
-              Mostrando <span class="font-bold text-secondary" id="product-count">{filteredProducts.length}</span> de <span class="font-bold text-secondary">{total}</span> productos
+            <p class="text-gray-600" id="products-count">
+              Mostrando <span class="font-bold text-secondary">{products.length}</span> de <span class="font-bold text-secondary">{total}</span> productos
             </p>
 
             <div class="flex items-center gap-4">
               <!-- Vista (Grid/List) -->
               <div class="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-1">
-                <button id="grid-view-btn" class="p-2 bg-primary rounded text-secondary" aria-label="Vista de cuadrícula">
+                <button class="p-2 bg-primary rounded text-secondary" aria-label="Vista de cuadrícula">
                   <i class="material-icons text-lg">grid_view</i>
                 </button>
-                <button id="list-view-btn" class="p-2 text-gray-400 hover:text-secondary rounded" aria-label="Vista de lista">
+                <button class="p-2 text-gray-400 hover:text-secondary rounded" aria-label="Vista de lista">
                   <i class="material-icons text-lg">view_list</i>
                 </button>
               </div>
 
               <!-- Ordenar -->
-              <select id="sort-select" class="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-primary">
-                <option value="relevance">Más relevantes</option>
-                <option value="price-asc">Precio: menor a mayor</option>
-                <option value="price-desc">Precio: mayor a menor</option>
-                <option value="name-asc">Nombre: A-Z</option>
-                <option value="name-desc">Nombre: Z-A</option>
+              <select
+                id="sort-select"
+                class="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-primary"
+              >
+                <option value="relevance" selected={sort === 'relevance'}>Más relevantes</option>
+                <option value="price_asc" selected={sort === 'price_asc'}>Precio: menor a mayor</option>
+                <option value="price_desc" selected={sort === 'price_desc'}>Precio: mayor a menor</option>
+                <option value="newest" selected={sort === 'newest'}>Novedades</option>
+                <option value="bestseller" selected={sort === 'bestseller'}>Más vendidos</option>
               </select>
             </div>
           </div>
 
-          <!-- Mensaje si no hay resultados -->
-          {filteredProducts.length === 0 && (
-            <div class="bg-white rounded-xl p-12 text-center">
-              <i class="material-icons text-6xl text-gray-300 mb-4">search_off</i>
-              <h3 class="text-2xl font-bold text-secondary mb-2">No se encontraron productos</h3>
-              <p class="text-gray-600 mb-6">
-                {searchQuery
-                  ? `No encontramos productos que coincidan con "${searchQuery}"`
-                  : 'Intenta ajustar los filtros o busca algo diferente'
-                }
-              </p>
-              <a href="/buscar" class="inline-flex items-center gap-2 bg-primary text-secondary font-bold px-6 py-3 rounded-lg hover:bg-yellow-400 transition-colors">
-                <i class="material-icons">refresh</i>
-                Limpiar búsqueda
-              </a>
-            </div>
-          )}
+          <!-- Loading indicator -->
+          <div id="loading-indicator" class="hidden flex justify-center items-center py-12">
+            <div class="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full"></div>
+          </div>
 
           <!-- Grid de Productos -->
-          {filteredProducts.length > 0 && (
-            <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
+          <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <div class="product-card-wrapper">
                 <ProductCard product={product} />
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
 
-          <!-- Paginación (placeholder para futuro) -->
-          {filteredProducts.length > 12 && (
-            <div class="mt-12 flex justify-center">
-              <nav class="flex items-center gap-2">
-                <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-400 cursor-not-allowed" disabled>
-                  <i class="material-icons text-sm">chevron_left</i>
-                </button>
-                <button class="px-4 py-2 bg-primary text-secondary font-bold rounded-lg">1</button>
-                <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">2</button>
-                <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">
-                  <i class="material-icons text-sm">chevron_right</i>
-                </button>
-              </nav>
-            </div>
-          )}
+          <!-- Paginación -->
+          <div id="pagination-container" class={totalPages > 1 ? 'mt-12 flex justify-center' : 'hidden'}>
+            <nav class="flex items-center gap-2" id="pagination-nav">
+              <!-- Se renderiza dinámicamente -->
+            </nav>
+          </div>
+
+          <!-- Mensaje si no hay productos -->
+          <div id="no-products" class={products.length === 0 ? 'text-center py-16' : 'hidden text-center py-16'}>
+            <i class="material-icons text-6xl text-gray-300 mb-4">search_off</i>
+            <h3 class="text-xl font-bold text-gray-600 mb-2">No se encontraron productos</h3>
+            <p class="text-gray-500 mb-6">Prueba a cambiar los filtros o buscar algo diferente</p>
+            <button id="clear-filters-empty" class="inline-block bg-primary text-secondary font-bold px-6 py-3 rounded-lg hover:bg-yellow-400 transition-colors">
+              Limpiar filtros
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -390,54 +297,594 @@ const filters = {
   <Footer />
 </Layout>
 
+<script define:vars={{ searchQuery, limit, priceRanges, products, total }}>
+  window.searchQuery = searchQuery;
+  window.limit = limit;
+  window.priceRanges = priceRanges;
+  window.initialProducts = products;
+  window.initialTotal = total;
+</script>
+
 <script>
-  // Toggle vista grid/list
-  const gridBtn = document.getElementById('grid-view-btn');
-  const listBtn = document.getElementById('list-view-btn');
-  const productsGrid = document.getElementById('products-grid');
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 
-  gridBtn?.addEventListener('click', () => {
-    gridBtn.classList.add('bg-primary', 'text-secondary');
-    gridBtn.classList.remove('text-gray-400');
-    listBtn?.classList.remove('bg-primary', 'text-secondary');
-    listBtn?.classList.add('text-gray-400');
-    productsGrid?.classList.remove('grid-cols-1');
-    productsGrid?.classList.add('grid-cols-2', 'md:grid-cols-3', 'xl:grid-cols-4');
-  });
+  interface FilterState {
+    categories: string[];
+    prices: { min: number; max: number }[];
+    brands: string[];
+    colors: string[];
+    inStock: boolean;
+    sort: string;
+    page: number;
+    viewMode: 'grid' | 'list';
+  }
 
-  listBtn?.addEventListener('click', () => {
-    listBtn.classList.add('bg-primary', 'text-secondary');
-    listBtn.classList.remove('text-gray-400');
-    gridBtn?.classList.remove('bg-primary', 'text-secondary');
-    gridBtn?.classList.add('text-gray-400');
-    productsGrid?.classList.remove('grid-cols-2', 'md:grid-cols-3', 'xl:grid-cols-4');
-    productsGrid?.classList.add('grid-cols-1');
-  });
+  const state: FilterState = {
+    categories: [],
+    prices: [],
+    brands: [],
+    colors: [],
+    inStock: false,
+    sort: 'relevance',
+    page: 1,
+    viewMode: 'grid'
+  };
 
-  // Filtros interactivos (placeholder - será implementado con JavaScript más complejo)
-  const filterCheckboxes = document.querySelectorAll('[data-filter]');
+  let debounceTimer: ReturnType<typeof setTimeout>;
+  let currentProducts: any[] = [];
+  let currentTotal: number = 0;
 
-  filterCheckboxes.forEach(checkbox => {
-    checkbox.addEventListener('change', () => {
-      // Esta funcionalidad será implementada completamente cuando se conecte con el backend
-      // Por ahora solo registra los cambios
-      console.log('Filter changed:', checkbox.getAttribute('data-filter'), checkbox.value, checkbox.checked);
+  function debounce(fn: () => void, delay: number) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(fn, delay);
+  }
+
+  // Re-renderizar productos sin hacer fetch (para cambio de vista)
+  function rerenderCurrentProducts() {
+    renderProducts(currentProducts, currentTotal);
+  }
+
+  async function fetchProducts() {
+    const productsGrid = document.getElementById('products-grid');
+    const noProducts = document.getElementById('no-products');
+
+    // Solo una transición suave, sin spinner de carga
+    if (productsGrid) productsGrid.style.opacity = '0.6';
+
+    try {
+      const params = new URLSearchParams();
+
+      // Search query
+      const searchQuery = (window as any).searchQuery;
+      if (searchQuery) {
+        params.set('search', searchQuery);
+      }
+
+      params.set('limit', String((window as any).limit));
+      params.set('offset', String((state.page - 1) * (window as any).limit));
+
+      // Categorías
+      if (state.categories.length > 0) {
+        // Si hay múltiples categorías, no enviamos filtro de categoría (busca en todas)
+        // Si hay una sola, la enviamos
+        if (state.categories.length === 1) {
+          params.set('category', state.categories[0]);
+        }
+      }
+
+      // Precio - combinar rangos seleccionados
+      if (state.prices.length > 0) {
+        const minPrice = Math.min(...state.prices.map(p => p.min));
+        const maxPrice = Math.max(...state.prices.map(p => p.max));
+        params.set('minPrice', String(minPrice));
+        params.set('maxPrice', String(maxPrice));
+      }
+
+      // Marcas
+      if (state.brands.length > 0) {
+        params.set('brand', state.brands.join(','));
+      }
+
+      // Colores
+      if (state.colors.length > 0) {
+        params.set('color', state.colors.join(','));
+      }
+
+      // In Stock
+      if (state.inStock) {
+        params.set('inStock', 'true');
+      }
+
+      // Sort
+      if (state.sort !== 'relevance') {
+        params.set('sort', state.sort);
+      }
+
+      const response = await fetch(`${API_URL}/products?${params}`);
+      const data = await response.json();
+
+      renderProducts(data.products, data.total);
+      renderPagination(data.total);
+      updateActiveFilters();
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      if (productsGrid) productsGrid.style.opacity = '1';
+    }
+  }
+
+  function renderProducts(products: any[], total: number) {
+    // Guardar productos actuales para re-renderizar sin fetch
+    currentProducts = products;
+    currentTotal = total;
+
+    const productsGrid = document.getElementById('products-grid');
+    const noProducts = document.getElementById('no-products');
+    const productsCount = document.getElementById('products-count');
+
+    if (productsCount) {
+      productsCount.innerHTML = `Mostrando <span class="font-bold text-secondary">${products.length}</span> de <span class="font-bold text-secondary">${total}</span> productos`;
+    }
+
+    if (products.length === 0) {
+      if (productsGrid) productsGrid.classList.add('hidden');
+      if (noProducts) noProducts.classList.remove('hidden');
+      return;
+    }
+
+    if (productsGrid) productsGrid.classList.remove('hidden');
+    if (noProducts) noProducts.classList.add('hidden');
+
+    if (productsGrid) {
+      productsGrid.innerHTML = products.map(product => {
+        const image = product.thumbnailUrl || (product.images && product.images[0]) || '/placeholder.jpg';
+        const price = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+        const compareAtPrice = product.compareAtPrice ? (typeof product.compareAtPrice === 'string' ? parseFloat(product.compareAtPrice) : product.compareAtPrice) : null;
+        const hasDiscount = compareAtPrice && compareAtPrice > price;
+        const discountPercent = hasDiscount ? Math.round(((compareAtPrice! - price) / compareAtPrice!) * 100) : 0;
+
+        // Vista lista - tarjeta horizontal compacta
+        if (state.viewMode === 'list') {
+          return `
+            <div class="product-item">
+              <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 group transition-all duration-300 hover:shadow-lg flex">
+                <div class="relative w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 bg-gray-50 overflow-hidden">
+                  <a href="/producto/${product.slug}">
+                    <img
+                      src="${image}"
+                      alt="${product.name}"
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                  </a>
+                  ${hasDiscount ? `
+                    <span class="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow-md">
+                      -${discountPercent}%
+                    </span>
+                  ` : ''}
+                </div>
+                <div class="flex-1 p-4 flex flex-col justify-between">
+                  <div>
+                    ${product.category ? `<p class="text-xs text-gray-500 mb-1">${product.category.name}</p>` : ''}
+                    <a href="/producto/${product.slug}">
+                      <h3 class="font-bold text-secondary text-base mb-1 group-hover:text-gray-600 transition-colors line-clamp-1">
+                        ${product.name}
+                      </h3>
+                    </a>
+                    ${product.isNew ? `<span class="inline-block bg-secondary text-primary text-xs font-bold px-2 py-0.5 rounded-full">NUEVO</span>` : ''}
+                  </div>
+                  <div class="flex items-center justify-between gap-4 mt-2">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xl font-bold text-secondary">${price.toFixed(2)}€</span>
+                      ${hasDiscount ? `<span class="text-sm text-gray-400 line-through">${compareAtPrice!.toFixed(2)}€</span>` : ''}
+                    </div>
+                    <button
+                      class="add-to-cart-btn bg-secondary text-primary hover:bg-black px-4 py-2 rounded-lg transition-all duration-200 text-sm font-bold flex items-center gap-2 shadow-md hover:shadow-lg"
+                      data-product-id="${product.id}"
+                      data-product-name="${product.name}"
+                      data-product-slug="${product.slug}"
+                      data-product-price="${price}"
+                      data-product-image="${image}"
+                    >
+                      <i class="material-icons text-base">add_shopping_cart</i>
+                      <span class="hidden sm:inline">Añadir</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        // Vista grid - tarjeta vertical
+        return `
+          <div class="product-item">
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 group transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+              <div class="relative aspect-square bg-gray-50 overflow-hidden">
+                <a href="/producto/${product.slug}">
+                  <img
+                    src="${image}"
+                    alt="${product.name}"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                </a>
+                ${hasDiscount ? `
+                  <span class="absolute top-3 left-3 bg-accent text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
+                    -${discountPercent}%
+                  </span>
+                ` : ''}
+                ${product.isNew ? `
+                  <span class="absolute top-3 right-3 bg-secondary text-primary text-xs font-bold px-2 py-1 rounded-full shadow-md">
+                    NUEVO
+                  </span>
+                ` : ''}
+              </div>
+              <div class="p-4">
+                ${product.category ? `<p class="text-xs text-gray-500 mb-1">${product.category.name}</p>` : ''}
+                <a href="/producto/${product.slug}">
+                  <h3 class="font-bold text-secondary text-sm mb-2 line-clamp-2 group-hover:text-gray-600 transition-colors">
+                    ${product.name}
+                  </h3>
+                </a>
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-lg font-bold text-secondary">${price.toFixed(2)}€</span>
+                  ${hasDiscount ? `<span class="text-sm text-gray-400 line-through">${compareAtPrice!.toFixed(2)}€</span>` : ''}
+                </div>
+                <button
+                  class="add-to-cart-btn w-full bg-secondary text-primary hover:bg-black py-2 rounded-lg transition-all duration-200 text-sm font-bold flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                  data-product-id="${product.id}"
+                  data-product-name="${product.name}"
+                  data-product-slug="${product.slug}"
+                  data-product-price="${price}"
+                  data-product-image="${image}"
+                >
+                  <i class="material-icons text-base">add_shopping_cart</i>
+                  Añadir
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Re-attach cart event listeners
+      attachCartListeners();
+    }
+  }
+
+  function attachCartListeners() {
+    document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget as HTMLButtonElement;
+        const productId = target.dataset.productId;
+        const productName = target.dataset.productName;
+        const productSlug = target.dataset.productSlug;
+        const productPrice = parseFloat(target.dataset.productPrice || '0');
+        const productImage = target.dataset.productImage;
+
+        // Import and use cart functions
+        import('@/lib/cart').then(({ addToCart }) => {
+          addToCart({
+            productId: productId!,
+            productName: productName!,
+            productSlug: productSlug!,
+            productImage: productImage!,
+            unitPrice: productPrice,
+            quantity: 1
+          });
+        });
+
+        import('@/lib/toast').then(({ toastSuccess }) => {
+          toastSuccess('Producto añadido al carrito');
+        });
+      });
     });
-  });
+  }
 
-  // Ordenamiento (placeholder)
-  const sortSelect = document.getElementById('sort-select');
+  function renderPagination(total: number) {
+    const paginationContainer = document.getElementById('pagination-container');
+    const paginationNav = document.getElementById('pagination-nav');
+    const totalPages = Math.ceil(total / (window as any).limit);
 
-  sortSelect?.addEventListener('change', (e) => {
-    const value = (e.target as HTMLSelectElement).value;
-    console.log('Sort changed:', value);
-    // La ordenación real se implementará cuando se conecte con el backend
+    if (totalPages <= 1) {
+      if (paginationContainer) paginationContainer.classList.add('hidden');
+      return;
+    }
+
+    if (paginationContainer) paginationContainer.classList.remove('hidden');
+
+    if (paginationNav) {
+      let html = '';
+
+      // Previous button
+      if (state.page > 1) {
+        html += `<button class="pagination-btn px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors" data-page="${state.page - 1}"><i class="material-icons text-sm">chevron_left</i></button>`;
+      } else {
+        html += `<span class="px-4 py-2 border border-gray-200 rounded-lg text-gray-400 cursor-not-allowed"><i class="material-icons text-sm">chevron_left</i></span>`;
+      }
+
+      // Page numbers
+      for (let i = 1; i <= Math.min(5, totalPages); i++) {
+        if (i === state.page) {
+          html += `<span class="px-4 py-2 rounded-lg font-bold bg-primary text-secondary">${i}</span>`;
+        } else {
+          html += `<button class="pagination-btn px-4 py-2 rounded-lg font-bold border border-gray-200 text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors" data-page="${i}">${i}</button>`;
+        }
+      }
+
+      // Next button
+      if (state.page < totalPages) {
+        html += `<button class="pagination-btn px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors" data-page="${state.page + 1}"><i class="material-icons text-sm">chevron_right</i></button>`;
+      } else {
+        html += `<span class="px-4 py-2 border border-gray-200 rounded-lg text-gray-400 cursor-not-allowed"><i class="material-icons text-sm">chevron_right</i></span>`;
+      }
+
+      paginationNav.innerHTML = html;
+
+      // Attach pagination listeners
+      document.querySelectorAll('.pagination-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLButtonElement;
+          state.page = parseInt(target.dataset.page || '1');
+          fetchProducts();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    }
+  }
+
+  function updateActiveFilters() {
+    const activeFiltersContainer = document.getElementById('active-filters');
+    const activeFiltersTags = document.getElementById('active-filters-tags');
+
+    const hasFilters = state.categories.length > 0 || state.prices.length > 0 || state.brands.length > 0 ||
+                       state.colors.length > 0 || state.inStock;
+
+    if (!hasFilters) {
+      if (activeFiltersContainer) activeFiltersContainer.classList.add('hidden');
+      return;
+    }
+
+    if (activeFiltersContainer) activeFiltersContainer.classList.remove('hidden');
+
+    if (activeFiltersTags) {
+      let html = '';
+
+      // Category tags
+      const categoryLabels: Record<string, string> = { deportes: 'Deportes', juguetes: 'Juguetes', hobbies: 'Hobbies' };
+      state.categories.forEach(cat => {
+        html += `<button class="remove-filter inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors" data-filter="category" data-value="${cat}">
+          ${categoryLabels[cat] || cat}
+          <i class="material-icons text-xs">close</i>
+        </button>`;
+      });
+
+      // Price tags
+      state.prices.forEach((price, index) => {
+        const range = (window as any).priceRanges.find((r: any) => r.minPrice === price.min && r.maxPrice === price.max);
+        if (range) {
+          html += `<button class="remove-filter inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors" data-filter="price" data-index="${index}">
+            ${range.label}
+            <i class="material-icons text-xs">close</i>
+          </button>`;
+        }
+      });
+
+      // Brand tags
+      state.brands.forEach(brand => {
+        html += `<button class="remove-filter inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors" data-filter="brand" data-value="${brand}">
+          ${brand}
+          <i class="material-icons text-xs">close</i>
+        </button>`;
+      });
+
+      // Color tags
+      state.colors.forEach(color => {
+        html += `<button class="remove-filter inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors" data-filter="color" data-value="${color}">
+          ${color}
+          <i class="material-icons text-xs">close</i>
+        </button>`;
+      });
+
+      // In stock tag
+      if (state.inStock) {
+        html += `<button class="remove-filter inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors" data-filter="inStock">
+          En stock
+          <i class="material-icons text-xs">close</i>
+        </button>`;
+      }
+
+      activeFiltersTags.innerHTML = html;
+
+      // Attach remove filter listeners
+      document.querySelectorAll('.remove-filter').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLButtonElement;
+          const filter = target.dataset.filter;
+          const value = target.dataset.value;
+          const index = target.dataset.index;
+
+          if (filter === 'category' && value) {
+            state.categories = state.categories.filter(c => c !== value);
+            const checkbox = document.querySelector(`[data-filter="category"][data-value="${value}"]`) as HTMLInputElement;
+            if (checkbox) checkbox.checked = false;
+          } else if (filter === 'price' && index !== undefined) {
+            state.prices.splice(parseInt(index), 1);
+            // Uncheck corresponding checkbox
+            const checkbox = document.querySelector(`[data-filter="price"][data-index="${index}"]`) as HTMLInputElement;
+            if (checkbox) checkbox.checked = false;
+          } else if (filter === 'brand' && value) {
+            state.brands = state.brands.filter(b => b !== value);
+            const checkbox = document.querySelector(`[data-filter="brand"][data-value="${value}"]`) as HTMLInputElement;
+            if (checkbox) checkbox.checked = false;
+          } else if (filter === 'color' && value) {
+            state.colors = state.colors.filter(c => c !== value);
+            const checkbox = document.querySelector(`[data-filter="color"][data-value="${value}"]`) as HTMLInputElement;
+            if (checkbox) checkbox.checked = false;
+          } else if (filter === 'inStock') {
+            state.inStock = false;
+            const checkbox = document.querySelector(`[data-filter="inStock"]`) as HTMLInputElement;
+            if (checkbox) checkbox.checked = false;
+          }
+
+          state.page = 1;
+          fetchProducts();
+        });
+      });
+    }
+  }
+
+  function clearAllFilters() {
+    state.categories = [];
+    state.prices = [];
+    state.brands = [];
+    state.colors = [];
+    state.inStock = false;
+    state.page = 1;
+
+    // Uncheck all checkboxes
+    document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+      (checkbox as HTMLInputElement).checked = false;
+    });
+
+    fetchProducts();
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    // Filter checkboxes
+    document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const target = e.target as HTMLInputElement;
+        const filter = target.dataset.filter;
+        const value = target.dataset.value;
+        const min = target.dataset.min;
+        const max = target.dataset.max;
+
+        if (filter === 'category' && value) {
+          if (target.checked) {
+            state.categories.push(value);
+          } else {
+            state.categories = state.categories.filter(c => c !== value);
+          }
+        } else if (filter === 'price' && min !== undefined && max !== undefined) {
+          if (target.checked) {
+            state.prices.push({ min: parseFloat(min), max: parseFloat(max) });
+          } else {
+            state.prices = state.prices.filter(p => !(p.min === parseFloat(min) && p.max === parseFloat(max)));
+          }
+        } else if (filter === 'brand' && value) {
+          if (target.checked) {
+            state.brands.push(value);
+          } else {
+            state.brands = state.brands.filter(b => b !== value);
+          }
+        } else if (filter === 'color' && value) {
+          if (target.checked) {
+            state.colors.push(value);
+          } else {
+            state.colors = state.colors.filter(c => c !== value);
+          }
+        } else if (filter === 'inStock') {
+          state.inStock = target.checked;
+        }
+
+        state.page = 1;
+        debounce(fetchProducts, 300);
+      });
+    });
+
+    // Sort select
+    const sortSelect = document.getElementById('sort-select') as HTMLSelectElement;
+    sortSelect?.addEventListener('change', () => {
+      state.sort = sortSelect.value;
+      state.page = 1;
+      fetchProducts();
+    });
+
+    // Clear filters buttons
+    document.getElementById('clear-filters')?.addEventListener('click', clearAllFilters);
+    document.getElementById('clear-filters-empty')?.addEventListener('click', clearAllFilters);
+
+    // Filter accordions
+    document.querySelectorAll('.filter-accordion-button').forEach(button => {
+      button.addEventListener('click', () => {
+        button.classList.toggle('collapsed');
+      });
+    });
+
+    // Vista grid/list toggle
+    const gridBtn = document.querySelector('[aria-label="Vista de cuadrícula"]') as HTMLButtonElement;
+    const listBtn = document.querySelector('[aria-label="Vista de lista"]') as HTMLButtonElement;
+    const productsGrid = document.getElementById('products-grid');
+
+    gridBtn?.addEventListener('click', () => {
+      if (state.viewMode === 'grid') return;
+      state.viewMode = 'grid';
+      gridBtn.classList.add('bg-primary', 'text-secondary');
+      gridBtn.classList.remove('text-gray-400');
+      listBtn?.classList.remove('bg-primary', 'text-secondary');
+      listBtn?.classList.add('text-gray-400');
+      productsGrid?.classList.remove('grid-cols-1', 'lg:grid-cols-2');
+      productsGrid?.classList.add('grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-3', 'xl:grid-cols-4');
+      // Re-renderizar sin fetch, solo cambia el template
+      if (currentProducts.length > 0) {
+        rerenderCurrentProducts();
+      }
+    });
+
+    listBtn?.addEventListener('click', () => {
+      if (state.viewMode === 'list') return;
+      state.viewMode = 'list';
+      listBtn.classList.add('bg-primary', 'text-secondary');
+      listBtn.classList.remove('text-gray-400');
+      gridBtn?.classList.remove('bg-primary', 'text-secondary');
+      gridBtn?.classList.add('text-gray-400');
+      productsGrid?.classList.remove('grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-3', 'xl:grid-cols-4');
+      productsGrid?.classList.add('grid-cols-1', 'lg:grid-cols-2');
+      // Re-renderizar sin fetch, solo cambia el template
+      if (currentProducts.length > 0) {
+        rerenderCurrentProducts();
+      }
+    });
+
+    // Inicializar productos actuales con los datos SSR (para cambio de vista sin fetch)
+    const initialProducts = (window as any).initialProducts || [];
+    const initialTotal = (window as any).initialTotal || 0;
+    currentProducts = initialProducts;
+    currentTotal = initialTotal;
+
+    // Solo renderizar paginación inicial (productos ya vienen renderizados por Astro SSR)
+    renderPagination(initialTotal);
+
+    // Attach cart listeners a los productos ya renderizados por SSR
+    attachCartListeners();
   });
 </script>
 
 <style>
-  /* Transiciones suaves para cambios de vista */
+  /* Transición suave para el grid de productos */
   #products-grid {
-    transition: all 0.3s ease;
+    transition: opacity 0.15s ease;
+  }
+
+  /* Filter accordion styles */
+  .filter-accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .filter-accordion-button:not(.collapsed) + .filter-accordion-content {
+    max-height: 500px;
+  }
+
+  .filter-accordion-icon {
+    transition: transform 0.3s ease;
+  }
+
+  .filter-accordion-button:not(.collapsed) .filter-accordion-icon {
+    transform: rotate(180deg);
   }
 </style>

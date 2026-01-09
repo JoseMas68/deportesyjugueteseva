@@ -38,15 +38,33 @@ export async function GET(request: NextRequest) {
     }
 
     if (sportType) {
-      where.sportType = sportType
+      // Soportar múltiples tipos de deporte separados por coma
+      const sportTypes = sportType.split(',').map(s => s.trim()).filter(Boolean)
+      if (sportTypes.length === 1) {
+        where.sportType = sportTypes[0]
+      } else if (sportTypes.length > 1) {
+        where.sportType = { in: sportTypes }
+      }
     }
 
     if (productType) {
-      where.productType = productType
+      // Soportar múltiples tipos de producto separados por coma
+      const productTypes = productType.split(',').map(p => p.trim()).filter(Boolean)
+      if (productTypes.length === 1) {
+        where.productType = productTypes[0]
+      } else if (productTypes.length > 1) {
+        where.productType = { in: productTypes }
+      }
     }
 
     if (collectionType) {
-      where.collectionType = collectionType
+      // Soportar múltiples tipos de colección separados por coma
+      const collectionTypes = collectionType.split(',').map(c => c.trim()).filter(Boolean)
+      if (collectionTypes.length === 1) {
+        where.collectionType = collectionTypes[0]
+      } else if (collectionTypes.length > 1) {
+        where.collectionType = { in: collectionTypes }
+      }
     }
 
     if (isFeatured === 'true') {
@@ -78,11 +96,27 @@ export async function GET(request: NextRequest) {
     }
 
     if (brand) {
-      where.brand = { equals: brand, mode: 'insensitive' }
+      // Soportar múltiples marcas separadas por coma
+      const brands = brand.split(',').map(b => b.trim()).filter(Boolean)
+      if (brands.length === 1) {
+        where.brand = { equals: brands[0], mode: 'insensitive' }
+      } else if (brands.length > 1) {
+        where.AND.push({
+          OR: brands.map(b => ({ brand: { equals: b, mode: 'insensitive' } }))
+        })
+      }
     }
 
     if (color) {
-      where.color = { equals: color, mode: 'insensitive' }
+      // Soportar múltiples colores separados por coma
+      const colors = color.split(',').map(c => c.trim()).filter(Boolean)
+      if (colors.length === 1) {
+        where.color = { equals: colors[0], mode: 'insensitive' }
+      } else if (colors.length > 1) {
+        where.AND.push({
+          OR: colors.map(c => ({ color: { equals: c, mode: 'insensitive' } }))
+        })
+      }
     }
 
     if (inStock === 'true') {
