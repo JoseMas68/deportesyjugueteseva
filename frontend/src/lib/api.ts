@@ -62,6 +62,8 @@ export interface CheckoutData {
 export async function getProducts(filters?: {
   category?: string;
   sportType?: string;
+  productType?: string;
+  collectionType?: string;
   featured?: boolean;
   new?: boolean;
   bestseller?: boolean;
@@ -69,6 +71,7 @@ export async function getProducts(filters?: {
   maxPrice?: number;
   search?: string;
   brand?: string;
+  color?: string;
   inStock?: boolean;
   sort?: string;
   limit?: number;
@@ -140,6 +143,42 @@ export async function checkout(data: CheckoutData): Promise<{
     const error = await response.json();
     throw new Error(error.error || 'Error en el checkout');
   }
+
+  return response.json();
+}
+
+// ============ HOME SECTIONS ============
+
+export interface HomeSection {
+  id: string;
+  title: string;
+  subtitle?: string;
+  type: 'PRODUCTS_SLIDER' | 'CATEGORIES_GRID' | 'BANNER' | 'TEXT_BLOCK';
+  config?: {
+    // PRODUCTS_SLIDER config
+    filter?: 'featured' | 'new' | 'bestseller';
+    category?: string;
+    limit?: number;
+    // CATEGORIES_GRID config
+    categories?: string[];
+    // BANNER config
+    imageUrl?: string;
+    linkUrl?: string;
+    text?: string;
+    buttonText?: string;
+  };
+  displayOrder: number;
+  isActive: boolean;
+  linkUrl?: string;
+  linkText?: string;
+}
+
+/**
+ * Obtiene las secciones de la home
+ */
+export async function getHomeSections(): Promise<{ sections: HomeSection[] }> {
+  const response = await fetch(`${API_URL}/home-sections`);
+  if (!response.ok) throw new Error('Error fetching home sections');
 
   return response.json();
 }

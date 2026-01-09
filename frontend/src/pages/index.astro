@@ -2,7 +2,7 @@
 import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
-import ProductCard from '@/components/ProductCard.astro';
+import ProductSlider from '@/components/ProductSlider.astro';
 import { getProducts } from '@/lib/api';
 
 // Categorías populares con imágenes de Unsplash (mantenemos estáticas)
@@ -38,7 +38,7 @@ let productosMasVendidos = [];
 try {
   const { products } = await getProducts({
     featured: true,
-    limit: 4
+    limit: 10
   });
   productosMasVendidos = products;
 } catch (error) {
@@ -167,24 +167,12 @@ try {
     </section>
 
     <!-- Los Más Vendidos -->
-    <section class="py-16">
-      <div class="container mx-auto px-4">
-        <h2 class="text-3xl font-display font-bold text-secondary mb-8 text-center">Los Más Vendidos</h2>
-
-        {productosMasVendidos.length > 0 ? (
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {productosMasVendidos.map((producto) => (
-              <ProductCard product={producto} />
-            ))}
-          </div>
-        ) : (
-          <div class="text-center py-12">
-            <i class="material-icons text-6xl text-gray-300 mb-4">shopping_bag</i>
-            <p class="text-gray-500">No hay productos destacados disponibles en este momento.</p>
-          </div>
-        )}
-      </div>
-    </section>
+    <ProductSlider
+      title="Los Más Vendidos"
+      products={productosMasVendidos}
+      linkUrl="/deportes"
+      sliderId="mas-vendidos"
+    />
 
     <!-- Beneficios -->
     <section class="relative py-24 overflow-hidden">
@@ -329,3 +317,4 @@ try {
 
   <Footer />
 </Layout>
+

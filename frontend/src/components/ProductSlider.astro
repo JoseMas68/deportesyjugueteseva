@@ -1,0 +1,163 @@
+---
+import ProductCard from './ProductCard.astro';
+import type { Product } from '@/lib/api';
+
+interface Props {
+  title: string;
+  products: Product[];
+  linkUrl?: string;
+  linkText?: string;
+  sliderId?: string; // ID único para múltiples sliders en la misma página
+}
+
+const {
+  title,
+  products,
+  linkUrl = '/deportes',
+  linkText = 'Ver todo',
+  sliderId = 'slider-' + Math.random().toString(36).substr(2, 9)
+} = Astro.props;
+---
+
+<section class="py-16 bg-background-light">
+  <div class="container mx-auto px-4">
+    <div class="flex justify-between items-end mb-8">
+      <div>
+        <h2 class="text-3xl font-display font-bold text-secondary">{title}</h2>
+        <div class="h-1 w-20 bg-primary mt-2"></div>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href={linkUrl} class="text-sm font-bold text-gray-500 hover:text-secondary transition flex items-center">
+          {linkText} <i class="material-icons text-base ml-1">arrow_forward</i>
+        </a>
+        <!-- Flechas de navegación -->
+        <div class="hidden md:flex items-center gap-2">
+          <button
+            class={`${sliderId}-prev bg-primary hover:bg-yellow-400 text-secondary w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-md hover:shadow-lg`}
+          >
+            <i class="material-icons">chevron_left</i>
+          </button>
+          <button
+            class={`${sliderId}-next bg-primary hover:bg-yellow-400 text-secondary w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-md hover:shadow-lg`}
+          >
+            <i class="material-icons">chevron_right</i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {products.length > 0 ? (
+      <div class={`swiper productos-slider ${sliderId}`} data-slider-id={sliderId}>
+        <div class="swiper-wrapper">
+          {products.map((producto) => (
+            <div class="swiper-slide">
+              <ProductCard product={producto} />
+            </div>
+          ))}
+        </div>
+        <div class={`swiper-pagination ${sliderId}-pagination`}></div>
+      </div>
+    ) : (
+      <div class="text-center py-12">
+        <i class="material-icons text-6xl text-gray-300 mb-4">shopping_bag</i>
+        <p class="text-gray-500">No hay productos disponibles en este momento.</p>
+      </div>
+    )}
+  </div>
+</section>
+
+<script>
+  import Swiper from 'swiper';
+  import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+  import 'swiper/css';
+  import 'swiper/css/pagination';
+
+  // Inicializar todos los sliders de productos en la página
+  document.addEventListener('DOMContentLoaded', () => {
+    const sliders = document.querySelectorAll('.productos-slider[data-slider-id]');
+
+    sliders.forEach((sliderEl) => {
+      const sliderId = sliderEl.getAttribute('data-slider-id');
+      if (!sliderId) return;
+
+      new Swiper(`.${sliderId}`, {
+        modules: [Navigation, Pagination, Autoplay],
+        slidesPerView: 1,
+        spaceBetween: 20,
+        loop: true,
+        autoplay: {
+          delay: 4000,
+          disableOnInteraction: false,
+        },
+        pagination: {
+          el: `.${sliderId}-pagination`,
+          clickable: true,
+        },
+        navigation: {
+          nextEl: `.${sliderId}-next`,
+          prevEl: `.${sliderId}-prev`,
+        },
+        breakpoints: {
+          640: {
+            slidesPerView: 2,
+            spaceBetween: 20,
+          },
+          768: {
+            slidesPerView: 3,
+            spaceBetween: 24,
+          },
+          1024: {
+            slidesPerView: 4,
+            spaceBetween: 24,
+          },
+        },
+      });
+    });
+  });
+</script>
+
+<style is:global>
+  /* Estilos personalizados para Swiper */
+  .productos-slider {
+    padding-bottom: 50px;
+    position: relative;
+  }
+
+  .productos-slider .swiper-wrapper {
+    align-items: stretch;
+  }
+
+  .productos-slider .swiper-slide {
+    height: auto;
+  }
+
+  /* Hover en las tarjetas */
+  .productos-slider .swiper-slide > div {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .productos-slider .swiper-slide:hover > div {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Paginación */
+  .productos-slider .swiper-pagination {
+    bottom: -5px !important;
+  }
+
+  .productos-slider .swiper-pagination-bullet {
+    background: #1a1a1a;
+    opacity: 0.3;
+    width: 10px;
+    height: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .productos-slider .swiper-pagination-bullet-active {
+    background: #FFD700;
+    opacity: 1;
+    width: 24px;
+    border-radius: 5px;
+  }
+</style>

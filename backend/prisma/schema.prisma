@@ -53,6 +53,31 @@ enum CollectionType {
   OTROS
 }
 
+enum ProductType {
+  // Deportes
+  ZAPATILLAS
+  CAMISETAS
+  PANTALONES
+  CHAQUETAS
+  GORRAS
+  CALCETINES
+  ACCESORIOS
+  EQUIPAMIENTO
+  // Juguetes
+  MUNECAS
+  VEHICULOS
+  CONSTRUCCION
+  JUEGOS_MESA
+  PELUCHES
+  FIGURAS
+  // Hobbies
+  CIRCUITOS
+  TRENES
+  MAQUETAS_AVIONES
+  MAQUETAS_COCHES
+  MAQUETAS_BARCOS
+}
+
 model Product {
   id               String          @id @default(cuid())
   name             String
@@ -72,6 +97,7 @@ model Product {
   categoryId       String
   category         Category        @relation(fields: [categoryId], references: [id])
   sportType        SportType?
+  productType      ProductType?
   isCollectible    Boolean         @default(false)
   collectionType   CollectionType?
 
@@ -104,6 +130,7 @@ model Product {
   @@index([isActive])
   @@index([isFeatured])
   @@index([sportType])
+  @@index([productType])
   @@index([collectionType])
 }
 
@@ -309,4 +336,41 @@ model PaymentMethodConfig {
 
   @@index([method])
   @@index([isEnabled])
+}
+
+// ============ SECCIONES DE HOME ============
+enum HomeSectionType {
+  PRODUCTS_SLIDER     // Slider de productos
+  CATEGORIES_GRID     // Grid de categorías
+  BANNER              // Banner promocional
+  TEXT_BLOCK          // Bloque de texto
+}
+
+model HomeSection {
+  id           String          @id @default(cuid())
+  title        String          // "Los Más Vendidos", "Novedades", etc.
+  subtitle     String?
+  type         HomeSectionType
+
+  // Configuración del contenido
+  // Para PRODUCTS_SLIDER: filtro de productos (featured, new, bestseller, category)
+  // Para CATEGORIES_GRID: array de categorías a mostrar
+  // Para BANNER: imagen, link, texto
+  config       Json?
+
+  // Orden de visualización
+  displayOrder Int             @default(0)
+
+  // Visibilidad
+  isActive     Boolean         @default(true)
+
+  // Link "Ver todo"
+  linkUrl      String?
+  linkText     String?         @default("Ver todo")
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([isActive])
+  @@index([displayOrder])
 }

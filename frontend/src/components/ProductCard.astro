@@ -72,10 +72,10 @@ const totalReviews = 42;
     <!-- Estrellas de rating -->
     <div class="flex items-center gap-1 mb-3">
       {Array.from({ length: fullStars }).map(() => (
-        <i class="material-icons text-primary text-sm">star</i>
+        <i class="material-icons text-amber-400 text-sm">star</i>
       ))}
       {hasHalfStar && (
-        <i class="material-icons text-primary text-sm">star_half</i>
+        <i class="material-icons text-amber-400 text-sm">star_half</i>
       )}
       {Array.from({ length: 5 - fullStars - (hasHalfStar ? 1 : 0) }).map(() => (
         <i class="material-icons text-gray-300 text-sm">star</i>
@@ -115,7 +115,6 @@ const totalReviews = 42;
 
 <script>
   import { addToCart } from '@/lib/cart';
-  import type { Product } from '@/lib/types';
 
   // Añadir al carrito desde la tarjeta
   document.addEventListener('DOMContentLoaded', () => {
@@ -138,18 +137,14 @@ const totalReviews = 42;
         const imageUrl = card.querySelector('img')?.getAttribute('src') || '';
         const productSlug = card.querySelector('a')?.getAttribute('href')?.split('/').pop() || '';
 
-        // Crear objeto del producto para el carrito
+        // Crear objeto del producto para el carrito (estructura correcta de CartItem)
         const cartItem = {
-          productId: parseInt(productId),
-          product: {
-            id: parseInt(productId),
-            name: productName,
-            slug: productSlug,
-            price: price,
-            image: imageUrl,
-            stock: 100, // El stock real se validará en el backend
-          } as Product,
+          productId: productId,
+          productName: productName,
+          productSlug: productSlug,
+          productImage: imageUrl,
           quantity: 1,
+          unitPrice: price,
         };
 
         // Añadir al carrito
