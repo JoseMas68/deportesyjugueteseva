@@ -7,18 +7,58 @@ import Footer from '@/components/Footer.astro';
 import ProductCard from '@/components/ProductCard.astro';
 import { getProducts } from '@/lib/api';
 
-const category = Astro.params.category || 'deportes';
-const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+const categorySlug = Astro.params.category || 'deportes';
+
+// Mapeo de slugs de URL a nombres de categoría legibles
+const categoryNames: Record<string, string> = {
+  'deportes': 'Deportes',
+  'juguetes': 'Juguetes',
+  'hobbies': 'Hobbies y Coleccionismo',
+  'running': 'Running',
+  'trail-running': 'Trail Running',
+  'fitness': 'Fitness',
+  'natacion': 'Natación',
+  'outdoor': 'Outdoor',
+  'casual': 'Casual',
+  'infantiles': 'Juguetes Infantiles',
+  'educativos': 'Juguetes Educativos',
+  'aire-libre': 'Aire Libre',
+  'scalextric': 'Scalextric',
+  'trenes': 'Trenes',
+  'maquetas': 'Maquetas'
+};
+
+const categoryName = categoryNames[categorySlug] || categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1);
+
+// Obtener parámetros de filtros desde la URL
+const url = new URL(Astro.request.url);
+const minPrice = url.searchParams.get('minPrice');
+const maxPrice = url.searchParams.get('maxPrice');
+const brand = url.searchParams.get('brand');
+const inStock = url.searchParams.get('inStock');
+const sort = url.searchParams.get('sort') || 'relevance';
+const page = parseInt(url.searchParams.get('page') || '1');
+const limit = 12;
+const offset = (page - 1) * limit;
 
 // Obtener productos desde la API
 let products = [];
 let total = 0;
 
 try {
-  const result = await getProducts({
-    sportType: category,
-    limit: 12
-  });
+  const filters: Record<string, any> = {
+    category: categorySlug,
+    limit,
+    offset
+  };
+
+  if (minPrice) filters.minPrice = parseFloat(minPrice);
+  if (maxPrice) filters.maxPrice = parseFloat(maxPrice);
+  if (brand) filters.brand = brand;
+  if (inStock === 'true') filters.inStock = true;
+  if (sort && sort !== 'relevance') filters.sort = sort;
+
+  const result = await getProducts(filters);
   products = result.products;
   total = result.total;
 } catch (error) {
@@ -27,20 +67,40 @@ try {
   total = 0;
 }
 
-const filters = {
-  priceRanges: [
-    { label: 'Menos de 25€', value: '0-25' },
-    { label: '25€ - 50€', value: '25-50' },
-    { label: '50€ - 100€', value: '50-100' },
-    { label: 'Más de 100€', value: '100+' }
-  ],
-  brands: [
-    { label: 'Nike', value: 'nike', count: 23 },
-    { label: 'Adidas', value: 'adidas', count: 18 },
-    { label: 'Wilson', value: 'wilson', count: 12 },
-    { label: 'Puma', value: 'puma', count: 15 }
-  ]
-};
+// Calcular paginación
+const totalPages = Math.ceil(total / limit);
+
+// Filtros disponibles
+const priceRanges = [
+  { label: 'Menos de 25€', minPrice: 0, maxPrice: 25 },
+  { label: '25€ - 50€', minPrice: 25, maxPrice: 50 },
+  { label: '50€ - 100€', minPrice: 50, maxPrice: 100 },
+  { label: 'Más de 100€', minPrice: 100, maxPrice: 9999 }
+];
+
+// Marcas únicas de los productos (extraídas de la base de datos)
+const brandList = ['Nike', 'Adidas', 'Salomon', 'Arena', 'Speedo', 'Puma', 'The North Face', 'LEGO', 'Hasbro', 'Scalextric', 'Märklin'];
+
+// Verificar qué filtros están activos
+const activePriceMin = minPrice ? parseFloat(minPrice) : null;
+const activePriceMax = maxPrice ? parseFloat(maxPrice) : null;
+const activeBrand = brand || null;
+const activeInStock = inStock === 'true';
+
+// Construir URL base para filtros
+function buildFilterUrl(params: Record<string, string | null>) {
+  const newUrl = new URL(url);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === null) {
+      newUrl.searchParams.delete(key);
+    } else {
+      newUrl.searchParams.set(key, value);
+    }
+  });
+  // Reset to page 1 when filters change
+  newUrl.searchParams.delete('page');
+  return newUrl.pathname + newUrl.search;
+}
 ---
 
 <Layout title={`${categoryName} - Deportes y Juguetes Eva`} description={`Explora nuestra colección de ${categoryName.toLowerCase()}`}>
@@ -73,51 +133,91 @@ const filters = {
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
             <div class="flex items-center justify-between mb-6">
               <h2 class="font-display font-bold text-lg">Filtros</h2>
-              <button class="text-sm text-primary hover:underline">Limpiar</button>
+              <a href={`/${categorySlug}`} class="text-sm text-red-500 hover:text-red-700 hover:underline font-medium">Limpiar</a>
             </div>
 
             <!-- Precio -->
             <div class="mb-6 pb-6 border-b border-gray-200">
               <h3 class="font-bold text-secondary mb-4">Precio</h3>
               <div class="space-y-2">
-                {filters.priceRanges.map((range) => (
-                  <label class="flex items-center gap-2 cursor-pointer group">
-                    <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
-                    <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">{range.label}</span>
-                  </label>
-                ))}
+                {priceRanges.map((range) => {
+                  const isActive = activePriceMin === range.minPrice && activePriceMax === range.maxPrice;
+                  const filterUrl = isActive
+                    ? buildFilterUrl({ minPrice: null, maxPrice: null })
+                    : buildFilterUrl({ minPrice: String(range.minPrice), maxPrice: String(range.maxPrice) });
+                  return (
+                    <a href={filterUrl} class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${isActive ? 'font-medium' : ''}`}>
+                      <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isActive ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
+                        {isActive && <i class="material-icons text-xs text-white">check</i>}
+                      </span>
+                      <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${isActive ? 'text-secondary font-bold' : 'text-gray-700'}`}>{range.label}</span>
+                    </a>
+                  );
+                })}
               </div>
             </div>
 
             <!-- Marca -->
             <div class="mb-6 pb-6 border-b border-gray-200">
               <h3 class="font-bold text-secondary mb-4">Marca</h3>
-              <div class="space-y-2">
-                {filters.brands.map((brand) => (
-                  <label class="flex items-center justify-between cursor-pointer group">
-                    <div class="flex items-center gap-2">
-                      <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
-                      <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">{brand.label}</span>
-                    </div>
-                    <span class="text-xs text-gray-400">({brand.count})</span>
-                  </label>
-                ))}
+              <div class="space-y-2 max-h-48 overflow-y-auto">
+                {brandList.map((brandName) => {
+                  const isActive = activeBrand?.toLowerCase() === brandName.toLowerCase();
+                  const filterUrl = isActive
+                    ? buildFilterUrl({ brand: null })
+                    : buildFilterUrl({ brand: brandName });
+                  return (
+                    <a href={filterUrl} class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${isActive ? 'font-medium' : ''}`}>
+                      <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isActive ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
+                        {isActive && <i class="material-icons text-xs text-white">check</i>}
+                      </span>
+                      <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${isActive ? 'text-secondary font-bold' : 'text-gray-700'}`}>{brandName}</span>
+                    </a>
+                  );
+                })}
               </div>
             </div>
 
             <!-- Disponibilidad -->
             <div>
               <h3 class="font-bold text-secondary mb-4">Disponibilidad</h3>
-              <label class="flex items-center gap-2 cursor-pointer group">
-                <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
-                <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">En stock</span>
-              </label>
+              <a
+                href={buildFilterUrl({ inStock: activeInStock ? null : 'true' })}
+                class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${activeInStock ? 'font-medium' : ''}`}
+              >
+                <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${activeInStock ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
+                  {activeInStock && <i class="material-icons text-xs text-white">check</i>}
+                </span>
+                <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${activeInStock ? 'text-secondary font-bold' : 'text-gray-700'}`}>En stock</span>
+              </a>
             </div>
 
-            <!-- Botón aplicar filtros (mobile) -->
-            <button class="lg:hidden w-full mt-6 bg-primary text-secondary font-bold py-3 rounded-lg hover:bg-yellow-400 transition-colors">
-              Aplicar Filtros
-            </button>
+            <!-- Filtros activos -->
+            {(activePriceMin !== null || activeBrand || activeInStock) && (
+              <div class="mt-6 pt-6 border-t border-gray-200">
+                <p class="text-xs text-gray-500 mb-2">Filtros activos:</p>
+                <div class="flex flex-wrap gap-2">
+                  {activePriceMin !== null && (
+                    <a href={buildFilterUrl({ minPrice: null, maxPrice: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded">
+                      {priceRanges.find(r => r.minPrice === activePriceMin)?.label}
+                      <i class="material-icons text-xs">close</i>
+                    </a>
+                  )}
+                  {activeBrand && (
+                    <a href={buildFilterUrl({ brand: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded">
+                      {activeBrand}
+                      <i class="material-icons text-xs">close</i>
+                    </a>
+                  )}
+                  {activeInStock && (
+                    <a href={buildFilterUrl({ inStock: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded">
+                      En stock
+                      <i class="material-icons text-xs">close</i>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </aside>
 
@@ -141,39 +241,135 @@ const filters = {
               </div>
 
               <!-- Ordenar -->
-              <select class="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-primary">
-                <option>Más relevantes</option>
-                <option>Precio: menor a mayor</option>
-                <option>Precio: mayor a menor</option>
-                <option>Novedades</option>
-                <option>Mejor valorados</option>
+              <select
+                id="sort-select"
+                class="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-primary"
+                data-current-url={url.pathname + url.search}
+              >
+                <option value="relevance" selected={sort === 'relevance'}>Más relevantes</option>
+                <option value="price_asc" selected={sort === 'price_asc'}>Precio: menor a mayor</option>
+                <option value="price_desc" selected={sort === 'price_desc'}>Precio: mayor a menor</option>
+                <option value="newest" selected={sort === 'newest'}>Novedades</option>
+                <option value="bestseller" selected={sort === 'bestseller'}>Más vendidos</option>
               </select>
             </div>
           </div>
 
           <!-- Grid de Productos -->
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <ProductCard product={product} />
-            ))}
+          <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map((product) => {
+              const image = product.thumbnailUrl || (product.images && product.images[0]) || '/placeholder.jpg';
+              const price = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+              const compareAtPrice = product.compareAtPrice ? (typeof product.compareAtPrice === 'string' ? parseFloat(product.compareAtPrice) : product.compareAtPrice) : null;
+              const hasDiscount = compareAtPrice && compareAtPrice > price;
+              const discountPercent = hasDiscount ? Math.round(((compareAtPrice! - price) / compareAtPrice!) * 100) : 0;
+
+              return (
+                <div class="product-item">
+                  {/* Vista Grid (default) */}
+                  <div class="grid-view">
+                    <ProductCard product={product} />
+                  </div>
+                  {/* Vista Lista (hidden by default) */}
+                  <div class="list-view hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex gap-6 hover:shadow-lg transition">
+                      <div class="w-32 h-32 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden relative">
+                        <img src={image} alt={product.name} class="w-full h-full object-cover" loading="lazy" />
+                        {hasDiscount && (
+                          <span class="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
+                            -{discountPercent}%
+                          </span>
+                        )}
+                      </div>
+                      <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                          {product.category && (
+                            <p class="text-xs text-gray-500 mb-1">{product.category.name}</p>
+                          )}
+                          <a href={`/producto/${product.slug}`}>
+                            <h3 class="font-bold text-secondary text-lg hover:text-gray-600 transition-colors mb-2">
+                              {product.name}
+                            </h3>
+                          </a>
+                          <p class="text-sm text-gray-600 line-clamp-2">{product.shortDescription || product.description}</p>
+                        </div>
+                        <div class="flex items-center justify-between mt-3">
+                          <div class="flex items-center gap-3">
+                            <span class="text-xl font-bold text-secondary">{price.toFixed(2)}€</span>
+                            {hasDiscount && (
+                              <span class="text-sm text-gray-400 line-through">{compareAtPrice!.toFixed(2)}€</span>
+                            )}
+                          </div>
+                          <button
+                            class="bg-secondary text-primary hover:bg-black px-4 py-2 rounded-lg transition shadow-md flex items-center gap-2"
+                            aria-label="Añadir al carrito"
+                            data-product-id={product.id}
+                          >
+                            <i class="material-icons text-lg">add_shopping_cart</i>
+                            <span class="text-sm font-bold">Añadir</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <!-- Paginación -->
-          <div class="mt-12 flex justify-center">
-            <nav class="flex items-center gap-2">
-              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-400 cursor-not-allowed" disabled>
-                <i class="material-icons text-sm">chevron_left</i>
-              </button>
-              <button class="px-4 py-2 bg-primary text-secondary font-bold rounded-lg">1</button>
-              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">2</button>
-              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">3</button>
-              <span class="px-2 text-gray-400">...</span>
-              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">10</button>
-              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">
-                <i class="material-icons text-sm">chevron_right</i>
-              </button>
-            </nav>
-          </div>
+          {totalPages > 1 && (
+            <div class="mt-12 flex justify-center">
+              <nav class="flex items-center gap-2">
+                {page > 1 && (
+                  <a href={buildFilterUrl({ page: String(page - 1) })} class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">
+                    <i class="material-icons text-sm">chevron_left</i>
+                  </a>
+                )}
+                {page <= 1 && (
+                  <span class="px-4 py-2 border border-gray-200 rounded-lg text-gray-400 cursor-not-allowed">
+                    <i class="material-icons text-sm">chevron_left</i>
+                  </span>
+                )}
+
+                {[1, 2, 3, 4, 5].filter(n => n <= totalPages).map((pageNum) => (
+                  <a
+                    href={buildFilterUrl({ page: String(pageNum) })}
+                    class={`px-4 py-2 rounded-lg font-bold transition-colors ${
+                      pageNum === page
+                        ? 'bg-primary text-secondary'
+                        : 'border border-gray-200 text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary'
+                    }`}
+                  >
+                    {pageNum}
+                  </a>
+                ))}
+
+                {page < totalPages && (
+                  <a href={buildFilterUrl({ page: String(page + 1) })} class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-secondary hover:text-primary hover:border-secondary transition-colors">
+                    <i class="material-icons text-sm">chevron_right</i>
+                  </a>
+                )}
+                {page >= totalPages && (
+                  <span class="px-4 py-2 border border-gray-200 rounded-lg text-gray-400 cursor-not-allowed">
+                    <i class="material-icons text-sm">chevron_right</i>
+                  </span>
+                )}
+              </nav>
+            </div>
+          )}
+
+          {/* Mensaje si no hay productos */}
+          {products.length === 0 && (
+            <div class="text-center py-16">
+              <i class="material-icons text-6xl text-gray-300 mb-4">inventory_2</i>
+              <h3 class="text-xl font-bold text-gray-600 mb-2">No se encontraron productos</h3>
+              <p class="text-gray-500 mb-6">Prueba a cambiar los filtros o buscar en otra categoría</p>
+              <a href={`/${categorySlug}`} class="inline-block bg-primary text-secondary font-bold px-6 py-3 rounded-lg hover:bg-yellow-400 transition-colors">
+                Limpiar filtros
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -183,28 +379,54 @@ const filters = {
 </Layout>
 
 <script>
-  // Toggle filtros en mobile
-  const filterBtn = document.querySelector('[aria-label="Abrir filtros"]');
-  const sidebar = document.querySelector('aside');
+  // Ordenación
+  const sortSelect = document.getElementById('sort-select') as HTMLSelectElement;
+  sortSelect?.addEventListener('change', () => {
+    const url = new URL(window.location.href);
+    const value = sortSelect.value;
+    if (value === 'relevance') {
+      url.searchParams.delete('sort');
+    } else {
+      url.searchParams.set('sort', value);
+    }
+    url.searchParams.delete('page'); // Reset page on sort change
+    window.location.href = url.toString();
+  });
 
   // Vista grid/list toggle
-  const gridBtn = document.querySelector('[aria-label="Vista de cuadrícula"]');
-  const listBtn = document.querySelector('[aria-label="Vista de lista"]');
-  const productsGrid = document.querySelector('.grid');
+  const gridBtn = document.querySelector('[aria-label="Vista de cuadrícula"]') as HTMLButtonElement;
+  const listBtn = document.querySelector('[aria-label="Vista de lista"]') as HTMLButtonElement;
+  const productsGrid = document.getElementById('products-grid');
+  const gridViews = document.querySelectorAll('.grid-view');
+  const listViews = document.querySelectorAll('.list-view');
 
   gridBtn?.addEventListener('click', () => {
+    // Activar botón grid
     gridBtn.classList.add('bg-primary', 'text-secondary');
     gridBtn.classList.remove('text-gray-400');
+    // Desactivar botón lista
     listBtn?.classList.remove('bg-primary', 'text-secondary');
     listBtn?.classList.add('text-gray-400');
-    productsGrid?.classList.remove('grid-cols-1');
+    // Cambiar a grid view
+    productsGrid?.classList.remove('grid-cols-1', 'lg:grid-cols-2');
+    productsGrid?.classList.add('grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-3', 'xl:grid-cols-4');
+    // Mostrar grid, ocultar lista
+    gridViews.forEach(el => el.classList.remove('hidden'));
+    listViews.forEach(el => el.classList.add('hidden'));
   });
 
   listBtn?.addEventListener('click', () => {
+    // Activar botón lista
     listBtn.classList.add('bg-primary', 'text-secondary');
     listBtn.classList.remove('text-gray-400');
+    // Desactivar botón grid
     gridBtn?.classList.remove('bg-primary', 'text-secondary');
     gridBtn?.classList.add('text-gray-400');
-    productsGrid?.classList.add('grid-cols-1');
+    // Cambiar a list view (1 columna en móvil, 2 en desktop)
+    productsGrid?.classList.remove('grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-3', 'xl:grid-cols-4');
+    productsGrid?.classList.add('grid-cols-1', 'lg:grid-cols-2');
+    // Ocultar grid, mostrar lista
+    gridViews.forEach(el => el.classList.add('hidden'));
+    listViews.forEach(el => el.classList.remove('hidden'));
   });
 </script>

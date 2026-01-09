@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
     const minPrice = searchParams.get('minPrice')
     const maxPrice = searchParams.get('maxPrice')
     const search = searchParams.get('search')
+    const brand = searchParams.get('brand')
+    const inStock = searchParams.get('inStock')
+    const sortBy = searchParams.get('sort')
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
@@ -59,16 +62,33 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    if (brand) {
+      where.brand = { equals: brand, mode: 'insensitive' }
+    }
+
+    if (inStock === 'true') {
+      where.stock = { gt: 0 }
+    }
+
+    // Determinar ordenación
+    let orderBy: any = [{ isFeatured: 'desc' }, { createdAt: 'desc' }]
+    if (sortBy === 'price_asc') {
+      orderBy = [{ price: 'asc' }]
+    } else if (sortBy === 'price_desc') {
+      orderBy = [{ price: 'desc' }]
+    } else if (sortBy === 'newest') {
+      orderBy = [{ createdAt: 'desc' }]
+    } else if (sortBy === 'bestseller') {
+      orderBy = [{ isBestSeller: 'desc' }, { createdAt: 'desc' }]
+    }
+
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
         include: {
           category: true,
         },
-        orderBy: [
-          { isFeatured: 'desc' },
-          { createdAt: 'desc' },
-        ],
+        orderBy,
         take: limit,
         skip: offset,
       }),

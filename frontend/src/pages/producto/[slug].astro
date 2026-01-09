@@ -10,91 +10,41 @@ import { getProductBySlug } from '@/lib/api';
 const slug = Astro.params.slug || '';
 
 // Obtener producto desde la API
-let product;
-let relatedProducts = [];
+let product: any;
+let relatedProducts: any[] = [];
 
 try {
   const result = await getProductBySlug(slug);
   product = result.product;
-  relatedProducts = result.relatedProducts;
+  relatedProducts = result.relatedProducts || [];
 } catch (error) {
   console.error('Error al cargar producto:', error);
-  // Si el producto no existe, redirigir a 404 o mostrar error
   return Astro.redirect('/404');
 }
 
-// Mock product - REMOVE LATER
-const product_REMOVE_LATER = {
-  id: 1,
-  name: 'Balón de Baloncesto Pro Grip Elite 7',
-  slug: 'balon-baloncesto-pro-grip',
-  brand: 'Wilson',
-  price: 34.99,
-  originalPrice: 45.99,
-  discount: 24,
-  category: 'Deportes',
-  subcategory: 'Baloncesto',
-  description: 'Balón de baloncesto profesional con agarre superior y durabilidad excepcional. Diseñado para uso indoor y outdoor. Cumple con las especificaciones oficiales de la FIBA.',
-  rating: 4.5,
-  reviews: 42,
-  stock: 'En stock',
-  images: [
-    '/products/balon-basket-1.jpg',
-    '/products/balon-basket-2.jpg',
-    '/products/balon-basket-3.jpg',
-    '/products/balon-basket-4.jpg'
-  ],
-  sizes: [
-    { value: '5', label: '5', available: true },
-    { value: '6', label: '6', available: true },
-    { value: '7', label: '7', available: true, popular: true }
-  ],
-  specs: [
-    { label: 'Material', value: 'Cuero sintético compuesto' },
-    { label: 'Uso', value: 'Indoor / Outdoor' },
-    { label: 'Peso', value: '600g (Oficial)' },
-    { label: 'Circunferencia', value: '75cm (Talla 7)' }
-  ],
-  badge: 'NUEVO'
-};
+// Convertir precios de Prisma Decimal (string) a número
+const price = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+const compareAtPrice = product.compareAtPrice
+  ? (typeof product.compareAtPrice === 'string' ? parseFloat(product.compareAtPrice) : product.compareAtPrice)
+  : null;
 
-// Mock related products - REMOVE LATER
-const relatedProducts_REMOVE_LATER = [
-  {
-    id: 2,
-    name: 'Nike Air Zoom GT',
-    slug: 'nike-air-zoom-gt',
-    price: 129.99,
-    originalPrice: 149.99,
-    category: 'Deportes',
-    image: '/products/zapatillas-basket.jpg',
-    badge: '-15%'
-  },
-  {
-    id: 3,
-    name: 'Mochila Deportiva Pro',
-    slug: 'mochila-deportiva-pro',
-    price: 49.99,
-    category: 'Deportes',
-    image: '/products/mochila.jpg'
-  },
-  {
-    id: 4,
-    name: 'Bomba de Balones',
-    slug: 'bomba-balones',
-    price: 14.99,
-    category: 'Deportes',
-    image: '/products/bomba.jpg'
-  },
-  {
-    id: 5,
-    name: 'Red de Baloncesto',
-    slug: 'red-baloncesto',
-    price: 24.99,
-    category: 'Deportes',
-    image: '/products/red.jpg'
-  }
-];
+// Calcular descuento
+const hasDiscount = compareAtPrice && compareAtPrice > price;
+const discountPercent = hasDiscount ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100) : 0;
+
+// Imagen principal
+const mainImage = product.thumbnailUrl || (product.images && product.images[0]) || '/placeholder.jpg';
+const productImages = product.images && product.images.length > 0 ? product.images : [mainImage];
+
+// Rating (mock por ahora, se puede añadir al modelo después)
+const rating = 4.5;
+const totalReviews = 42;
+
+// Badge
+const badge = product.isNew ? 'NUEVO' : (hasDiscount ? `-${discountPercent}%` : null);
+
+// Stock
+const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.stock} unidades!` : 'En stock') : 'Agotado';
 ---
 
 <Layout title={`${product.name} - Deportes y Juguetes Eva`} description={product.description}>
@@ -107,10 +57,12 @@ const relatedProducts_REMOVE_LATER = [
         <nav class="flex items-center text-sm flex-wrap">
           <a href="/" class="text-gray-500 hover:text-secondary transition-colors">Inicio</a>
           <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
-          <a href="/deportes" class="text-gray-500 hover:text-secondary transition-colors">Deportes</a>
-          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
-          <a href="/deportes/baloncesto" class="text-gray-500 hover:text-secondary transition-colors">{product.subcategory}</a>
-          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          {product.category && (
+            <>
+              <a href={`/${product.category.slug}`} class="text-gray-500 hover:text-secondary transition-colors">{product.category.name}</a>
+              <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+            </>
+          )}
           <span class="text-secondary font-medium truncate">{product.name}</span>
         </nav>
       </div>
@@ -122,7 +74,7 @@ const relatedProducts_REMOVE_LATER = [
         <div class="product-gallery flex flex-col-reverse lg:flex-row gap-4">
           <!-- Thumbnails -->
           <div class="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-y-auto lg:h-[600px] no-scrollbar py-2 lg:py-0">
-            {product.images.map((img, index) => (
+            {productImages.map((img, index) => (
               <button
                 class={`thumbnail w-20 h-20 flex-shrink-0 border-2 rounded-lg overflow-hidden transition-all ${index === 0 ? 'border-primary' : 'border-gray-200 hover:border-primary'}`}
                 data-image={img}
@@ -137,13 +89,18 @@ const relatedProducts_REMOVE_LATER = [
             <img
               id="main-image"
               class="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
-              src={product.images[0]}
+              src={mainImage}
               alt={product.name}
             />
-            {product.badge && (
+            {badge && (
               <span class="absolute top-4 left-4 bg-black text-primary text-xs font-bold px-3 py-1 uppercase tracking-wider rounded-sm">
-                {product.badge}
+                {badge}
               </span>
+            )}
+            {product.stock === 0 && (
+              <div class="absolute inset-0 bg-black/70 flex items-center justify-center">
+                <span class="text-white font-bold text-2xl">AGOTADO</span>
+              </div>
             )}
           </div>
         </div>
@@ -151,7 +108,9 @@ const relatedProducts_REMOVE_LATER = [
         <!-- Información del Producto -->
         <div>
           <!-- Marca -->
-          <p class="text-primary font-bold text-sm mb-2">{product.brand}</p>
+          {product.brand && (
+            <span class="inline-block bg-gray-800 text-white font-bold text-sm px-3 py-1 rounded mb-3">{product.brand}</span>
+          )}
 
           <!-- Título -->
           <h1 class="text-3xl lg:text-5xl font-display font-extrabold uppercase italic text-secondary mb-4">
@@ -161,52 +120,38 @@ const relatedProducts_REMOVE_LATER = [
           <!-- Rating -->
           <div class="flex items-center gap-2 mb-6">
             <div class="flex items-center gap-0.5">
-              {Array.from({ length: Math.floor(product.rating) }).map(() => (
-                <i class="material-icons text-primary text-lg">star</i>
+              {Array.from({ length: Math.floor(rating) }).map(() => (
+                <i class="material-icons text-amber-400 text-lg">star</i>
               ))}
-              {product.rating % 1 !== 0 && (
-                <i class="material-icons text-primary text-lg">star_half</i>
+              {rating % 1 !== 0 && (
+                <i class="material-icons text-amber-400 text-lg">star_half</i>
               )}
             </div>
-            <span class="text-sm text-gray-600">({product.reviews} reseñas)</span>
+            <span class="text-sm text-gray-600">({totalReviews} reseñas)</span>
           </div>
 
           <!-- Precio -->
           <div class="flex items-center gap-4 mb-6">
-            <p class="text-4xl font-bold text-secondary">{product.price.toFixed(2)}€</p>
-            {product.originalPrice && (
+            <p class="text-4xl font-bold text-secondary">{price.toFixed(2)}€</p>
+            {hasDiscount && (
               <>
-                <p class="text-xl text-gray-400 line-through">{product.originalPrice.toFixed(2)}€</p>
-                <span class="bg-accent text-white text-sm font-bold px-2 py-1 rounded">-{product.discount}%</span>
+                <p class="text-xl text-gray-400 line-through">{compareAtPrice!.toFixed(2)}€</p>
+                <span class="bg-accent text-white text-sm font-bold px-2 py-1 rounded">-{discountPercent}%</span>
               </>
             )}
           </div>
 
+          <!-- Stock -->
+          <div class="mb-4">
+            <span class={`text-sm font-medium ${product.stock > 5 ? 'text-green-600' : product.stock > 0 ? 'text-orange-500' : 'text-red-600'}`}>
+              {stockStatus}
+            </span>
+          </div>
+
           <!-- Descripción -->
           <p class="text-gray-600 leading-relaxed mb-8">
-            {product.description}
+            {product.description || product.shortDescription || 'Sin descripción disponible.'}
           </p>
-
-          <!-- Selector de Talla -->
-          <div class="mb-8 border-t border-b border-gray-200 py-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-sm font-medium text-secondary">Talla</h3>
-              <a class="text-sm text-primary hover:underline" href="#">Guía de tallas</a>
-            </div>
-            <div class="grid grid-cols-3 gap-4 sm:grid-cols-6">
-              {product.sizes.map((size) => (
-                <label class={`group relative border rounded-md py-3 px-4 flex items-center justify-center text-sm font-medium uppercase hover:bg-gray-50 cursor-pointer transition-colors ${size.popular ? 'border-2 border-primary' : ''}`}>
-                  <input class="sr-only" name="size-choice" type="radio" value={size.value} checked={size.popular} />
-                  <span class={size.popular ? 'font-bold' : ''}>{size.label}</span>
-                  {size.popular && (
-                    <div class="absolute top-0 right-0 -mt-2 -mr-2 bg-primary text-black text-[10px] px-1 font-bold rounded">
-                      Popular
-                    </div>
-                  )}
-                </label>
-              ))}
-            </div>
-          </div>
 
           <!-- Cantidad -->
           <div class="mb-8">
@@ -238,78 +183,138 @@ const relatedProducts_REMOVE_LATER = [
             </button>
           </div>
 
+          <!-- Acordeón Descripción -->
+          <div class="border border-gray-200 rounded-lg overflow-hidden mb-4">
+            <button class="accordion-button collapsed w-full flex justify-between items-center p-4 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+              <span class="font-bold text-secondary uppercase text-sm">Descripción</span>
+              <i class="material-icons accordion-icon">expand_more</i>
+            </button>
+            <div class="accordion-content">
+              <div class="p-4 bg-white border-t border-gray-200 text-sm text-gray-600">
+                <p class="leading-relaxed">
+                  {product.description || product.shortDescription || 'Sin descripción disponible.'}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- Acordeón Características -->
           <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <button class="accordion-button w-full flex justify-between items-center p-4 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
-              <span class="font-bold text-secondary uppercase text-sm">Características Técnicas</span>
-              <i class="material-icons">expand_more</i>
+            <button class="accordion-button collapsed w-full flex justify-between items-center p-4 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+              <span class="font-bold text-secondary uppercase text-sm">Características</span>
+              <i class="material-icons accordion-icon">expand_more</i>
             </button>
-            <div class="accordion-content p-4 bg-white border-t border-gray-200 text-sm text-gray-600 space-y-2">
-              {product.specs.map((spec) => (
+            <div class="accordion-content">
+              <div class="p-4 bg-white border-t border-gray-200 text-sm text-gray-600 space-y-2">
+              {product.sku && (
                 <div class="flex justify-between border-b border-gray-100 pb-2">
-                  <span>{spec.label}:</span>
-                  <span class="font-medium text-secondary">{spec.value}</span>
+                  <span>SKU:</span>
+                  <span class="font-medium text-secondary">{product.sku}</span>
                 </div>
-              ))}
+              )}
+              {product.brand && (
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                  <span>Marca:</span>
+                  <span class="font-medium text-secondary">{product.brand}</span>
+                </div>
+              )}
+              {product.color && (
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                  <span>Color:</span>
+                  <span class="font-medium text-secondary">{product.color}</span>
+                </div>
+              )}
+              {product.category && (
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                  <span>Categoría:</span>
+                  <span class="font-medium text-secondary">{product.category.name}</span>
+                </div>
+              )}
+              {product.sportType && (
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                  <span>Deporte:</span>
+                  <span class="font-medium text-secondary">{product.sportType}</span>
+                </div>
+              )}
+              {product.isCollectible && product.collectionType && (
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                  <span>Colección:</span>
+                  <span class="font-medium text-secondary">{product.collectionType}</span>
+                </div>
+              )}
+              </div>
             </div>
           </div>
 
           <!-- Beneficios -->
-          <div class="mt-8 grid grid-cols-3 gap-4 text-center">
-            <div class="flex flex-col items-center gap-2">
-              <i class="material-icons text-primary text-2xl">local_shipping</i>
-              <p class="text-xs text-gray-600">Envío gratis +50€</p>
+          <div class="mt-8 grid grid-cols-3 gap-3 text-center">
+            <div class="bg-gray-500 rounded-lg p-4 shadow-sm flex flex-col items-center gap-2">
+              <i class="material-icons text-white text-2xl">local_shipping</i>
+              <p class="text-xs text-white font-bold">Envío gratis +50€</p>
             </div>
-            <div class="flex flex-col items-center gap-2">
-              <i class="material-icons text-primary text-2xl">verified_user</i>
-              <p class="text-xs text-gray-600">Compra segura</p>
+            <div class="bg-gray-500 rounded-lg p-4 shadow-sm flex flex-col items-center gap-2">
+              <i class="material-icons text-white text-2xl">verified_user</i>
+              <p class="text-xs text-white font-bold">Compra segura</p>
             </div>
-            <div class="flex flex-col items-center gap-2">
-              <i class="material-icons text-primary text-2xl">sync</i>
-              <p class="text-xs text-gray-600">Devolución 30 días</p>
+            <div class="bg-gray-500 rounded-lg p-4 shadow-sm flex flex-col items-center gap-2">
+              <i class="material-icons text-white text-2xl">sync</i>
+              <p class="text-xs text-white font-bold">Devolución 30 días</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Productos Relacionados -->
-      <section class="mt-16 border-t border-gray-200 pt-12">
-        <h2 class="text-3xl font-display font-extrabold uppercase italic text-secondary mb-8">
-          Productos <span class="text-primary">Relacionados</span>
-        </h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {relatedProducts.map((relProduct) => (
-            <div class="group relative bg-background-light rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
-              <div class="aspect-[4/5] bg-white overflow-hidden relative">
-                <img class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" src={relProduct.image} alt={relProduct.name} />
+      {relatedProducts.length > 0 && (
+        <section class="mt-16 border-t border-gray-200 pt-12">
+          <h2 class="text-3xl font-display font-extrabold uppercase italic text-secondary mb-8 relative inline-block">
+            Productos Relacionados
+            <span class="absolute bottom-0 left-0 w-[3ch] h-1 bg-primary"></span>
+          </h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {relatedProducts.map((relProduct) => {
+              const relPrice = typeof relProduct.price === 'string' ? parseFloat(relProduct.price) : relProduct.price;
+              const relCompareAtPrice = relProduct.compareAtPrice
+                ? (typeof relProduct.compareAtPrice === 'string' ? parseFloat(relProduct.compareAtPrice) : relProduct.compareAtPrice)
+                : null;
+              const relHasDiscount = relCompareAtPrice && relCompareAtPrice > relPrice;
+              const relDiscountPercent = relHasDiscount ? Math.round(((relCompareAtPrice - relPrice) / relCompareAtPrice) * 100) : 0;
+              const relImage = relProduct.thumbnailUrl || (relProduct.images && relProduct.images[0]) || '/placeholder.jpg';
 
-                {relProduct.badge && (
-                  <div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
-                    {relProduct.badge}
+              return (
+                <a href={`/producto/${relProduct.slug}`} class="group relative bg-background-light rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
+                  <div class="aspect-[4/5] bg-white overflow-hidden relative">
+                    <img class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" src={relImage} alt={relProduct.name} />
+
+                    {relHasDiscount && (
+                      <div class="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
+                        -{relDiscountPercent}%
+                      </div>
+                    )}
+                    {relProduct.isNew && !relHasDiscount && (
+                      <div class="absolute top-2 right-2 bg-primary text-black text-xs font-bold px-2 py-1 rounded">
+                        NUEVO
+                      </div>
+                    )}
                   </div>
-                )}
-
-                <!-- Overlay con botón -->
-                <div class="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/80 to-transparent">
-                  <button class="w-full bg-primary text-black font-bold py-2 rounded text-sm uppercase hover:bg-yellow-400 transition-colors">
-                    Añadir
-                  </button>
-                </div>
-              </div>
-              <div class="p-4">
-                <h3 class="text-lg font-bold text-secondary mb-1">{relProduct.name}</h3>
-                <p class="text-sm text-gray-500 mb-2">{relProduct.category}</p>
-                <div class="flex justify-between items-center">
-                  <p class="text-lg font-bold text-secondary">{relProduct.price.toFixed(2)}€</p>
-                  {relProduct.originalPrice && (
-                    <p class="text-sm text-gray-400 line-through">{relProduct.originalPrice.toFixed(2)}€</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+                  <div class="p-4">
+                    <h3 class="text-lg font-bold text-secondary mb-1 line-clamp-2">{relProduct.name}</h3>
+                    {relProduct.category && (
+                      <p class="text-sm text-gray-500 mb-2">{relProduct.category.name}</p>
+                    )}
+                    <div class="flex justify-between items-center">
+                      <p class="text-lg font-bold text-secondary">{relPrice.toFixed(2)}€</p>
+                      {relHasDiscount && (
+                        <p class="text-sm text-gray-400 line-through">{relCompareAtPrice!.toFixed(2)}€</p>
+                      )}
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   </main>
 
@@ -355,14 +360,14 @@ const relatedProducts_REMOVE_LATER = [
     quantityInput.value = (currentValue + 1).toString();
   });
 
-  // Acordeón
-  const accordionButton = document.querySelector('.accordion-button');
-  const accordionContent = document.querySelector('.accordion-content');
-  const accordionIcon = accordionButton?.querySelector('.material-icons');
+  // Acordeones (múltiples)
+  const accordionButtons = document.querySelectorAll('.accordion-button');
 
-  accordionButton?.addEventListener('click', () => {
-    accordionContent?.classList.toggle('hidden');
-    accordionIcon?.classList.toggle('rotate-180');
+  accordionButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      // Solo alternar collapsed - el CSS hace el resto
+      button.classList.toggle('collapsed');
+    });
   });
 </script>
 
@@ -385,7 +390,11 @@ const relatedProducts_REMOVE_LATER = [
     max-height: 500px;
   }
 
-  .material-icons {
+  .accordion-icon {
     transition: transform 0.3s ease;
+  }
+
+  .accordion-button:not(.collapsed) .accordion-icon {
+    transform: rotate(180deg);
   }
 </style>

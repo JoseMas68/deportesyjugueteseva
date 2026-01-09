@@ -68,6 +68,9 @@ export async function getProducts(filters?: {
   minPrice?: number;
   maxPrice?: number;
   search?: string;
+  brand?: string;
+  inStock?: boolean;
+  sort?: string;
   limit?: number;
   offset?: number;
 }): Promise<{ products: Product[]; total: number }> {

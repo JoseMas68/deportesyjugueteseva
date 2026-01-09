@@ -1,4 +1,5 @@
 import { PrismaClient, EmailType, PaymentMethod } from '@prisma/client'
+import { getProducts } from './seed-products'
 
 const prisma = new PrismaClient()
 
@@ -205,312 +206,29 @@ async function main() {
 
   console.log('✅ Categories created')
 
-  // ============ PRODUCTOS MOCK ============
-  console.log('📦 Creating mock products...')
+  // ============ PRODUCTOS MOCK (50 productos) ============
+  console.log('📦 Creating 50 mock products...')
 
-  // Productos Running
-  await prisma.product.createMany({
-    data: [
-      {
-        name: 'Zapatillas Nike Air Zoom Pegasus 40',
-        slug: 'nike-pegasus-40',
-        description: 'Las Pegasus 40 ofrecen una amortiguación reactiva y un ajuste cómodo para corredores de todos los niveles. Perfectas para entrenamientos diarios y carreras.',
-        shortDescription: 'Zapatillas de running con amortiguación React',
-        price: 129.99,
-        compareAtPrice: 149.99,
-        stock: 25,
-        sku: 'NIKE-PEG40-001',
-        categoryId: running.id,
-        sportType: 'RUNNING',
-        brand: 'Nike',
-        color: 'Negro/Blanco',
-        images: [
-          'https://placeholder.co/600x600/000000/CCFF00?text=Nike+Pegasus+40',
-          'https://placeholder.co/600x600/000000/FFFFFF?text=Nike+Pegasus+40',
-        ],
-        thumbnailUrl: 'https://placeholder.co/300x300/000000/CCFF00?text=Nike+Pegasus+40',
-        isFeatured: true,
-        isBestSeller: true,
-        publishedAt: new Date(),
-      },
-      {
-        name: 'Adidas Ultraboost 23',
-        slug: 'adidas-ultraboost-23',
-        description: 'Las Ultraboost 23 combinan comodidad excepcional con un diseño moderno. La tecnología Boost proporciona un retorno de energía incomparable.',
-        shortDescription: 'Máxima comodidad y retorno de energía',
-        price: 189.99,
-        stock: 18,
-        sku: 'ADIDAS-UB23-001',
-        categoryId: running.id,
-        sportType: 'RUNNING',
-        brand: 'Adidas',
-        color: 'Blanco/Gris',
-        images: ['https://placeholder.co/600x600/FFFFFF/000000?text=Ultraboost+23'],
-        thumbnailUrl: 'https://placeholder.co/300x300/FFFFFF/000000?text=Ultraboost+23',
-        isFeatured: true,
-        publishedAt: new Date(),
-      },
-      {
-        name: 'Asics Gel-Nimbus 25',
-        slug: 'asics-nimbus-25',
-        description: 'Las Gel-Nimbus 25 ofrecen una amortiguación suave y duradera. Ideales para largas distancias con máximo confort.',
-        shortDescription: 'Amortiguación superior para largas distancias',
-        price: 169.99,
-        stock: 20,
-        sku: 'ASICS-NIM25-001',
-        categoryId: running.id,
-        sportType: 'RUNNING',
-        brand: 'Asics',
-        color: 'Azul/Amarillo',
-        images: ['https://placeholder.co/600x600/0000FF/CCFF00?text=Asics+Nimbus'],
-        thumbnailUrl: 'https://placeholder.co/300x300/0000FF/CCFF00?text=Asics+Nimbus',
-        publishedAt: new Date(),
-      },
-    ],
+  const products = getProducts({
+    running,
+    trailRunning,
+    fitness,
+    natacion,
+    outdoor,
+    casual,
+    infantiles,
+    educativos,
+    aireLibre,
+    scalextric,
+    trenes,
+    maquetas,
   })
 
-  // Productos Trail Running
   await prisma.product.createMany({
-    data: [
-      {
-        name: 'Salomon Speedcross 6',
-        slug: 'salomon-speedcross-6',
-        description: 'Las Speedcross 6 dominan terrenos técnicos con su agresiva suela y ajuste preciso. Perfectas para trail runners exigentes.',
-        shortDescription: 'Agarre extremo para trail',
-        price: 149.99,
-        stock: 15,
-        sku: 'SALOMON-SC6-001',
-        categoryId: trailRunning.id,
-        sportType: 'TRAIL_RUNNING',
-        brand: 'Salomon',
-        color: 'Negro/Rojo',
-        images: ['https://placeholder.co/600x600/000000/FF0000?text=Speedcross+6'],
-        thumbnailUrl: 'https://placeholder.co/300x300/000000/FF0000?text=Speedcross+6',
-        isFeatured: true,
-        publishedAt: new Date(),
-      },
-      {
-        name: 'Hoka Speedgoat 5',
-        slug: 'hoka-speedgoat-5',
-        description: 'Las Speedgoat 5 ofrecen máxima amortiguación y tracción en terrenos variados. Ideales para ultras y trails largos.',
-        shortDescription: 'Máxima amortiguación para ultras',
-        price: 159.99,
-        stock: 12,
-        sku: 'HOKA-SG5-001',
-        categoryId: trailRunning.id,
-        sportType: 'TRAIL_RUNNING',
-        brand: 'Hoka',
-        color: 'Azul/Naranja',
-        images: ['https://placeholder.co/600x600/0000FF/FF6600?text=Speedgoat+5'],
-        thumbnailUrl: 'https://placeholder.co/300x300/0000FF/FF6600?text=Speedgoat+5',
-        publishedAt: new Date(),
-      },
-    ],
+    data: products,
   })
 
-  // Productos Fitness
-  await prisma.product.createMany({
-    data: [
-      {
-        name: 'Mancuernas Ajustables 20kg',
-        slug: 'mancuernas-ajustables-20kg',
-        description: 'Set de mancuernas ajustables de 2.5kg a 20kg. Perfectas para entrenar en casa, ahorran espacio y dinero.',
-        shortDescription: 'Ajustables de 2.5 a 20kg',
-        price: 89.99,
-        stock: 30,
-        sku: 'MANC-ADJ20-001',
-        categoryId: fitness.id,
-        sportType: 'FITNESS',
-        brand: 'PowerTech',
-        images: ['https://placeholder.co/600x600/333333/CCFF00?text=Mancuernas'],
-        thumbnailUrl: 'https://placeholder.co/300x300/333333/CCFF00?text=Mancuernas',
-        isBestSeller: true,
-        publishedAt: new Date(),
-      },
-      {
-        name: 'Esterilla Yoga Premium',
-        slug: 'esterilla-yoga-premium',
-        description: 'Esterilla de yoga antideslizante de 6mm. Material ecológico, perfecta para yoga, pilates y estiramientos.',
-        shortDescription: 'Antideslizante 6mm, material eco',
-        price: 34.99,
-        stock: 50,
-        sku: 'YOGA-MAT-001',
-        categoryId: fitness.id,
-        sportType: 'FITNESS',
-        brand: 'YogaLife',
-        color: 'Morado',
-        images: ['https://placeholder.co/600x600/8B008B/FFFFFF?text=Yoga+Mat'],
-        thumbnailUrl: 'https://placeholder.co/300x300/8B008B/FFFFFF?text=Yoga+Mat',
-        publishedAt: new Date(),
-      },
-    ],
-  })
-
-  // Productos Natación
-  await prisma.product.createMany({
-    data: [
-      {
-        name: 'Gafas Natación Speedo Futura',
-        slug: 'gafas-speedo-futura',
-        description: 'Gafas de natación con visión panorámica y ajuste cómodo. Protección UV y antivaho.',
-        shortDescription: 'Visión panorámica, antivaho',
-        price: 24.99,
-        stock: 40,
-        sku: 'SPEEDO-FUT-001',
-        categoryId: natacion.id,
-        sportType: 'NATACION',
-        brand: 'Speedo',
-        color: 'Azul',
-        images: ['https://placeholder.co/600x600/0066CC/FFFFFF?text=Speedo+Goggles'],
-        thumbnailUrl: 'https://placeholder.co/300x300/0066CC/FFFFFF?text=Speedo+Goggles',
-        publishedAt: new Date(),
-      },
-    ],
-  })
-
-  // Juguetes Infantiles
-  await prisma.product.createMany({
-    data: [
-      {
-        name: 'Bloques Construcción 100 Piezas',
-        slug: 'bloques-construccion-100',
-        description: 'Set de 100 bloques de construcción de colores. Estimula la creatividad y habilidades motoras. Para niños de 3+.',
-        shortDescription: '100 piezas de colores, 3+ años',
-        price: 29.99,
-        stock: 60,
-        sku: 'BLOCKS-100-001',
-        categoryId: infantiles.id,
-        brand: 'PlayBlocks',
-        images: ['https://placeholder.co/600x600/FF6B6B/FFFFFF?text=Bloques'],
-        thumbnailUrl: 'https://placeholder.co/300x300/FF6B6B/FFFFFF?text=Bloques',
-        isNew: true,
-        publishedAt: new Date(),
-      },
-      {
-        name: 'Peluche Oso Teddy 40cm',
-        slug: 'peluche-oso-teddy',
-        description: 'Adorable oso de peluche suave de 40cm. Material hipoalergénico y lavable. Perfecto para regalar.',
-        shortDescription: 'Suave, 40cm, hipoalergénico',
-        price: 19.99,
-        stock: 45,
-        sku: 'TEDDY-40-001',
-        categoryId: infantiles.id,
-        brand: 'TeddyLand',
-        color: 'Marrón',
-        images: ['https://placeholder.co/600x600/8B4513/FFFFFF?text=Teddy+Bear'],
-        thumbnailUrl: 'https://placeholder.co/300x300/8B4513/FFFFFF?text=Teddy+Bear',
-        publishedAt: new Date(),
-      },
-    ],
-  })
-
-  // Juguetes Educativos
-  await prisma.product.createMany({
-    data: [
-      {
-        name: 'Puzzle Mapamundi 500 Piezas',
-        slug: 'puzzle-mapamundi-500',
-        description: 'Puzzle educativo del mapamundi de 500 piezas. Aprende geografía mientras te diviertes. 8+ años.',
-        shortDescription: '500 piezas, aprende geografía',
-        price: 24.99,
-        stock: 35,
-        sku: 'PUZZLE-MAP500-001',
-        categoryId: educativos.id,
-        brand: 'EduPuzzle',
-        images: ['https://placeholder.co/600x600/4169E1/FFFFFF?text=Puzzle+Map'],
-        thumbnailUrl: 'https://placeholder.co/300x300/4169E1/FFFFFF?text=Puzzle+Map',
-        publishedAt: new Date(),
-      },
-    ],
-  })
-
-  // Scalextric
-  await prisma.product.createMany({
-    data: [
-      {
-        name: 'Circuito Scalextric GT Master',
-        slug: 'scalextric-gt-master',
-        description: 'Circuito Scalextric GT Master con 6.8m de pista, 2 coches GT, transformador y mandos. Incluye looping y peraltes.',
-        shortDescription: '6.8m pista, 2 coches, looping',
-        price: 159.99,
-        compareAtPrice: 189.99,
-        stock: 10,
-        sku: 'SCAL-GTM-001',
-        categoryId: scalextric.id,
-        isCollectible: true,
-        collectionType: 'SCALEXTRIC',
-        brand: 'Scalextric',
-        images: ['https://placeholder.co/600x600/FF0000/FFFFFF?text=Scalextric+GT'],
-        thumbnailUrl: 'https://placeholder.co/300x300/FF0000/FFFFFF?text=Scalextric+GT',
-        isFeatured: true,
-        publishedAt: new Date(),
-      },
-      {
-        name: 'Coche Scalextric Ferrari F1',
-        slug: 'scalextric-ferrari-f1',
-        description: 'Coche Scalextric Ferrari F1 edición oficial. Compatible con todos los circuitos Scalextric.',
-        shortDescription: 'Ferrari F1 oficial, compatible',
-        price: 34.99,
-        stock: 25,
-        sku: 'SCAL-FERRF1-001',
-        categoryId: scalextric.id,
-        isCollectible: true,
-        collectionType: 'SCALEXTRIC',
-        brand: 'Scalextric',
-        color: 'Rojo',
-        images: ['https://placeholder.co/600x600/DC0000/FFFFFF?text=Ferrari+F1'],
-        thumbnailUrl: 'https://placeholder.co/300x300/DC0000/FFFFFF?text=Ferrari+F1',
-        publishedAt: new Date(),
-      },
-    ],
-  })
-
-  // Trenes Eléctricos
-  await prisma.product.createMany({
-    data: [
-      {
-        name: 'Set Tren Eléctrico Iniciación',
-        slug: 'tren-electrico-iniciacion',
-        description: 'Set completo de tren eléctrico con locomotora, 3 vagones, vías ovaladas y transformador. Escala HO 1:87.',
-        shortDescription: 'Set completo escala HO 1:87',
-        price: 119.99,
-        stock: 8,
-        sku: 'TRAIN-START-001',
-        categoryId: trenes.id,
-        isCollectible: true,
-        collectionType: 'TRENES_ELECTRICOS',
-        brand: 'Mehano',
-        images: ['https://placeholder.co/600x600/0047AB/FFFFFF?text=Train+Set'],
-        thumbnailUrl: 'https://placeholder.co/300x300/0047AB/FFFFFF?text=Train+Set',
-        isNew: true,
-        publishedAt: new Date(),
-      },
-    ],
-  })
-
-  // Maquetas
-  await prisma.product.createMany({
-    data: [
-      {
-        name: 'Maqueta Avión Spitfire 1:48',
-        slug: 'maqueta-spitfire-148',
-        description: 'Maqueta de avión Spitfire Mk IX escala 1:48. Incluye 85 piezas, calcas y pintura. Nivel intermedio.',
-        shortDescription: 'Escala 1:48, 85 piezas, nivel medio',
-        price: 39.99,
-        stock: 15,
-        sku: 'MODEL-SPIT48-001',
-        categoryId: maquetas.id,
-        isCollectible: true,
-        collectionType: 'MAQUETAS',
-        brand: 'Airfix',
-        images: ['https://placeholder.co/600x600/556B2F/FFFFFF?text=Spitfire+Model'],
-        thumbnailUrl: 'https://placeholder.co/300x300/556B2F/FFFFFF?text=Spitfire+Model',
-        publishedAt: new Date(),
-      },
-    ],
-  })
-
-  console.log('✅ Mock products created')
+  console.log(`✅ ${products.length} products created`)
 
   // ============ PLANTILLAS DE EMAIL ============
   console.log('📧 Creating email templates...')
