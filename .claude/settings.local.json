@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(taskkill //F //PID 54052)",
+      "Bash(npm run dev:*)",
+      "Bash(cd:*)",
+      "Bash(git push:*)",
+      "Bash(npx tsc:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill /F /PID 18724)",
+      "Bash(powershell:*)",
+      "Bash(curl:*)",
+      "Bash(npm run build:*)"
+    ]
+  }
+}

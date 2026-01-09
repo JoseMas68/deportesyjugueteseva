@@ -21,6 +21,7 @@
 - [x] GET /api/products/[slug] (detalle + productos relacionados)
 - [x] GET /api/categories (con agrupación para megamenu)
 - [x] POST /api/checkout (creación de pedidos + emails automáticos)
+- [x] GET/POST /api/home-sections (gestión de secciones de home)
 
 ### 4. Sistema de Emails
 - [x] 7 plantillas HTML predefinidas en seed
@@ -43,6 +44,7 @@
 - [x] Header.astro con megamenu responsive (Deportes/Juguetes/Hobbies)
 - [x] Footer.astro con links y redes sociales
 - [x] ProductCard.astro (con ratings, badges, stock)
+- [x] ProductSlider.astro (slider reutilizable con Swiper.js)
 
 ### 3. Páginas Principales
 - [x] index.astro (hero + categorías populares + más vendidos)
@@ -65,29 +67,50 @@
 - [x] Estados de stock (agotado, bajo stock)
 - [x] Banners promocionales
 - [x] Newsletter signup
-- [x] Ratings con estrellas
+- [x] Ratings con estrellas (color amber)
+- [x] Sliders de productos con Swiper.js (navegación, paginación, autoplay)
+
+## ✅ Completado (Integración Frontend-Backend)
+
+### Conexión con Backend
+- [x] Integrar API de productos (reemplazar mock data)
+- [x] Integrar API de categorías
+- [x] Implementar carrito funcional con localStorage
+- [x] Configurar CORS en backend para permitir peticiones desde frontend
+- [x] Crear middleware para hacer APIs públicas (sin autenticación)
+- [x] Fix de conversión Prisma Decimal (string a number)
+- [x] Contador de carrito dinámico en Header
+- [x] Base de datos Supabase conectada con Session Pooler (IPv4)
+- [x] Migración de schema y seed de datos (15 productos de muestra)
+
+### Páginas Conectadas a API Real
+- [x] index.astro - Mostrar productos más vendidos desde API
+- [x] [category].astro - Productos por categoría desde API
+- [x] buscar.astro - Búsqueda de productos desde API
+- [x] ofertas.astro - Productos en oferta desde API
+- [x] producto/[slug].astro - Detalle de producto desde API
+- [x] carrito.astro - Carrito funcional con localStorage
 
 ## 🚧 Pendiente
 
-### Frontend (Conexión con Backend)
-- [ ] Integrar API de productos (reemplazar mock data)
-- [ ] Integrar API de categorías
-- [ ] Implementar carrito funcional con localStorage
+### Frontend (Funcionalidades Pendientes)
+- [ ] Filtros de productos (precio, marca, subcategoría) - NO FUNCIONAN
 - [ ] Conectar checkout con API backend
-- [ ] Gestión de estados de carga y errores
-- [ ] Implementar búsqueda en tiempo real
+- [ ] Gestión de estados de carga y errores mejorada
+- [ ] Implementar búsqueda en tiempo real con debounce
 - [ ] Sistema de favoritos funcional
+- [ ] Paginación funcional en listados de productos
 
-### Panel Admin (Next.js)
-- [ ] Middleware de autenticación con Supabase
-- [ ] Layout admin con sidebar
-- [ ] Dashboard (stats, gráficas, pedidos recientes)
-- [ ] CRUD de productos (con subida de imágenes a Supabase Storage)
-- [ ] Gestión de pedidos (lista + detalle + cambio de estado)
-- [ ] Configuración de métodos de pago (habilitar/deshabilitar)
-- [ ] Gestión de plantillas de email (editor WYSIWYG básico)
-- [ ] Gestión de categorías (editar descripciones/imágenes)
-- [ ] Configuración general del sitio
+### Panel Admin (Next.js) - ✅ COMPLETADO
+- [x] Middleware de autenticación con Supabase
+- [x] Layout admin con sidebar
+- [x] Dashboard (stats, pedidos recientes)
+- [x] CRUD de productos (con subida de imágenes a Supabase Storage)
+- [x] Gestión de pedidos (lista + detalle + cambio de estado + emails automáticos)
+- [x] Configuración de métodos de pago (habilitar/deshabilitar)
+- [x] Gestión de categorías (editar descripciones/imágenes)
+- [x] Configuración general del sitio
+- [ ] Gestión de plantillas de email (editor WYSIWYG básico) - Pendiente
 
 ### Integraciones
 - [ ] Stripe Payment Intent en checkout
@@ -105,48 +128,61 @@
 
 ## 📋 Próximos Pasos Inmediatos
 
-### Opción A: Conectar Frontend con Backend (Recomendado)
-1. **Crear módulo de API cliente**
-   - Crear `frontend/src/lib/api.ts` con funciones para llamar al backend
-   - Implementar fetchProducts(), fetchCategories(), createOrder()
-   - Gestión de errores y estados de carga
+### ✅ COMPLETADO: Opción A - Conectar Frontend con Backend
+1. ✅ **Crear módulo de API cliente**
+   - ✅ Creado `frontend/src/lib/api.ts` con funciones para llamar al backend
+   - ✅ Implementado fetchProducts(), fetchCategories(), createOrder()
+   - ✅ Gestión básica de errores
 
-2. **Implementar carrito funcional**
-   - Sistema de localStorage para persistencia
-   - Añadir/quitar/actualizar cantidad
-   - Calcular totales con envío
-   - Sincronizar con UI en tiempo real
+2. ✅ **Implementar carrito funcional**
+   - ✅ Sistema de localStorage para persistencia
+   - ✅ Añadir/quitar/actualizar cantidad
+   - ✅ Calcular totales
+   - ✅ Sincronizar con UI en tiempo real
 
-3. **Conectar páginas con API real**
-   - Reemplazar mock data en index.astro
-   - Conectar página de categoría con filtros
-   - Página de detalle con productos relacionados
-   - Búsqueda en tiempo real
+3. ✅ **Conectar páginas con API real**
+   - ✅ Reemplazar mock data en index.astro
+   - ✅ Conectar página de categoría
+   - ✅ Página de detalle con productos relacionados
+   - ✅ Búsqueda básica
 
-4. **Implementar checkout funcional**
-   - Validación de formulario
-   - Integración con Stripe
-   - Confirmación de pedido
-   - Redirección a página de confirmación
+4. ⚠️ **Checkout funcional - PENDIENTE**
+   - [ ] Validación de formulario
+   - [ ] Integración con Stripe
+   - [ ] Confirmación de pedido
+   - [ ] Redirección a página de confirmación
 
-### Opción B: Desarrollar Panel Admin
-1. **Setup de autenticación**
-   - Middleware de Supabase
-   - Protección de rutas admin
-   - Login/logout
+### ✅ COMPLETADO: Opción B - Panel Admin
+1. ✅ **Setup de autenticación**
+   - ✅ Middleware de Supabase protegiendo /admin/* y /api/admin/*
+   - ✅ Página de login con Supabase Auth
+   - ✅ Verificación de AdminUser en base de datos
+   - ✅ Logout funcional
 
-2. **Layout admin**
-   - Sidebar con navegación
-   - Header con usuario
-   - Dashboard principal
+2. ✅ **Layout admin**
+   - ✅ Sidebar con navegación (Dashboard, Productos, Pedidos, Categorías, Configuración)
+   - ✅ Header con usuario y menú desplegable
+   - ✅ Dashboard principal con estadísticas
 
-3. **Gestión de productos**
-   - Lista con paginación
-   - Formulario crear/editar
-   - Subida de imágenes
-   - Control de stock
+3. ✅ **Gestión de productos**
+   - ✅ Lista con paginación y búsqueda
+   - ✅ Formulario crear/editar
+   - ✅ Subida de imágenes a Supabase Storage
+   - ✅ Control de stock
 
-### Opción C: Preparar para Deploy
+4. ✅ **Gestión de pedidos**
+   - ✅ Lista de pedidos con filtros
+   - ✅ Detalle de pedido
+   - ✅ Cambio de estado (pendiente → pagado → enviado → entregado)
+   - ✅ Emails automáticos al cambiar estado
+   - ✅ Añadir número de seguimiento
+
+5. ✅ **Configuración**
+   - ✅ Gestión de categorías
+   - ✅ Configuración general del sitio
+   - ✅ Habilitar/deshabilitar métodos de pago
+
+### Opción C: Preparar para Deploy (Más adelante)
 1. **Variables de entorno**
    - Configurar .env para producción
    - Secrets en Vercel
@@ -208,7 +244,8 @@ deportesyjugueteseva/
 │   │   │   │   ├── products/route.ts ✅
 │   │   │   │   ├── products/[slug]/route.ts ✅
 │   │   │   │   ├── categories/route.ts ✅
-│   │   │   │   └── checkout/route.ts ✅ (150 líneas)
+│   │   │   │   ├── checkout/route.ts ✅ (150 líneas)
+│   │   │   │   └── home-sections/route.ts ✅
 │   │   │   ├── layout.tsx ✅
 │   │   │   ├── page.tsx ✅
 │   │   │   └── globals.css ✅
@@ -227,7 +264,28 @@ deportesyjugueteseva/
 │   ├── PROGRESS.md ✅ (Este archivo)
 │   ├── ARCHITECTURE.md ✅ (Arquitectura completa)
 │   └── README-ORIGINAL.md ✅ (Especificaciones)
-├── frontend/ (pendiente)
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Header.astro ✅
+│   │   │   ├── Footer.astro ✅
+│   │   │   ├── ProductCard.astro ✅
+│   │   │   └── ProductSlider.astro ✅ (slider reutilizable)
+│   │   ├── layouts/
+│   │   │   └── Layout.astro ✅
+│   │   ├── lib/
+│   │   │   ├── api.ts ✅ (cliente API)
+│   │   │   └── cart.ts ✅ (carrito localStorage)
+│   │   └── pages/
+│   │       ├── index.astro ✅
+│   │       ├── [category].astro ✅
+│   │       ├── buscar.astro ✅
+│   │       ├── ofertas.astro ✅
+│   │       ├── carrito.astro ✅
+│   │       ├── checkout.astro ✅
+│   │       ├── confirmacion.astro ✅
+│   │       └── producto/[slug].astro ✅
+│   └── package.json ✅
 ├── logo deportes eva.png ✅
 ├── package.json ✅
 ├── README.md ✅
@@ -278,17 +336,18 @@ npm run dev
 ## ⚠️ Prioridad Alta - Faltan Implementar
 
 ### Funcionalidad Crítica
-1. **Conexión Frontend-Backend**: Actualmente el frontend usa mock data
-2. **Carrito Funcional**: Implementar localStorage y sincronización
-3. **Checkout Real**: Integrar con Stripe y API de pedidos
-4. **Panel Admin**: Sin implementar (gestión de productos, pedidos, etc.)
-5. **Autenticación Admin**: Protección de rutas administrativas
+1. ✅ ~~**Conexión Frontend-Backend**~~ - COMPLETADO
+2. ✅ ~~**Carrito Funcional**~~ - COMPLETADO
+3. ✅ ~~**Panel Admin**~~ - COMPLETADO (gestión de productos, pedidos, categorías, configuración)
+4. ✅ ~~**Autenticación Admin**~~ - COMPLETADO (Supabase Auth + middleware)
+5. ⚠️ **Filtros de Productos**: NO FUNCIONAN (precio, marca, subcategoría)
+6. ❌ **Checkout Real**: Integrar con Stripe y API de pedidos
 
 ### Integraciones Pendientes
 - Stripe Payment Intent real (actualmente simulado en API)
 - Webhook de Stripe para confirmar pagos automáticamente
-- Subida de imágenes a Supabase Storage
-- Sistema de emails funcional (API lista, falta integrar)
+- ✅ ~~Subida de imágenes a Supabase Storage~~ - COMPLETADO (en panel admin)
+- ✅ ~~Sistema de emails funcional~~ - COMPLETADO (al cambiar estado de pedidos)
 
 ### Mejoras Futuras
 - Tests unitarios y de integración
@@ -296,3 +355,4 @@ npm run dev
 - Sistema de reviews y ratings reales
 - Analytics y monitoreo
 - Página de favoritos funcional
+- Paginación funcional en listados

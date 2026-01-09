@@ -174,9 +174,19 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
 
           <!-- Botones de Acción -->
           <div class="flex gap-4 mb-8">
-            <button class="flex-1 bg-primary border border-transparent py-3 px-8 flex items-center justify-center text-base font-bold text-black hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary uppercase tracking-wider rounded-lg shadow-lg hover:shadow-primary/50 transition-all duration-300 transform hover:-translate-y-1">
-              <i class="material-icons mr-2">shopping_bag</i>
-              Añadir al Carrito
+            <button
+              id="add-to-cart-btn"
+              class="flex-1 bg-primary border border-transparent py-3 px-8 flex items-center justify-center text-base font-bold text-black hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary uppercase tracking-wider rounded-lg shadow-lg hover:shadow-primary/50 transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              data-product-id={product.id}
+              data-product-name={product.name}
+              data-product-slug={product.slug}
+              data-product-price={price}
+              data-product-image={mainImage}
+              data-product-stock={product.stock}
+              disabled={product.stock === 0}
+            >
+              <i class="material-icons mr-2" id="cart-icon">shopping_bag</i>
+              <span id="cart-btn-text">{product.stock === 0 ? 'Agotado' : 'Añadir al Carrito'}</span>
             </button>
             <button class="border-2 border-gray-300 py-3 px-6 rounded-lg hover:border-red-500 hover:text-red-500 transition-colors" aria-label="Añadir a favoritos">
               <i class="material-icons">favorite_border</i>
@@ -368,6 +378,52 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
       // Solo alternar collapsed - el CSS hace el resto
       button.classList.toggle('collapsed');
     });
+  });
+
+  // Añadir al carrito
+  import { addToCart } from '@/lib/cart';
+
+  const addToCartBtn = document.getElementById('add-to-cart-btn') as HTMLButtonElement;
+  const cartIcon = document.getElementById('cart-icon');
+  const cartBtnText = document.getElementById('cart-btn-text');
+
+  addToCartBtn?.addEventListener('click', () => {
+    const productId = addToCartBtn.dataset.productId;
+    const productName = addToCartBtn.dataset.productName || '';
+    const productSlug = addToCartBtn.dataset.productSlug || '';
+    const productPrice = parseFloat(addToCartBtn.dataset.productPrice || '0');
+    const productImage = addToCartBtn.dataset.productImage || '';
+    const productStock = parseInt(addToCartBtn.dataset.productStock || '0');
+
+    if (!productId || productStock === 0) return;
+
+    // Obtener cantidad seleccionada
+    const quantityInput = document.querySelector('input[type="number"]') as HTMLInputElement;
+    const quantity = parseInt(quantityInput?.value || '1');
+
+    // Crear objeto del producto para el carrito (estructura correcta de CartItem)
+    const cartItem = {
+      productId: productId,
+      productName: productName,
+      productSlug: productSlug,
+      productImage: productImage,
+      quantity: quantity,
+      unitPrice: productPrice,
+    };
+
+    // Añadir al carrito
+    addToCart(cartItem);
+
+    // Feedback visual
+    addToCartBtn.classList.add('scale-95');
+    if (cartIcon) cartIcon.textContent = 'check';
+    if (cartBtnText) cartBtnText.textContent = '¡Añadido!';
+
+    setTimeout(() => {
+      addToCartBtn.classList.remove('scale-95');
+      if (cartIcon) cartIcon.textContent = 'shopping_bag';
+      if (cartBtnText) cartBtnText.textContent = 'Añadir al Carrito';
+    }, 1500);
   });
 </script>
 

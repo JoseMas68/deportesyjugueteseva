@@ -2,6 +2,9 @@ import { Resend } from 'resend'
 import { prisma } from './prisma'
 import { EmailType, Order, OrderItem, Product } from '@prisma/client'
 
+// Re-exportar EmailType para uso en otros archivos
+export { EmailType }
+
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 type OrderWithItems = Order & {

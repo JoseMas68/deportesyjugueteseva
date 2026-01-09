@@ -1,5 +1,7 @@
+import { Prisma } from '@prisma/client'
+
 // 50 productos con imágenes de Unsplash
-export const getProducts = (categories: any) => {
+export const getProducts = (categories: any): Prisma.ProductCreateManyInput[] => {
   return [
     // ========== RUNNING (8 productos) ==========
     {

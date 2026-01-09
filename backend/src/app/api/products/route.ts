@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const category = searchParams.get('category')
     const sportType = searchParams.get('sportType')
+    const productType = searchParams.get('productType')
     const collectionType = searchParams.get('collectionType')
     const isFeatured = searchParams.get('featured')
     const isNew = searchParams.get('new')
@@ -14,6 +15,7 @@ export async function GET(request: NextRequest) {
     const maxPrice = searchParams.get('maxPrice')
     const search = searchParams.get('search')
     const brand = searchParams.get('brand')
+    const color = searchParams.get('color')
     const inStock = searchParams.get('inStock')
     const sortBy = searchParams.get('sort')
     const limit = parseInt(searchParams.get('limit') || '50')
@@ -30,6 +32,10 @@ export async function GET(request: NextRequest) {
 
     if (sportType) {
       where.sportType = sportType
+    }
+
+    if (productType) {
+      where.productType = productType
     }
 
     if (collectionType) {
@@ -64,6 +70,10 @@ export async function GET(request: NextRequest) {
 
     if (brand) {
       where.brand = { equals: brand, mode: 'insensitive' }
+    }
+
+    if (color) {
+      where.color = { equals: color, mode: 'insensitive' }
     }
 
     if (inStock === 'true') {

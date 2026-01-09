@@ -35,6 +35,10 @@ const url = new URL(Astro.request.url);
 const minPrice = url.searchParams.get('minPrice');
 const maxPrice = url.searchParams.get('maxPrice');
 const brand = url.searchParams.get('brand');
+const color = url.searchParams.get('color');
+const sportType = url.searchParams.get('sportType');
+const productType = url.searchParams.get('productType');
+const collectionType = url.searchParams.get('collectionType');
 const inStock = url.searchParams.get('inStock');
 const sort = url.searchParams.get('sort') || 'relevance';
 const page = parseInt(url.searchParams.get('page') || '1');
@@ -55,6 +59,10 @@ try {
   if (minPrice) filters.minPrice = parseFloat(minPrice);
   if (maxPrice) filters.maxPrice = parseFloat(maxPrice);
   if (brand) filters.brand = brand;
+  if (color) filters.color = color;
+  if (sportType) filters.sportType = sportType;
+  if (productType) filters.productType = productType;
+  if (collectionType) filters.collectionType = collectionType;
   if (inStock === 'true') filters.inStock = true;
   if (sort && sort !== 'relevance') filters.sort = sort;
 
@@ -81,10 +89,77 @@ const priceRanges = [
 // Marcas únicas de los productos (extraídas de la base de datos)
 const brandList = ['Nike', 'Adidas', 'Salomon', 'Arena', 'Speedo', 'Puma', 'The North Face', 'LEGO', 'Hasbro', 'Scalextric', 'Märklin'];
 
+// Colores disponibles
+const colorList = ['Negro', 'Blanco', 'Azul', 'Rojo', 'Verde', 'Amarillo', 'Naranja', 'Rosa', 'Gris', 'Multicolor'];
+
+// Tipos de deporte (solo para la categoría principal "deportes")
+const sportTypeList = [
+  { value: 'RUNNING', label: 'Running' },
+  { value: 'TRAIL_RUNNING', label: 'Trail Running' },
+  { value: 'FITNESS', label: 'Fitness' },
+  { value: 'NATACION', label: 'Natación' },
+  { value: 'OUTDOOR', label: 'Outdoor' },
+  { value: 'CASUAL', label: 'Casual' },
+];
+
+// Tipos de producto por sección
+const productTypeDeportes = [
+  { value: 'ZAPATILLAS', label: 'Zapatillas' },
+  { value: 'CAMISETAS', label: 'Camisetas' },
+  { value: 'PANTALONES', label: 'Pantalones' },
+  { value: 'CHAQUETAS', label: 'Chaquetas' },
+  { value: 'GORRAS', label: 'Gorras' },
+  { value: 'CALCETINES', label: 'Calcetines' },
+  { value: 'ACCESORIOS', label: 'Accesorios' },
+  { value: 'EQUIPAMIENTO', label: 'Equipamiento' },
+];
+
+const productTypeJuguetes = [
+  { value: 'MUNECAS', label: 'Muñecas' },
+  { value: 'VEHICULOS', label: 'Vehículos' },
+  { value: 'CONSTRUCCION', label: 'Construcción' },
+  { value: 'JUEGOS_MESA', label: 'Juegos de Mesa' },
+  { value: 'PELUCHES', label: 'Peluches' },
+  { value: 'FIGURAS', label: 'Figuras' },
+];
+
+const productTypeHobbies = [
+  { value: 'CIRCUITOS', label: 'Circuitos' },
+  { value: 'TRENES', label: 'Trenes' },
+  { value: 'MAQUETAS_AVIONES', label: 'Maquetas Aviones' },
+  { value: 'MAQUETAS_COCHES', label: 'Maquetas Coches' },
+  { value: 'MAQUETAS_BARCOS', label: 'Maquetas Barcos' },
+];
+
+// Tipos de colección (solo para la categoría principal "hobbies")
+const collectionTypeList = [
+  { value: 'SCALEXTRIC', label: 'Scalextric' },
+  { value: 'TRENES_ELECTRICOS', label: 'Trenes Eléctricos' },
+  { value: 'MAQUETAS', label: 'Maquetas' },
+  { value: 'OTROS', label: 'Otros' },
+];
+
+// Determinar qué filtros mostrar según la categoría
+const isDeportes = categorySlug === 'deportes' || ['running', 'trail-running', 'fitness', 'natacion', 'outdoor', 'casual'].includes(categorySlug);
+const isJuguetes = categorySlug === 'juguetes' || ['infantiles', 'educativos', 'aire-libre'].includes(categorySlug);
+const isHobbies = categorySlug === 'hobbies' || ['scalextric', 'trenes', 'maquetas'].includes(categorySlug);
+
+// Solo mostrar filtro de tipo de deporte en la categoría principal "deportes"
+const showSportTypeFilter = categorySlug === 'deportes';
+// Solo mostrar filtro de tipo de colección en la categoría principal "hobbies"
+const showCollectionTypeFilter = categorySlug === 'hobbies';
+
+// Determinar qué tipos de producto mostrar
+const productTypeList = isDeportes ? productTypeDeportes : isJuguetes ? productTypeJuguetes : isHobbies ? productTypeHobbies : [];
+
 // Verificar qué filtros están activos
 const activePriceMin = minPrice ? parseFloat(minPrice) : null;
 const activePriceMax = maxPrice ? parseFloat(maxPrice) : null;
 const activeBrand = brand || null;
+const activeColor = color || null;
+const activeSportType = sportType || null;
+const activeProductType = productType || null;
+const activeCollectionType = collectionType || null;
 const activeInStock = inStock === 'true';
 
 // Construir URL base para filtros
@@ -137,80 +212,231 @@ function buildFilterUrl(params: Record<string, string | null>) {
             </div>
 
             <!-- Precio -->
-            <div class="mb-6 pb-6 border-b border-gray-200">
-              <h3 class="font-bold text-secondary mb-4">Precio</h3>
-              <div class="space-y-2">
-                {priceRanges.map((range) => {
-                  const isActive = activePriceMin === range.minPrice && activePriceMax === range.maxPrice;
-                  const filterUrl = isActive
-                    ? buildFilterUrl({ minPrice: null, maxPrice: null })
-                    : buildFilterUrl({ minPrice: String(range.minPrice), maxPrice: String(range.maxPrice) });
-                  return (
-                    <a href={filterUrl} class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${isActive ? 'font-medium' : ''}`}>
-                      <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isActive ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
-                        {isActive && <i class="material-icons text-xs text-white">check</i>}
-                      </span>
-                      <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${isActive ? 'text-secondary font-bold' : 'text-gray-700'}`}>{range.label}</span>
-                    </a>
-                  );
-                })}
+            <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+              <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                <span class="font-bold text-secondary text-sm">Precio</span>
+                <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
+              </button>
+              <div class="filter-accordion-content">
+                <div class="p-3 bg-white border-t border-gray-200 space-y-2">
+                  {priceRanges.map((range) => {
+                    const isActive = activePriceMin === range.minPrice && activePriceMax === range.maxPrice;
+                    const filterUrl = isActive
+                      ? buildFilterUrl({ minPrice: null, maxPrice: null })
+                      : buildFilterUrl({ minPrice: String(range.minPrice), maxPrice: String(range.maxPrice) });
+                    return (
+                      <a href={filterUrl} class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${isActive ? 'font-medium' : ''}`}>
+                        <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isActive ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
+                          {isActive && <i class="material-icons text-xs text-white">check</i>}
+                        </span>
+                        <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${isActive ? 'text-secondary font-bold' : 'text-gray-700'}`}>{range.label}</span>
+                      </a>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
             <!-- Marca -->
-            <div class="mb-6 pb-6 border-b border-gray-200">
-              <h3 class="font-bold text-secondary mb-4">Marca</h3>
-              <div class="space-y-2 max-h-48 overflow-y-auto">
-                {brandList.map((brandName) => {
-                  const isActive = activeBrand?.toLowerCase() === brandName.toLowerCase();
-                  const filterUrl = isActive
-                    ? buildFilterUrl({ brand: null })
-                    : buildFilterUrl({ brand: brandName });
-                  return (
-                    <a href={filterUrl} class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${isActive ? 'font-medium' : ''}`}>
-                      <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isActive ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
-                        {isActive && <i class="material-icons text-xs text-white">check</i>}
-                      </span>
-                      <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${isActive ? 'text-secondary font-bold' : 'text-gray-700'}`}>{brandName}</span>
-                    </a>
-                  );
-                })}
+            <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+              <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                <span class="font-bold text-secondary text-sm">Marca</span>
+                <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
+              </button>
+              <div class="filter-accordion-content">
+                <div class="p-3 bg-white border-t border-gray-200 space-y-2 max-h-48 overflow-y-auto">
+                  {brandList.map((brandName) => {
+                    const isActive = activeBrand?.toLowerCase() === brandName.toLowerCase();
+                    const filterUrl = isActive
+                      ? buildFilterUrl({ brand: null })
+                      : buildFilterUrl({ brand: brandName });
+                    return (
+                      <a href={filterUrl} class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${isActive ? 'font-medium' : ''}`}>
+                        <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isActive ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
+                          {isActive && <i class="material-icons text-xs text-white">check</i>}
+                        </span>
+                        <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${isActive ? 'text-secondary font-bold' : 'text-gray-700'}`}>{brandName}</span>
+                      </a>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
+            <!-- Color -->
+            <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+              <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                <span class="font-bold text-secondary text-sm">Color</span>
+                <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
+              </button>
+              <div class="filter-accordion-content">
+                <div class="p-3 bg-white border-t border-gray-200 space-y-2 max-h-48 overflow-y-auto">
+                  {colorList.map((colorName) => {
+                    const isActive = activeColor?.toLowerCase() === colorName.toLowerCase();
+                    const filterUrl = isActive
+                      ? buildFilterUrl({ color: null })
+                      : buildFilterUrl({ color: colorName });
+                    return (
+                      <a href={filterUrl} class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${isActive ? 'font-medium' : ''}`}>
+                        <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isActive ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
+                          {isActive && <i class="material-icons text-xs text-white">check</i>}
+                        </span>
+                        <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${isActive ? 'text-secondary font-bold' : 'text-gray-700'}`}>{colorName}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <!-- Tipo de Deporte (solo para categoría principal "deportes") -->
+            {showSportTypeFilter && (
+              <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+                <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                  <span class="font-bold text-secondary text-sm">Tipo de Deporte</span>
+                  <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
+                </button>
+                <div class="filter-accordion-content">
+                  <div class="p-3 bg-white border-t border-gray-200 space-y-2">
+                    {sportTypeList.map((sport) => {
+                      const isActive = activeSportType === sport.value;
+                      const filterUrl = isActive
+                        ? buildFilterUrl({ sportType: null })
+                        : buildFilterUrl({ sportType: sport.value });
+                      return (
+                        <a href={filterUrl} class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${isActive ? 'font-medium' : ''}`}>
+                          <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isActive ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
+                            {isActive && <i class="material-icons text-xs text-white">check</i>}
+                          </span>
+                          <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${isActive ? 'text-secondary font-bold' : 'text-gray-700'}`}>{sport.label}</span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <!-- Tipo de Colección (solo para categoría principal "hobbies") -->
+            {showCollectionTypeFilter && (
+              <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+                <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                  <span class="font-bold text-secondary text-sm">Tipo de Colección</span>
+                  <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
+                </button>
+                <div class="filter-accordion-content">
+                  <div class="p-3 bg-white border-t border-gray-200 space-y-2">
+                    {collectionTypeList.map((collection) => {
+                      const isActive = activeCollectionType === collection.value;
+                      const filterUrl = isActive
+                        ? buildFilterUrl({ collectionType: null })
+                        : buildFilterUrl({ collectionType: collection.value });
+                      return (
+                        <a href={filterUrl} class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${isActive ? 'font-medium' : ''}`}>
+                          <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isActive ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
+                            {isActive && <i class="material-icons text-xs text-white">check</i>}
+                          </span>
+                          <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${isActive ? 'text-secondary font-bold' : 'text-gray-700'}`}>{collection.label}</span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <!-- Tipo de Producto -->
+            {productTypeList.length > 0 && (
+              <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+                <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                  <span class="font-bold text-secondary text-sm">Tipo de Producto</span>
+                  <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
+                </button>
+                <div class="filter-accordion-content">
+                  <div class="p-3 bg-white border-t border-gray-200 space-y-2 max-h-48 overflow-y-auto">
+                    {productTypeList.map((pType) => {
+                      const isActive = activeProductType === pType.value;
+                      const filterUrl = isActive
+                        ? buildFilterUrl({ productType: null })
+                        : buildFilterUrl({ productType: pType.value });
+                      return (
+                        <a href={filterUrl} class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${isActive ? 'font-medium' : ''}`}>
+                          <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isActive ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
+                            {isActive && <i class="material-icons text-xs text-white">check</i>}
+                          </span>
+                          <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${isActive ? 'text-secondary font-bold' : 'text-gray-700'}`}>{pType.label}</span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <!-- Disponibilidad -->
-            <div>
-              <h3 class="font-bold text-secondary mb-4">Disponibilidad</h3>
-              <a
-                href={buildFilterUrl({ inStock: activeInStock ? null : 'true' })}
-                class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${activeInStock ? 'font-medium' : ''}`}
-              >
-                <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${activeInStock ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
-                  {activeInStock && <i class="material-icons text-xs text-white">check</i>}
-                </span>
-                <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${activeInStock ? 'text-secondary font-bold' : 'text-gray-700'}`}>En stock</span>
-              </a>
+            <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+              <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                <span class="font-bold text-secondary text-sm">Disponibilidad</span>
+                <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
+              </button>
+              <div class="filter-accordion-content">
+                <div class="p-3 bg-white border-t border-gray-200">
+                  <a
+                    href={buildFilterUrl({ inStock: activeInStock ? null : 'true' })}
+                    class={`flex items-center gap-2 cursor-pointer group transition-transform duration-200 hover:scale-105 origin-left ${activeInStock ? 'font-medium' : ''}`}
+                  >
+                    <span class={`w-4 h-4 rounded border flex items-center justify-center transition-all ${activeInStock ? 'bg-secondary border-secondary' : 'border-gray-300 group-hover:border-secondary'}`}>
+                      {activeInStock && <i class="material-icons text-xs text-white">check</i>}
+                    </span>
+                    <span class={`text-sm transition-all duration-200 group-hover:text-secondary group-hover:font-bold ${activeInStock ? 'text-secondary font-bold' : 'text-gray-700'}`}>En stock</span>
+                  </a>
+                </div>
+              </div>
             </div>
 
             <!-- Filtros activos -->
-            {(activePriceMin !== null || activeBrand || activeInStock) && (
+            {(activePriceMin !== null || activeBrand || activeColor || activeSportType || activeProductType || activeCollectionType || activeInStock) && (
               <div class="mt-6 pt-6 border-t border-gray-200">
                 <p class="text-xs text-gray-500 mb-2">Filtros activos:</p>
                 <div class="flex flex-wrap gap-2">
                   {activePriceMin !== null && (
-                    <a href={buildFilterUrl({ minPrice: null, maxPrice: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded">
+                    <a href={buildFilterUrl({ minPrice: null, maxPrice: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors">
                       {priceRanges.find(r => r.minPrice === activePriceMin)?.label}
                       <i class="material-icons text-xs">close</i>
                     </a>
                   )}
                   {activeBrand && (
-                    <a href={buildFilterUrl({ brand: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded">
+                    <a href={buildFilterUrl({ brand: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors">
                       {activeBrand}
                       <i class="material-icons text-xs">close</i>
                     </a>
                   )}
+                  {activeColor && (
+                    <a href={buildFilterUrl({ color: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors">
+                      {activeColor}
+                      <i class="material-icons text-xs">close</i>
+                    </a>
+                  )}
+                  {activeSportType && (
+                    <a href={buildFilterUrl({ sportType: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors">
+                      {sportTypeList.find(s => s.value === activeSportType)?.label}
+                      <i class="material-icons text-xs">close</i>
+                    </a>
+                  )}
+                  {activeProductType && (
+                    <a href={buildFilterUrl({ productType: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors">
+                      {productTypeList.find(p => p.value === activeProductType)?.label}
+                      <i class="material-icons text-xs">close</i>
+                    </a>
+                  )}
+                  {activeCollectionType && (
+                    <a href={buildFilterUrl({ collectionType: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors">
+                      {collectionTypeList.find(c => c.value === activeCollectionType)?.label}
+                      <i class="material-icons text-xs">close</i>
+                    </a>
+                  )}
                   {activeInStock && (
-                    <a href={buildFilterUrl({ inStock: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded">
+                    <a href={buildFilterUrl({ inStock: null })} class="inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors">
                       En stock
                       <i class="material-icons text-xs">close</i>
                     </a>
@@ -429,4 +655,33 @@ function buildFilterUrl(params: Record<string, string | null>) {
     gridViews.forEach(el => el.classList.add('hidden'));
     listViews.forEach(el => el.classList.remove('hidden'));
   });
+
+  // Filter accordions
+  const filterAccordionButtons = document.querySelectorAll('.filter-accordion-button');
+  filterAccordionButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      button.classList.toggle('collapsed');
+    });
+  });
 </script>
+
+<style>
+  /* Filter accordion styles */
+  .filter-accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .filter-accordion-button:not(.collapsed) + .filter-accordion-content {
+    max-height: 500px;
+  }
+
+  .filter-accordion-icon {
+    transition: transform 0.3s ease;
+  }
+
+  .filter-accordion-button:not(.collapsed) .filter-accordion-icon {
+    transform: rotate(180deg);
+  }
+</style>
