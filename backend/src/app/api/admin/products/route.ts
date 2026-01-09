@@ -4,6 +4,20 @@ import { getAdminSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
+// Schema para variante
+const variantSchema = z.object({
+  id: z.string().optional(),
+  size: z.string().optional().nullable(),
+  color: z.string().optional().nullable(),
+  colorHex: z.string().optional().nullable(),
+  material: z.string().optional().nullable(),
+  price: z.number().positive().optional().nullable(),
+  stock: z.number().int().min(0).default(0),
+  sku: z.string().optional().nullable(),
+  imageUrl: z.string().optional().nullable(),
+  isActive: z.boolean().default(true),
+})
+
 // Schema de validacion para crear producto
 const createProductSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio'),
@@ -21,6 +35,8 @@ const createProductSchema = z.object({
   isNew: z.boolean().default(false),
   isBestSeller: z.boolean().default(false),
   isActive: z.boolean().default(true),
+  hasVariants: z.boolean().default(false),
+  variants: z.array(variantSchema).optional(),
 })
 
 // GET - Listar productos
@@ -75,6 +91,7 @@ export async function GET(request: NextRequest) {
           category: {
             select: { id: true, name: true, slug: true },
           },
+          variants: true,
         },
         orderBy: { updatedAt: 'desc' },
         take: limit,
@@ -88,6 +105,10 @@ export async function GET(request: NextRequest) {
       ...p,
       price: Number(p.price),
       compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+      variants: p.variants.map(v => ({
+        ...v,
+        price: v.price ? Number(v.price) : null,
+      })),
     }))
 
     return NextResponse.json({
@@ -128,8 +149,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generar SKU si no se proporciona
-    const sku = validated.sku || await generateSku()
+    // Generar SKU único
+    let sku: string
+    if (validated.sku && validated.sku.trim()) {
+      sku = validated.sku.trim()
+      // Verificar que no exista
+      const skuExists = await prisma.product.findUnique({ where: { sku } })
+      if (skuExists) {
+        return NextResponse.json(
+          { error: `El SKU "${sku}" ya existe` },
+          { status: 400 }
+        )
+      }
+    } else {
+      // Generar SKU único con timestamp
+      sku = `EVA-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+    }
+    console.log('SKU final:', sku)
 
     const product = await prisma.product.create({
       data: {
@@ -148,11 +184,32 @@ export async function POST(request: NextRequest) {
         isNew: validated.isNew,
         isBestSeller: validated.isBestSeller,
         isActive: validated.isActive,
+        hasVariants: validated.hasVariants,
+        // Si tiene variantes, el stock es la suma de las variantes
+        stock: validated.hasVariants && validated.variants?.length
+          ? validated.variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+          : validated.stock,
+        variants: validated.hasVariants && validated.variants?.length
+          ? {
+              create: validated.variants.map(v => ({
+                size: v.size || null,
+                color: v.color || null,
+                colorHex: v.colorHex || null,
+                material: v.material || null,
+                price: v.price,
+                stock: v.stock,
+                sku: v.sku && v.sku.trim() ? v.sku.trim() : null,
+                imageUrl: v.imageUrl || null,
+                isActive: v.isActive,
+              })),
+            }
+          : undefined,
       },
       include: {
         category: {
           select: { id: true, name: true, slug: true },
         },
+        variants: true,
       },
     })
 
@@ -161,6 +218,10 @@ export async function POST(request: NextRequest) {
         ...product,
         price: Number(product.price),
         compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+        variants: product.variants.map(v => ({
+          ...v,
+          price: v.price ? Number(v.price) : null,
+        })),
       },
     })
   } catch (error) {
@@ -191,7 +252,27 @@ function generateSlug(name: string): string {
 }
 
 async function generateSku(): Promise<string> {
-  const count = await prisma.product.count()
-  const number = (count + 1).toString().padStart(6, '0')
-  return `EVA-${number}`
+  // Buscar todos los SKUs que empiezan con EVA-
+  const products = await prisma.product.findMany({
+    where: {
+      sku: { startsWith: 'EVA-' }
+    },
+    select: { sku: true }
+  })
+
+  // Encontrar el número más alto
+  let maxNumber = 0
+  for (const p of products) {
+    if (p.sku) {
+      const match = p.sku.match(/EVA-(\d+)/)
+      if (match) {
+        const num = parseInt(match[1], 10)
+        if (num > maxNumber) maxNumber = num
+      }
+    }
+  }
+
+  // El siguiente número
+  const nextNumber = maxNumber + 1
+  return `EVA-${nextNumber.toString().padStart(6, '0')}`
 }

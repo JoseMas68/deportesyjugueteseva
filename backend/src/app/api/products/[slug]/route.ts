@@ -16,6 +16,10 @@ export async function GET(
             parent: true,
           },
         },
+        variants: {
+          where: { isActive: true },
+          orderBy: [{ size: 'asc' }, { color: 'asc' }],
+        },
       },
     })
 

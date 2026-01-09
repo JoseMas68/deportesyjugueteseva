@@ -1,5 +1,6 @@
 ---
 import '@/styles/global.css';
+import Toast from '@/components/Toast.astro';
 
 interface Props {
   title?: string;
@@ -38,6 +39,9 @@ const {
   </head>
   <body>
     <slot />
+
+    <!-- Toast Notifications -->
+    <Toast />
 
     <!-- Script para actualizar el contador del carrito -->
     <script>

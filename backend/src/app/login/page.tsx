@@ -159,7 +159,7 @@ function LoginForm() {
         </div>
 
         <p className="text-center text-gray-500 text-sm mt-6">
-          &copy; 2024 Deportes y Juguetes Eva. Todos los derechos reservados.
+          &copy; 2026 Deportes y Juguetes Eva. Todos los derechos reservados.
         </p>
       </div>
     </div>

@@ -120,6 +120,18 @@ export async function getCategories(): Promise<{
 }
 
 /**
+ * Obtiene subcategorías destacadas (isFeatured = true)
+ */
+export async function getFeaturedCategories(): Promise<{
+  categories: (Category & { parent?: { id: string; name: string; slug: string } })[];
+}> {
+  const response = await fetch(`${API_URL}/categories?featured=true`);
+  if (!response.ok) throw new Error('Error fetching featured categories');
+
+  return response.json();
+}
+
+/**
  * Realiza el checkout
  */
 export async function checkout(data: CheckoutData): Promise<{

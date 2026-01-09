@@ -56,6 +56,9 @@ export default async function ProductosPage({
         category: {
           select: { id: true, name: true },
         },
+        variants: {
+          select: { id: true, size: true, color: true, colorHex: true, stock: true },
+        },
       },
       orderBy: { updatedAt: 'desc' },
       take: limit,
@@ -225,15 +228,39 @@ export default async function ProductosPage({
                     </div>
                   </td>
                   <td>
-                    <span className={`font-medium ${
-                      product.stock === 0
-                        ? 'text-red-600'
-                        : product.stock < 5
-                        ? 'text-yellow-600'
-                        : 'text-green-600'
-                    }`}>
-                      {product.stock}
-                    </span>
+                    <div>
+                      <span className={`font-medium ${
+                        product.stock === 0
+                          ? 'text-red-600'
+                          : product.stock < 5
+                          ? 'text-yellow-600'
+                          : 'text-green-600'
+                      }`}>
+                        {product.stock}
+                      </span>
+                      {product.hasVariants && product.variants.length > 0 && (
+                        <div className="mt-1 text-xs text-gray-500 max-w-[200px]">
+                          {product.variants.slice(0, 3).map((v, i) => {
+                            const label = [v.size, v.color].filter(Boolean).join(' ') || `Var ${i + 1}`
+                            const stockClass = v.stock === 0 ? 'text-red-500' : v.stock < 3 ? 'text-yellow-600' : 'text-gray-600'
+                            return (
+                              <span key={v.id} className="inline-flex items-center mr-2">
+                                {v.colorHex && (
+                                  <span
+                                    className="w-2 h-2 rounded-full mr-1 border border-gray-300"
+                                    style={{ backgroundColor: v.colorHex }}
+                                  />
+                                )}
+                                <span className={stockClass}>{label}: {v.stock}</span>
+                              </span>
+                            )
+                          })}
+                          {product.variants.length > 3 && (
+                            <span className="text-gray-400">+{product.variants.length - 3} mas</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td>
                     {product.isActive ? (

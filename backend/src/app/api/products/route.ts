@@ -23,7 +23,14 @@ export async function GET(request: NextRequest) {
 
     const where: any = {
       isActive: true,
-      publishedAt: { lte: new Date() },
+      AND: [
+        {
+          OR: [
+            { publishedAt: null },
+            { publishedAt: { lte: new Date() } },
+          ],
+        },
+      ],
     }
 
     if (category) {
@@ -61,11 +68,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { brand: { contains: search, mode: 'insensitive' } },
-      ]
+      where.AND.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { brand: { contains: search, mode: 'insensitive' } },
+        ],
+      })
     }
 
     if (brand) {

@@ -2,71 +2,6 @@
 import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
-
-// Mock cart items
-const cartItems = [
-  {
-    id: 1,
-    name: 'Balón de Fútbol Pro',
-    slug: 'balon-futbol-pro',
-    price: 29.99,
-    quantity: 1,
-    size: '5',
-    stock: 'En Stock',
-    image: '/products/balon-futbol.jpg'
-  },
-  {
-    id: 2,
-    name: 'Zapatillas Running X1',
-    slug: 'zapatillas-running-x1',
-    price: 89.99,
-    quantity: 1,
-    size: '42',
-    stock: 'En Stock',
-    image: '/products/zapatillas.jpg'
-  }
-];
-
-// Mock "podría interesarte" products
-const suggestedProducts = [
-  {
-    id: 3,
-    name: 'Mochila Deportiva',
-    slug: 'mochila-deportiva',
-    price: 39.99,
-    originalPrice: 49.99,
-    discount: 20,
-    image: '/products/mochila.jpg'
-  },
-  {
-    id: 4,
-    name: 'Botella Térmica',
-    slug: 'botella-termica',
-    price: 19.99,
-    image: '/products/botella.jpg'
-  },
-  {
-    id: 5,
-    name: 'Toalla Microfibra',
-    slug: 'toalla-microfibra',
-    price: 14.99,
-    image: '/products/toalla.jpg'
-  },
-  {
-    id: 6,
-    name: 'Guantes Gimnasio',
-    slug: 'guantes-gimnasio',
-    price: 24.99,
-    originalPrice: 34.99,
-    discount: 29,
-    image: '/products/guantes-gym.jpg'
-  }
-];
-
-const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-const shipping = subtotal > 50 ? 0 : 5.90;
-const tax = subtotal * 0.19;
-const total = subtotal + shipping + tax;
 ---
 
 <Layout title="Carrito de Compras - Deportes y Juguetes Eva" description="Tu carrito de compras">
@@ -86,12 +21,27 @@ const total = subtotal + shipping + tax;
 
     <div class="container mx-auto px-4 py-8 lg:py-12">
       <!-- Título -->
-      <h1 class="text-4xl lg:text-5xl font-display font-extrabold uppercase italic text-secondary mb-2">
-        Tu <span class="text-primary">Carrito</span>
+      <h1 class="text-4xl lg:text-5xl font-display font-extrabold uppercase italic text-secondary mb-2 relative inline-block">
+        Tu Carrito
+        <span class="absolute bottom-0 left-0 w-[3ch] h-1 bg-primary"></span>
       </h1>
-      <p class="text-gray-600 mb-8">{cartItems.length} artículos en tu carrito</p>
+      <p class="text-gray-600 mb-8" id="cart-count-text">Cargando carrito...</p>
 
-      <div class="grid lg:grid-cols-12 gap-8">
+      <!-- Carrito vacío (oculto por defecto) -->
+      <div id="empty-cart" class="hidden text-center py-16">
+        <div class="max-w-md mx-auto">
+          <i class="material-icons text-gray-300 text-8xl mb-4">shopping_cart</i>
+          <h2 class="text-2xl font-bold text-gray-700 mb-2">Tu carrito está vacío</h2>
+          <p class="text-gray-500 mb-6">Parece que aún no has añadido ningún producto a tu carrito.</p>
+          <a href="/" class="btn bg-primary text-black font-bold py-3 px-8 rounded hover:bg-yellow-400 transition-colors inline-flex items-center gap-2">
+            <i class="material-icons">arrow_back</i>
+            Explorar Productos
+          </a>
+        </div>
+      </div>
+
+      <!-- Contenido del carrito -->
+      <div id="cart-content" class="grid lg:grid-cols-12 gap-8">
         <!-- Tabla de Productos -->
         <div class="lg:col-span-8">
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -103,69 +53,20 @@ const total = subtotal + shipping + tax;
               <div class="text-right">Total</div>
             </div>
 
-            <!-- Items -->
-            <div>
-              {cartItems.map((item) => (
-                <div class="p-4 sm:p-6 border-b border-gray-200 hover:bg-gray-50 transition-colors group">
-                  <div class="flex flex-col sm:grid sm:grid-cols-6 gap-6 items-center">
-                    <!-- Producto -->
-                    <div class="col-span-3 flex items-center w-full">
-                      <div class="flex-shrink-0 w-24 h-24 bg-white rounded-md border border-gray-200 overflow-hidden relative">
-                        <img class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300" src={item.image} alt={item.name} />
-                      </div>
-                      <div class="ml-4 flex-1">
-                        <h3 class="text-lg font-bold font-display uppercase italic text-secondary">
-                          <a href={`/producto/${item.slug}`} class="hover:text-primary transition-colors">{item.name}</a>
-                        </h3>
-                        <p class="mt-1 text-sm text-gray-500">Talla: {item.size}</p>
-                        <p class="mt-1 text-sm text-green-600 font-medium">{item.stock}</p>
-                        <!-- Botón eliminar mobile -->
-                        <button class="sm:hidden mt-2 text-red-500 text-sm flex items-center gap-1 hover:text-red-700 transition-colors remove-item" data-id={item.id}>
-                          <i class="material-icons text-sm">delete</i> Eliminar
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Precio -->
-                    <div class="text-center w-full sm:w-auto">
-                      <span class="sm:hidden text-gray-500 text-xs uppercase mr-2">Precio:</span>
-                      <span class="font-medium text-secondary">{item.price.toFixed(2)}€</span>
-                    </div>
-
-                    <!-- Cantidad -->
-                    <div class="flex justify-center w-full sm:w-auto">
-                      <div class="flex items-center border border-gray-200 rounded bg-white">
-                        <button class="decrease-qty px-2 py-1 text-gray-600 hover:bg-gray-100 transition-colors" data-id={item.id}>
-                          <i class="material-icons text-sm">remove</i>
-                        </button>
-                        <input class="quantity-input w-10 text-center text-sm border-0 focus:ring-0 bg-transparent p-1 text-secondary" type="text" value={item.quantity} data-id={item.id} />
-                        <button class="increase-qty px-2 py-1 text-gray-600 hover:bg-gray-100 transition-colors" data-id={item.id}>
-                          <i class="material-icons text-sm">add</i>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Total -->
-                    <div class="text-right flex flex-col items-end justify-between h-full w-full sm:w-auto">
-                      <span class="font-bold text-secondary text-lg item-total" data-id={item.id}>{(item.price * item.quantity).toFixed(2)}€</span>
-                      <button class="hidden sm:flex text-gray-400 hover:text-red-500 transition-colors mt-2 remove-item" data-id={item.id} title="Eliminar producto">
-                        <i class="material-icons">delete_outline</i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <!-- Items Container -->
+            <div id="cart-items">
+              <!-- Items se insertan via JS -->
             </div>
 
             <!-- Footer -->
             <div class="p-4 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div class="flex w-full sm:w-auto gap-2">
-                <input class="w-full sm:w-48 rounded border-gray-300 bg-white text-sm focus:border-primary focus:ring-primary px-3 py-2" placeholder="Código de cupón" type="text" />
-                <button class="bg-secondary text-white px-4 py-2 rounded text-sm font-medium hover:bg-black transition-colors uppercase tracking-wide">
+                <input class="w-full sm:w-48 rounded border-gray-300 bg-white text-sm focus:border-primary focus:ring-primary px-3 py-2" placeholder="Código de cupón" type="text" id="coupon-input" />
+                <button class="bg-secondary text-white px-4 py-2 rounded text-sm font-medium hover:bg-black transition-colors uppercase tracking-wide" id="apply-coupon">
                   Aplicar
                 </button>
               </div>
-              <button class="text-sm text-primary hover:text-yellow-600 font-medium underline uppercase tracking-wide clear-cart">
+              <button class="text-sm text-red-500 hover:text-red-700 font-medium underline uppercase tracking-wide" id="clear-cart">
                 Vaciar Carrito
               </button>
             </div>
@@ -186,28 +87,24 @@ const total = subtotal + shipping + tax;
             <dl class="space-y-4 text-sm text-gray-600">
               <div class="flex justify-between">
                 <dt>Subtotal</dt>
-                <dd class="font-medium text-secondary" id="cart-subtotal">{subtotal.toFixed(2)}€</dd>
+                <dd class="font-medium text-secondary" id="summary-subtotal">0.00€</dd>
               </div>
               <div class="flex justify-between">
                 <dt class="flex items-center">
                   Envío
-                  <i class="ml-1.5 material-icons text-xs text-gray-400 cursor-help" title="Calculado en el siguiente paso">help_outline</i>
+                  <i class="ml-1.5 material-icons text-xs text-gray-400 cursor-help" title="Gratis a partir de 50€">help_outline</i>
                 </dt>
-                <dd class="font-medium text-secondary" id="cart-shipping">{shipping === 0 ? 'Gratis' : shipping.toFixed(2) + '€'}</dd>
-              </div>
-              <div class="flex justify-between">
-                <dt>Impuestos (19%)</dt>
-                <dd class="font-medium text-secondary" id="cart-tax">{tax.toFixed(2)}€</dd>
+                <dd class="font-medium text-secondary" id="summary-shipping">4.99€</dd>
               </div>
               <div class="border-t border-gray-200 pt-4 flex justify-between items-center">
                 <dt class="text-base font-bold text-secondary uppercase">Total</dt>
-                <dd class="text-2xl font-bold text-primary font-display italic" id="cart-total">{total.toFixed(2)}€</dd>
+                <dd class="text-2xl font-bold text-secondary font-display italic" id="summary-total">0.00€</dd>
               </div>
             </dl>
 
             <!-- Botón Finalizar -->
             <div class="mt-8">
-              <a href="/checkout" class="w-full bg-primary hover:bg-yellow-400 text-black font-bold py-4 px-6 rounded shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 uppercase tracking-widest flex justify-center items-center gap-2 group">
+              <a href="/checkout" id="checkout-btn" class="w-full bg-primary hover:bg-yellow-400 text-black font-bold py-4 px-6 rounded shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 uppercase tracking-widest flex justify-center items-center gap-2 group">
                 Finalizar Compra
                 <i class="material-icons group-hover:translate-x-1 transition-transform">arrow_forward</i>
               </a>
@@ -230,41 +127,6 @@ const total = subtotal + shipping + tax;
           </div>
         </div>
       </div>
-
-      <!-- Podría Interesarte -->
-      <section class="mt-16 border-t border-gray-200 pt-12">
-        <h2 class="text-3xl font-display font-extrabold uppercase italic text-secondary mb-8">
-          Podría <span class="text-primary">Interesarte</span>
-        </h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {suggestedProducts.map((product) => (
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all">
-              <div class="aspect-square bg-gray-50 flex items-center justify-center overflow-hidden relative">
-                <img class="object-contain h-48 hover:scale-110 transition duration-300" src={product.image} alt={product.name} />
-                {product.discount && (
-                  <span class="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
-                    -{product.discount}%
-                  </span>
-                )}
-              </div>
-              <div class="p-4">
-                <h3 class="font-bold text-secondary text-sm leading-tight mb-2 line-clamp-2">{product.name}</h3>
-                <div class="flex items-center justify-between mb-3">
-                  <div>
-                    {product.originalPrice && (
-                      <span class="text-gray-400 line-through text-xs mr-2">{product.originalPrice.toFixed(2)}€</span>
-                    )}
-                    <span class="text-lg font-bold text-secondary">{product.price.toFixed(2)}€</span>
-                  </div>
-                </div>
-                <button class="w-full bg-secondary text-white hover:bg-primary hover:text-black py-2 px-4 rounded-lg font-bold text-sm uppercase transition-colors">
-                  Agregar
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   </main>
 
@@ -272,81 +134,230 @@ const total = subtotal + shipping + tax;
 </Layout>
 
 <script>
-  // Incrementar/Decrementar cantidad
-  const decreaseButtons = document.querySelectorAll('.decrease-qty');
-  const increaseButtons = document.querySelectorAll('.increase-qty');
-  const quantityInputs = document.querySelectorAll('.quantity-input');
+  import { getCart, updateQuantity, removeFromCart, clearCart, getCartSubtotal, getShippingCost, getCartTotalWithShipping } from '@/lib/cart';
+  import type { CartItem } from '@/lib/cart';
+  import { toastSuccess, toastInfo } from '@/lib/toast';
 
-  decreaseButtons.forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const target = e.currentTarget as HTMLButtonElement;
-      const id = target.getAttribute('data-id');
-      const input = document.querySelector(`.quantity-input[data-id="${id}"]`) as HTMLInputElement;
-      const currentValue = parseInt(input.value);
-      if (currentValue > 1) {
-        input.value = (currentValue - 1).toString();
-        updateItemTotal(id);
-      }
-    });
-  });
+  const FREE_SHIPPING_THRESHOLD = 50;
 
-  increaseButtons.forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const target = e.currentTarget as HTMLButtonElement;
-      const id = target.getAttribute('data-id');
-      const input = document.querySelector(`.quantity-input[data-id="${id}"]`) as HTMLInputElement;
-      const currentValue = parseInt(input.value);
-      input.value = (currentValue + 1).toString();
-      updateItemTotal(id);
-    });
-  });
+  // Función para limpiar items inválidos del carrito
+  function cleanInvalidCartItems() {
+    const cart = getCart();
+    const validCart = cart.filter(item =>
+      item.productId &&
+      item.productName &&
+      typeof item.unitPrice === 'number' &&
+      !isNaN(item.unitPrice)
+    );
 
-  // Eliminar producto
-  const removeButtons = document.querySelectorAll('.remove-item');
-  removeButtons.forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const target = e.currentTarget as HTMLButtonElement;
-      const id = target.getAttribute('data-id');
-      if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-        // Aquí iría la llamada al API para eliminar el item
-        const item = target.closest('.group');
-        item?.remove();
-        updateCartTotals();
-      }
-    });
-  });
-
-  // Vaciar carrito
-  const clearCartBtn = document.querySelector('.clear-cart');
-  clearCartBtn?.addEventListener('click', () => {
-    if (confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
-      // Aquí iría la llamada al API
-      window.location.reload();
-    }
-  });
-
-  // Actualizar total del item
-  function updateItemTotal(itemId: string | null) {
-    if (!itemId) return;
-
-    const input = document.querySelector(`.quantity-input[data-id="${itemId}"]`) as HTMLInputElement;
-    const itemTotal = document.querySelector(`.item-total[data-id="${itemId}"]`);
-
-    // Mock price - en producción vendría del servidor
-    const pricePerUnit = 29.99; // Esto debería venir de los datos del producto
-    const quantity = parseInt(input.value);
-    const total = pricePerUnit * quantity;
-
-    if (itemTotal) {
-      itemTotal.textContent = `${total.toFixed(2)}€`;
+    if (validCart.length !== cart.length) {
+      console.log('Removed invalid cart items:', cart.length - validCart.length);
+      // Guardar carrito limpio
+      localStorage.setItem('eva_cart', JSON.stringify(validCart));
     }
 
-    updateCartTotals();
+    return validCart;
   }
 
-  // Actualizar totales del carrito
-  function updateCartTotals() {
-    // En producción, esto haría una llamada al API para recalcular totales
-    console.log('Actualizando totales del carrito...');
+  // Función para inicializar todo cuando el DOM esté listo
+  function initCart() {
+    console.log('initCart called');
+    // Limpiar items inválidos primero
+    const cart = cleanInvalidCartItems();
+    console.log('Cart contents (cleaned):', cart);
+    renderCart();
+  }
+
+  function renderCartItem(item: CartItem): string {
+    // Validar que el item tenga todos los campos necesarios
+    const unitPrice = item.unitPrice || 0;
+    const totalPrice = item.totalPrice || (unitPrice * (item.quantity || 1));
+    const quantity = item.quantity || 1;
+
+    return `
+      <div class="p-4 sm:p-6 border-b border-gray-200 hover:bg-gray-50 transition-colors group cart-item" data-id="${item.productId}">
+        <div class="flex flex-col sm:grid sm:grid-cols-6 gap-6 items-center">
+          <!-- Producto -->
+          <div class="col-span-3 flex items-center w-full">
+            <div class="flex-shrink-0 w-24 h-24 bg-white rounded-md border border-gray-200 overflow-hidden relative">
+              <img class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300" src="${item.productImage || '/placeholder.jpg'}" alt="${item.productName}" />
+            </div>
+            <div class="ml-4 flex-1">
+              <h3 class="text-lg font-bold font-display uppercase italic text-secondary">
+                <a href="/producto/${item.productSlug}" class="hover:text-primary transition-colors">${item.productName}</a>
+              </h3>
+              <p class="mt-1 text-sm text-green-600 font-medium">En Stock</p>
+              <!-- Botón eliminar mobile -->
+              <button class="sm:hidden mt-2 text-red-500 text-sm flex items-center gap-1 hover:text-red-700 transition-colors remove-item" data-id="${item.productId}">
+                <i class="material-icons text-sm">delete</i> Eliminar
+              </button>
+            </div>
+          </div>
+
+          <!-- Precio -->
+          <div class="text-center w-full sm:w-auto">
+            <span class="sm:hidden text-gray-500 text-xs uppercase mr-2">Precio:</span>
+            <span class="font-medium text-secondary">${unitPrice.toFixed(2)}€</span>
+          </div>
+
+          <!-- Cantidad -->
+          <div class="flex justify-center w-full sm:w-auto">
+            <div class="flex items-center border border-gray-200 rounded bg-white">
+              <button class="decrease-qty px-2 py-1 text-gray-600 hover:bg-gray-100 transition-colors" data-id="${item.productId}">
+                <i class="material-icons text-sm">remove</i>
+              </button>
+              <input class="quantity-input w-10 text-center text-sm border-0 focus:ring-0 bg-transparent p-1 text-secondary" type="text" value="${quantity}" data-id="${item.productId}" data-price="${unitPrice}" readonly />
+              <button class="increase-qty px-2 py-1 text-gray-600 hover:bg-gray-100 transition-colors" data-id="${item.productId}">
+                <i class="material-icons text-sm">add</i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Total -->
+          <div class="text-right flex flex-col items-end justify-between h-full w-full sm:w-auto">
+            <span class="font-bold text-secondary text-lg item-total">${totalPrice.toFixed(2)}€</span>
+            <button class="hidden sm:flex text-gray-400 hover:text-red-500 transition-colors mt-2 remove-item" data-id="${item.productId}" title="Eliminar producto">
+              <i class="material-icons">delete_outline</i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCart() {
+    const cart = getCart();
+    const itemsContainer = document.getElementById('cart-items');
+    const cartContent = document.getElementById('cart-content');
+    const emptyCart = document.getElementById('empty-cart');
+    const countText = document.getElementById('cart-count-text');
+
+    if (!itemsContainer || !cartContent || !emptyCart || !countText) return;
+
+    if (cart.length === 0) {
+      cartContent.classList.add('hidden');
+      emptyCart.classList.remove('hidden');
+      countText.textContent = '0 artículos en tu carrito';
+      return;
+    }
+
+    cartContent.classList.remove('hidden');
+    emptyCart.classList.add('hidden');
+
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    countText.textContent = `${totalItems} artículo${totalItems !== 1 ? 's' : ''} en tu carrito`;
+
+    itemsContainer.innerHTML = cart.map(renderCartItem).join('');
+
+    updateSummary();
+    attachEventListeners();
+  }
+
+  function updateSummary() {
+    const subtotal = getCartSubtotal();
+    const shipping = getShippingCost();
+    const total = getCartTotalWithShipping();
+
+    const subtotalEl = document.getElementById('summary-subtotal');
+    const shippingEl = document.getElementById('summary-shipping');
+    const totalEl = document.getElementById('summary-total');
+
+    if (subtotalEl) subtotalEl.textContent = `${subtotal.toFixed(2)}€`;
+    if (shippingEl) {
+      shippingEl.textContent = shipping === 0 ? 'Gratis' : `${shipping.toFixed(2)}€`;
+      if (subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
+        const remaining = FREE_SHIPPING_THRESHOLD - subtotal;
+        shippingEl.innerHTML = `${shipping.toFixed(2)}€ <span class="block text-xs text-gray-400">Faltan ${remaining.toFixed(2)}€ para envío gratis</span>`;
+      }
+    }
+    if (totalEl) totalEl.textContent = `${total.toFixed(2)}€`;
+  }
+
+  function attachEventListeners() {
+    // Decrease quantity buttons
+    document.querySelectorAll('.decrease-qty').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget as HTMLButtonElement;
+        const id = target.getAttribute('data-id');
+        if (!id) return;
+
+        const input = document.querySelector(`.quantity-input[data-id="${id}"]`) as HTMLInputElement;
+        const currentValue = parseInt(input.value);
+        if (currentValue > 1) {
+          updateQuantity(id, currentValue - 1);
+          renderCart();
+        }
+      });
+    });
+
+    // Increase quantity buttons
+    document.querySelectorAll('.increase-qty').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget as HTMLButtonElement;
+        const id = target.getAttribute('data-id');
+        if (!id) return;
+
+        const input = document.querySelector(`.quantity-input[data-id="${id}"]`) as HTMLInputElement;
+        const currentValue = parseInt(input.value);
+        updateQuantity(id, currentValue + 1);
+        renderCart();
+      });
+    });
+
+    // Remove item buttons
+    document.querySelectorAll('.remove-item').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget as HTMLButtonElement;
+        const id = target.getAttribute('data-id');
+        if (!id) return;
+
+        if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+          removeFromCart(id);
+          toastInfo('Producto eliminado del carrito');
+          renderCart();
+        }
+      });
+    });
+  }
+
+  function setupGlobalListeners() {
+    // Clear cart button
+    document.getElementById('clear-cart')?.addEventListener('click', () => {
+      if (confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
+        clearCart();
+        toastInfo('Carrito vaciado');
+        renderCart();
+      }
+    });
+
+    // Coupon button (placeholder)
+    document.getElementById('apply-coupon')?.addEventListener('click', () => {
+      const input = document.getElementById('coupon-input') as HTMLInputElement;
+      if (input?.value) {
+        toastInfo('Los cupones estarán disponibles próximamente');
+      }
+    });
+  }
+
+  // Listen for cart updates
+  window.addEventListener('cart-updated', () => {
+    console.log('cart-updated event received');
+    renderCart();
+  });
+
+  // Inicialización
+  console.log('Carrito script loaded, readyState:', document.readyState);
+
+  function init() {
+    console.log('init() called');
+    setupGlobalListeners();
+    initCart();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    // DOM ya está listo
+    init();
   }
 </script>

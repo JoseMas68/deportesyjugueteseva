@@ -1,0 +1,31 @@
+---
+// Componente Skeleton reutilizable para estados de carga
+interface Props {
+  type?: 'text' | 'title' | 'image' | 'card' | 'circle' | 'button';
+  width?: string;
+  height?: string;
+  class?: string;
+}
+
+const { type = 'text', width, height, class: className = '' } = Astro.props;
+
+const baseClasses = 'animate-pulse bg-gray-200 rounded';
+
+const typeClasses: Record<string, string> = {
+  text: 'h-4 w-full',
+  title: 'h-8 w-3/4',
+  image: 'aspect-square w-full',
+  card: 'h-64 w-full',
+  circle: 'rounded-full',
+  button: 'h-12 w-32',
+};
+
+const computedClasses = [baseClasses, typeClasses[type], className].join(' ');
+
+const style = [
+  width ? `width: ${width}` : '',
+  height ? `height: ${height}` : '',
+].filter(Boolean).join('; ');
+---
+
+<div class={computedClasses} style={style}></div>

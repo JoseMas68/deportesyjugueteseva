@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import FeaturedStar from '@/components/admin/FeaturedStar'
 
 export default async function CategoriasPage() {
   // Obtener todas las categorias con sus padres
@@ -37,22 +38,17 @@ export default async function CategoriasPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Categorias</h1>
-        <p className="text-gray-500 mt-1">{categories.length} categorias en total</p>
-      </div>
-
-      {/* Nota informativa */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800">
-        <div className="flex items-start gap-3">
-          <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <p className="font-medium">Las categorias son fijas</p>
-            <p className="text-sm mt-1">Solo puedes editar la descripcion y la imagen de cada categoria. No es posible crear o eliminar categorias.</p>
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Categorias</h1>
+          <p className="text-gray-500 mt-1">{categories.length} categorias en total</p>
         </div>
+        <Link href="/admin/categorias/nueva" className="btn btn-primary">
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Nueva Categoria
+        </Link>
       </div>
 
       {/* Secciones */}
@@ -90,7 +86,12 @@ export default async function CategoriasPage() {
                     {category._count.products} productos · /{category.slug}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                  <FeaturedStar
+                    categoryId={category.id}
+                    initialFeatured={category.isFeatured}
+                    isSubcategory={!!category.parentId}
+                  />
                   {category.isActive ? (
                     <span className="badge badge-success">Activa</span>
                   ) : (

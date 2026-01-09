@@ -3,35 +3,18 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import ProductSlider from '@/components/ProductSlider.astro';
-import { getProducts } from '@/lib/api';
+import CategorySlider from '@/components/CategorySlider.astro';
+import { getProducts, getFeaturedCategories } from '@/lib/api';
 
-// Categorías populares con imágenes de Unsplash (mantenemos estáticas)
-const categoriasPopulares = [
-  {
-    name: 'Fútbol',
-    slug: 'futbol',
-    image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400&h=500&fit=crop',
-    description: 'Balones, Botas, Equipaciones'
-  },
-  {
-    name: 'Construcción',
-    slug: 'construccion',
-    image: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=500&fit=crop',
-    description: 'LEGO, Bloques, Sets'
-  },
-  {
-    name: 'Sobre Ruedas',
-    slug: 'outdoor',
-    image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=500&fit=crop',
-    description: 'Bicis, Patinetes, Skates'
-  },
-  {
-    name: 'Juegos de Mesa',
-    slug: 'juegos-mesa',
-    image: 'https://images.unsplash.com/photo-1606167668584-78701c57f13d?w=400&h=500&fit=crop',
-    description: 'Estrategia, Familiares, Cartas'
-  }
-];
+// Obtener categorías destacadas desde la API
+let categoriasDestacadas: Array<any> = [];
+try {
+  const { categories } = await getFeaturedCategories();
+  categoriasDestacadas = categories;
+} catch (error) {
+  console.error('Error al cargar categorías destacadas:', error);
+  categoriasDestacadas = [];
+}
 
 // Obtener productos destacados desde la API
 let productosMasVendidos = [];
@@ -43,7 +26,6 @@ try {
   productosMasVendidos = products;
 } catch (error) {
   console.error('Error al cargar productos destacados:', error);
-  // Fallback a array vacío si falla la API
   productosMasVendidos = [];
 }
 ---
@@ -105,41 +87,14 @@ try {
       </div>
     </section>
 
-    <!-- Categorías Populares -->
-    <section class="py-16 bg-background-light">
-      <div class="container mx-auto px-4">
-        <div class="flex justify-between items-end mb-8">
-          <div>
-            <h2 class="text-3xl font-display font-bold text-secondary">Categorías Populares</h2>
-            <div class="h-1 w-20 bg-primary mt-2"></div>
-          </div>
-          <a href="/buscar" class="text-sm font-bold text-gray-500 hover:text-secondary transition flex items-center">
-            Ver todo <i class="material-icons text-base ml-1">arrow_forward</i>
-          </a>
-        </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {categoriasPopulares.map((categoria) => (
-            <a href={`/${categoria.slug}`} class="group relative rounded-xl overflow-hidden h-64 shadow-md">
-              <img
-                src={categoria.image}
-                alt={categoria.name}
-                class="w-full h-full object-cover transform group-hover:scale-110 transition duration-700"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-              <div class="absolute bottom-0 left-0 p-4 w-full">
-                <h3 class="text-white font-display font-bold text-xl group-hover:text-primary transition-colors">
-                  {categoria.name}
-                </h3>
-                <p class="text-gray-300 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {categoria.description}
-                </p>
-              </div>
-            </a>
-          ))}
-        </div>
-      </div>
-    </section>
+    <!-- Categorías Destacadas -->
+    <CategorySlider
+      title="Categorías Destacadas"
+      categories={categoriasDestacadas}
+      linkUrl="/buscar"
+      linkText="Ver todas"
+      sliderId="categorias-destacadas"
+    />
 
     <!-- Banner de Descuentos -->
     <section class="py-8 bg-surface-light border-y border-gray-200">

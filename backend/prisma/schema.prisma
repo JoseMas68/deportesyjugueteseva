@@ -26,6 +26,9 @@ model Category {
   // Para megamenu: 'deportes', 'juguetes', 'hobbies'
   menuSection String?
 
+  // Destacada en home
+  isFeatured  Boolean   @default(false)
+
   displayOrder Int      @default(0)
   isActive    Boolean   @default(true)
 
@@ -108,6 +111,10 @@ model Product {
   weight           String?
   specifications   Json?           // Objeto flexible para specs técnicas
 
+  // Variantes (si el producto tiene variantes)
+  hasVariants      Boolean         @default(false)
+  variants         ProductVariant[]
+
   // SEO
   metaTitle        String?
   metaDescription  String?
@@ -132,6 +139,35 @@ model Product {
   @@index([sportType])
   @@index([productType])
   @@index([collectionType])
+}
+
+// Variantes de producto (talla, color, etc.)
+model ProductVariant {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Atributos de la variante
+  size        String?     // Talla: XS, S, M, L, XL, 38, 39, 40, etc.
+  color       String?     // Color: Rojo, Azul, Negro, etc.
+  colorHex    String?     // Código hex del color para mostrar en UI
+  material    String?     // Material: Algodón, Poliéster, etc.
+
+  // Precio y stock de la variante
+  price       Decimal?    @db.Decimal(10, 2) // Si null, usa el precio del producto
+  stock       Int         @default(0)
+  sku         String?     @unique
+
+  // Imagen específica de esta variante
+  imageUrl    String?
+
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([productId])
+  @@index([size])
+  @@index([color])
 }
 
 // ============ PEDIDOS ============
@@ -241,6 +277,11 @@ model OrderItem {
   productName  String
   productImage String?
   productSku   String?
+
+  // Variante seleccionada (opcional)
+  variantId    String?
+  variantSize  String?
+  variantColor String?
 
   @@index([orderId])
   @@index([productId])

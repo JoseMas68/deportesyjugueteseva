@@ -1,0 +1,174 @@
+---
+import type { Category } from '@/lib/api';
+
+interface Props {
+  title: string;
+  categories: Category[];
+  linkUrl?: string;
+  linkText?: string;
+  sliderId?: string;
+}
+
+const {
+  title,
+  categories,
+  linkUrl = '/buscar',
+  linkText = 'Ver todas',
+  sliderId = 'cat-slider-' + Math.random().toString(36).substr(2, 9)
+} = Astro.props;
+
+const defaultCategoryImage = 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&h=500&fit=crop';
+---
+
+<section class="py-16 bg-background-light">
+  <div class="container mx-auto px-4">
+    <div class="flex justify-between items-end mb-8">
+      <div>
+        <h2 class="text-3xl font-display font-bold text-secondary">{title}</h2>
+        <div class="h-1 w-20 bg-primary mt-2"></div>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href={linkUrl} class="text-sm font-bold text-gray-500 hover:text-secondary transition flex items-center">
+          {linkText} <i class="material-icons text-base ml-1">arrow_forward</i>
+        </a>
+        <!-- Flechas de navegación -->
+        <div class="hidden md:flex items-center gap-2">
+          <button
+            class={`${sliderId}-prev bg-primary hover:bg-yellow-400 text-secondary w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-md hover:shadow-lg`}
+          >
+            <i class="material-icons">chevron_left</i>
+          </button>
+          <button
+            class={`${sliderId}-next bg-primary hover:bg-yellow-400 text-secondary w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-md hover:shadow-lg`}
+          >
+            <i class="material-icons">chevron_right</i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {categories.length > 0 ? (
+      <div class={`swiper categorias-slider ${sliderId}`} data-slider-id={sliderId}>
+        <div class="swiper-wrapper">
+          {categories.map((categoria) => (
+            <div class="swiper-slide">
+              <a href={`/${categoria.slug}`} class="group block relative rounded-xl overflow-hidden h-64 shadow-md">
+                <img
+                  src={categoria.imageUrl || defaultCategoryImage}
+                  alt={categoria.name}
+                  class="w-full h-full object-cover transform group-hover:scale-110 transition duration-700"
+                  loading="lazy"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-4 w-full">
+                  {categoria.parent && (
+                    <span class="text-primary text-xs font-bold uppercase tracking-wide mb-1 block">
+                      {categoria.parent.name}
+                    </span>
+                  )}
+                  <h3 class="text-white font-display font-bold text-xl group-hover:text-primary transition-colors">
+                    {categoria.name}
+                  </h3>
+                  {categoria.description && (
+                    <p class="text-gray-300 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-opacity line-clamp-2">
+                      {categoria.description}
+                    </p>
+                  )}
+                </div>
+              </a>
+            </div>
+          ))}
+        </div>
+        <div class={`swiper-pagination ${sliderId}-pagination`}></div>
+      </div>
+    ) : (
+      <div class="text-center py-12">
+        <i class="material-icons text-6xl text-gray-300 mb-4">category</i>
+        <p class="text-gray-500">No hay categorías destacadas en este momento.</p>
+      </div>
+    )}
+  </div>
+</section>
+
+<script>
+  import Swiper from 'swiper';
+  import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+  import 'swiper/css';
+  import 'swiper/css/pagination';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const sliders = document.querySelectorAll('.categorias-slider[data-slider-id]');
+
+    sliders.forEach((sliderEl) => {
+      const sliderId = sliderEl.getAttribute('data-slider-id');
+      if (!sliderId) return;
+
+      new Swiper(`.${sliderId}`, {
+        modules: [Navigation, Pagination, Autoplay],
+        slidesPerView: 1,
+        spaceBetween: 16,
+        loop: true,
+        autoplay: {
+          delay: 5000,
+          disableOnInteraction: false,
+        },
+        pagination: {
+          el: `.${sliderId}-pagination`,
+          clickable: true,
+        },
+        navigation: {
+          nextEl: `.${sliderId}-next`,
+          prevEl: `.${sliderId}-prev`,
+        },
+        breakpoints: {
+          640: {
+            slidesPerView: 2,
+            spaceBetween: 16,
+          },
+          768: {
+            slidesPerView: 3,
+            spaceBetween: 20,
+          },
+          1024: {
+            slidesPerView: 4,
+            spaceBetween: 24,
+          },
+        },
+      });
+    });
+  });
+</script>
+
+<style is:global>
+  .categorias-slider {
+    padding-bottom: 50px;
+    position: relative;
+  }
+
+  .categorias-slider .swiper-wrapper {
+    align-items: stretch;
+  }
+
+  .categorias-slider .swiper-slide {
+    height: auto;
+  }
+
+  .categorias-slider .swiper-pagination {
+    bottom: -5px !important;
+  }
+
+  .categorias-slider .swiper-pagination-bullet {
+    background: #1a1a1a;
+    opacity: 0.3;
+    width: 10px;
+    height: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .categorias-slider .swiper-pagination-bullet-active {
+    background: #FFD700;
+    opacity: 1;
+    width: 24px;
+    border-radius: 5px;
+  }
+</style>

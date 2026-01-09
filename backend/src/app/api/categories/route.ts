@@ -1,8 +1,33 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams
+    const featured = searchParams.get('featured')
+
+    // Si se pide featured, devolver solo subcategorías destacadas
+    if (featured === 'true') {
+      const featuredCategories = await prisma.category.findMany({
+        where: {
+          isActive: true,
+          isFeatured: true,
+          parentId: { not: null }, // Solo subcategorías
+        },
+        include: {
+          parent: {
+            select: { id: true, name: true, slug: true },
+          },
+        },
+        orderBy: { displayOrder: 'asc' },
+      })
+
+      return NextResponse.json({
+        categories: featuredCategories,
+      })
+    }
+
+    // Comportamiento normal: todas las categorías
     const categories = await prisma.category.findMany({
       where: { isActive: true },
       include: {

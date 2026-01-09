@@ -8,6 +8,7 @@ const updateCategorySchema = z.object({
   description: z.string().optional().nullable(),
   imageUrl: z.string().url().optional().nullable().or(z.literal('')),
   isActive: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
 })
 
 interface RouteParams {
@@ -90,6 +91,10 @@ export async function PUT(
 
     if (validated.isActive !== undefined) {
       updateData.isActive = validated.isActive
+    }
+
+    if (validated.isFeatured !== undefined) {
+      updateData.isFeatured = validated.isFeatured
     }
 
     const category = await prisma.category.update({

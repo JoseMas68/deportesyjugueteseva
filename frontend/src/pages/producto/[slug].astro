@@ -153,6 +153,75 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
             {product.description || product.shortDescription || 'Sin descripción disponible.'}
           </p>
 
+          <!-- Variantes -->
+          {product.hasVariants && product.variants && product.variants.length > 0 && (
+            <div class="mb-8 space-y-4" id="variants-section">
+              {/* Tallas */}
+              {product.variants.some((v: any) => v.size) && (
+                <div>
+                  <h3 class="text-sm font-medium text-secondary mb-3">Talla</h3>
+                  <div class="flex flex-wrap gap-2" id="size-options">
+                    {[...new Set(product.variants.filter((v: any) => v.size).map((v: any) => v.size))].map((size: string) => {
+                      const variantsWithSize = product.variants.filter((v: any) => v.size === size);
+                      const totalStock = variantsWithSize.reduce((sum: number, v: any) => sum + v.stock, 0);
+                      const isOutOfStock = totalStock === 0;
+                      return (
+                        <button
+                          type="button"
+                          class={`size-option px-4 py-2 border-2 rounded-lg font-medium transition-all ${isOutOfStock ? 'border-gray-200 text-gray-300 cursor-not-allowed line-through' : 'border-gray-300 hover:border-secondary'}`}
+                          data-size={size}
+                          disabled={isOutOfStock}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Colores */}
+              {product.variants.some((v: any) => v.color) && (
+                <div>
+                  <h3 class="text-sm font-medium text-secondary mb-3">Color: <span id="selected-color-name"></span></h3>
+                  <div class="flex flex-wrap gap-2" id="color-options">
+                    {[...new Map(product.variants.filter((v: any) => v.color).map((v: any) => [v.color, v])).values()].map((variant: any) => {
+                      const variantsWithColor = product.variants.filter((v: any) => v.color === variant.color);
+                      const totalStock = variantsWithColor.reduce((sum: number, v: any) => sum + v.stock, 0);
+                      const isOutOfStock = totalStock === 0;
+                      return (
+                        <button
+                          type="button"
+                          class={`color-option w-10 h-10 rounded-full border-2 transition-all relative ${isOutOfStock ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'}`}
+                          style={variant.colorHex ? `background-color: ${variant.colorHex}` : 'background-color: #ccc'}
+                          data-color={variant.color}
+                          data-color-hex={variant.colorHex || ''}
+                          title={variant.color}
+                          disabled={isOutOfStock}
+                        >
+                          {isOutOfStock && (
+                            <span class="absolute inset-0 flex items-center justify-center">
+                              <span class="w-full h-0.5 bg-red-500 rotate-45 absolute"></span>
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Stock de variante seleccionada */}
+              <div id="variant-stock" class="text-sm hidden">
+                <span class="text-gray-600">Stock disponible: </span>
+                <span id="variant-stock-count" class="font-medium"></span>
+              </div>
+
+              {/* Datos de variantes para JS */}
+              <script id="variants-data" type="application/json" set:html={JSON.stringify(product.variants)}></script>
+            </div>
+          )}
+
           <!-- Cantidad -->
           <div class="mb-8">
             <h3 class="text-sm font-medium text-secondary mb-4">Cantidad</h3>
@@ -183,10 +252,15 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
               data-product-price={price}
               data-product-image={mainImage}
               data-product-stock={product.stock}
-              disabled={product.stock === 0}
+              data-has-variants={product.hasVariants && product.variants && product.variants.length > 0}
+              disabled={product.hasVariants && product.variants && product.variants.length > 0 ? true : product.stock === 0}
             >
               <i class="material-icons mr-2" id="cart-icon">shopping_bag</i>
-              <span id="cart-btn-text">{product.stock === 0 ? 'Agotado' : 'Añadir al Carrito'}</span>
+              <span id="cart-btn-text">{
+                product.hasVariants && product.variants && product.variants.length > 0
+                  ? 'Selecciona opciones'
+                  : (product.stock === 0 ? 'Agotado' : 'Añadir al Carrito')
+              }</span>
             </button>
             <button class="border-2 border-gray-300 py-3 px-6 rounded-lg hover:border-red-500 hover:text-red-500 transition-colors" aria-label="Añadir a favoritos">
               <i class="material-icons">favorite_border</i>
@@ -382,10 +456,148 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
 
   // Añadir al carrito
   import { addToCart } from '@/lib/cart';
+  import { toastSuccess, toastError } from '@/lib/toast';
 
   const addToCartBtn = document.getElementById('add-to-cart-btn') as HTMLButtonElement;
   const cartIcon = document.getElementById('cart-icon');
   const cartBtnText = document.getElementById('cart-btn-text');
+
+  // Variables para variantes seleccionadas
+  let selectedSize: string | null = null;
+  let selectedColor: string | null = null;
+  let selectedVariant: any = null;
+
+  // Cargar datos de variantes
+  const variantsDataEl = document.getElementById('variants-data');
+  const variants: any[] = variantsDataEl ? JSON.parse(variantsDataEl.textContent || '[]') : [];
+  const hasVariants = variants.length > 0;
+
+  // Verificar si realmente hay variantes que requieren selección
+  const hasSizeOptions = variants.some(v => v.size);
+  const hasColorOptions = variants.some(v => v.color);
+  const needsVariantSelection = hasVariants && (hasSizeOptions || hasColorOptions);
+
+  // Elementos de variantes
+  const sizeOptions = document.querySelectorAll('.size-option');
+  const colorOptions = document.querySelectorAll('.color-option');
+  const selectedColorName = document.getElementById('selected-color-name');
+  const variantStockEl = document.getElementById('variant-stock');
+  const variantStockCount = document.getElementById('variant-stock-count');
+
+  // Función para encontrar variante seleccionada
+  function findSelectedVariant() {
+    if (!hasVariants) return null;
+
+    return variants.find(v => {
+      const sizeMatch = !selectedSize || v.size === selectedSize;
+      const colorMatch = !selectedColor || v.color === selectedColor;
+      return sizeMatch && colorMatch;
+    });
+  }
+
+  // Función para actualizar UI según selección
+  function updateVariantUI() {
+    selectedVariant = findSelectedVariant();
+
+    // Actualizar stock mostrado
+    if (variantStockEl && variantStockCount && selectedVariant) {
+      variantStockEl.classList.remove('hidden');
+      variantStockCount.textContent = selectedVariant.stock > 0
+        ? `${selectedVariant.stock} unidades`
+        : 'Agotado';
+      variantStockCount.className = selectedVariant.stock > 0
+        ? 'font-medium text-green-600'
+        : 'font-medium text-red-600';
+    }
+
+    // Actualizar botón
+    if (needsVariantSelection && addToCartBtn) {
+      const needsSize = hasSizeOptions && !selectedSize;
+      const needsColor = hasColorOptions && !selectedColor;
+
+      if (needsSize || needsColor) {
+        addToCartBtn.disabled = true;
+        if (cartBtnText) cartBtnText.textContent = 'Selecciona opciones';
+      } else if (selectedVariant && selectedVariant.stock === 0) {
+        addToCartBtn.disabled = true;
+        if (cartBtnText) cartBtnText.textContent = 'Agotado';
+      } else {
+        addToCartBtn.disabled = false;
+        if (cartBtnText) cartBtnText.textContent = 'Añadir al Carrito';
+      }
+    }
+
+    // Actualizar disponibilidad de colores según talla
+    if (selectedSize) {
+      colorOptions.forEach((btn) => {
+        const color = (btn as HTMLButtonElement).dataset.color;
+        const variant = variants.find(v => v.size === selectedSize && v.color === color);
+        if (variant && variant.stock > 0) {
+          (btn as HTMLButtonElement).disabled = false;
+          btn.classList.remove('opacity-30', 'cursor-not-allowed');
+        } else if (variant) {
+          (btn as HTMLButtonElement).disabled = true;
+          btn.classList.add('opacity-30', 'cursor-not-allowed');
+        }
+      });
+    }
+
+    // Actualizar disponibilidad de tallas según color
+    if (selectedColor) {
+      sizeOptions.forEach((btn) => {
+        const size = (btn as HTMLButtonElement).dataset.size;
+        const variant = variants.find(v => v.color === selectedColor && v.size === size);
+        if (variant && variant.stock > 0) {
+          (btn as HTMLButtonElement).disabled = false;
+          btn.classList.remove('border-gray-200', 'text-gray-300', 'cursor-not-allowed', 'line-through');
+          btn.classList.add('border-gray-300');
+        } else if (variant) {
+          (btn as HTMLButtonElement).disabled = true;
+          btn.classList.add('border-gray-200', 'text-gray-300', 'cursor-not-allowed', 'line-through');
+          btn.classList.remove('border-gray-300');
+        }
+      });
+    }
+  }
+
+  // Event listeners para tallas
+  sizeOptions.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if ((btn as HTMLButtonElement).disabled) return;
+
+      sizeOptions.forEach(b => b.classList.remove('border-secondary', 'bg-secondary', 'text-white'));
+      btn.classList.add('border-secondary', 'bg-secondary', 'text-white');
+      selectedSize = (btn as HTMLButtonElement).dataset.size || null;
+      updateVariantUI();
+    });
+  });
+
+  // Event listeners para colores
+  colorOptions.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if ((btn as HTMLButtonElement).disabled) return;
+
+      colorOptions.forEach(b => b.classList.remove('ring-2', 'ring-secondary', 'ring-offset-2'));
+      btn.classList.add('ring-2', 'ring-secondary', 'ring-offset-2');
+      selectedColor = (btn as HTMLButtonElement).dataset.color || null;
+      if (selectedColorName) selectedColorName.textContent = selectedColor || '';
+      updateVariantUI();
+    });
+  });
+
+  // Debug
+  console.log('Variantes debug:', {
+    hasVariants,
+    variantsCount: variants.length,
+    hasSizeOptions,
+    hasColorOptions,
+    needsVariantSelection
+  });
+
+  // Inicializar UI si hay variantes que requieren selección
+  if (needsVariantSelection) {
+    updateVariantUI();
+  }
 
   addToCartBtn?.addEventListener('click', () => {
     const productId = addToCartBtn.dataset.productId;
@@ -395,26 +607,65 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
     const productImage = addToCartBtn.dataset.productImage || '';
     const productStock = parseInt(addToCartBtn.dataset.productStock || '0');
 
-    if (!productId || productStock === 0) return;
+    // Validar variantes si aplica
+    if (needsVariantSelection) {
+      const needsSize = hasSizeOptions && !selectedSize;
+      const needsColor = hasColorOptions && !selectedColor;
+
+      if (needsSize || needsColor) {
+        toastError('Por favor selecciona todas las opciones');
+        return;
+      }
+
+      if (!selectedVariant || selectedVariant.stock === 0) {
+        toastError('Esta combinación no está disponible');
+        return;
+      }
+    }
+
+    if (!productId || (!needsVariantSelection && productStock === 0)) return;
 
     // Obtener cantidad seleccionada
     const quantityInput = document.querySelector('input[type="number"]') as HTMLInputElement;
     const quantity = parseInt(quantityInput?.value || '1');
 
-    // Crear objeto del producto para el carrito (estructura correcta de CartItem)
+    // Determinar precio (variante o producto)
+    // Si la variante tiene precio, usarlo; si no, usar el precio del producto
+    const variantPrice = selectedVariant?.price ? parseFloat(selectedVariant.price) : null;
+    const finalPrice = variantPrice || productPrice;
+
+    // Crear nombre con variante
+    let finalName = productName;
+    if (selectedSize || selectedColor) {
+      const variantParts = [selectedSize, selectedColor].filter(Boolean);
+      finalName = `${productName} (${variantParts.join(' - ')})`;
+    }
+
+    // Crear ID único para la variante
+    const cartItemId = selectedVariant
+      ? `${productId}-${selectedVariant.id}`
+      : productId;
+
+    // Crear objeto del producto para el carrito
     const cartItem = {
-      productId: productId,
-      productName: productName,
+      productId: cartItemId,
+      productName: finalName,
       productSlug: productSlug,
-      productImage: productImage,
+      productImage: selectedVariant?.imageUrl || productImage,
       quantity: quantity,
-      unitPrice: productPrice,
+      unitPrice: finalPrice,
     };
+
+    // Debug antes de añadir
+    console.log('Añadiendo al carrito:', cartItem);
 
     // Añadir al carrito
     addToCart(cartItem);
 
-    // Feedback visual
+    // Mostrar toast
+    toastSuccess(`${finalName} añadido al carrito`);
+
+    // Feedback visual en botón
     addToCartBtn.classList.add('scale-95');
     if (cartIcon) cartIcon.textContent = 'check';
     if (cartBtnText) cartBtnText.textContent = '¡Añadido!';

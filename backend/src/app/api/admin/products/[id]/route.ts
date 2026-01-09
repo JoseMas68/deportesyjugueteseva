@@ -4,6 +4,20 @@ import { getAdminSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
+// Schema para variante
+const variantSchema = z.object({
+  id: z.string().optional(),
+  size: z.string().optional().nullable(),
+  color: z.string().optional().nullable(),
+  colorHex: z.string().optional().nullable(),
+  material: z.string().optional().nullable(),
+  price: z.number().positive().optional().nullable(),
+  stock: z.number().int().min(0).default(0),
+  sku: z.string().optional().nullable(),
+  imageUrl: z.string().optional().nullable(),
+  isActive: z.boolean().default(true),
+})
+
 // Schema de validacion para actualizar producto
 const updateProductSchema = z.object({
   name: z.string().min(1).optional(),
@@ -21,6 +35,8 @@ const updateProductSchema = z.object({
   isNew: z.boolean().optional(),
   isBestSeller: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  hasVariants: z.boolean().optional(),
+  variants: z.array(variantSchema).optional(),
 })
 
 interface RouteParams {
@@ -46,6 +62,7 @@ export async function GET(
         category: {
           select: { id: true, name: true, slug: true },
         },
+        variants: true,
       },
     })
 
@@ -61,6 +78,10 @@ export async function GET(
         ...product,
         price: Number(product.price),
         compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+        variants: product.variants.map(v => ({
+          ...v,
+          price: v.price ? Number(v.price) : null,
+        })),
       },
     })
   } catch (error) {
@@ -88,7 +109,10 @@ export async function PUT(
     const validated = updateProductSchema.parse(body)
 
     // Verificar que el producto existe
-    const existing = await prisma.product.findUnique({ where: { id } })
+    const existing = await prisma.product.findUnique({
+      where: { id },
+      include: { variants: true }
+    })
     if (!existing) {
       return NextResponse.json(
         { error: 'Producto no encontrado' },
@@ -109,21 +133,104 @@ export async function PUT(
       }
     }
 
+    // Preparar datos para actualizar (sin variantes)
+    const { variants: newVariants, ...productData } = validated
+
+    // Calcular stock total si tiene variantes
+    if (validated.hasVariants && newVariants?.length) {
+      productData.stock = newVariants.reduce((sum, v) => sum + (v.stock || 0), 0)
+    }
+
+    // Actualizar producto
     const product = await prisma.product.update({
       where: { id },
-      data: validated,
+      data: productData,
       include: {
         category: {
           select: { id: true, name: true, slug: true },
         },
+        variants: true,
+      },
+    })
+
+    // Manejar variantes si se proporcionan
+    if (newVariants !== undefined && validated.hasVariants) {
+      // IDs de variantes existentes
+      const existingVariantIds = existing.variants.map(v => v.id)
+      // IDs de variantes en la actualizacion
+      const newVariantIds = newVariants.filter(v => v.id).map(v => v.id!)
+
+      // Eliminar variantes que ya no estan
+      const variantsToDelete = existingVariantIds.filter(id => !newVariantIds.includes(id))
+      if (variantsToDelete.length > 0) {
+        await prisma.productVariant.deleteMany({
+          where: { id: { in: variantsToDelete } }
+        })
+      }
+
+      // Actualizar o crear variantes
+      for (const variant of newVariants) {
+        if (variant.id && existingVariantIds.includes(variant.id)) {
+          // Actualizar existente
+          await prisma.productVariant.update({
+            where: { id: variant.id },
+            data: {
+              size: variant.size,
+              color: variant.color,
+              colorHex: variant.colorHex,
+              material: variant.material,
+              price: variant.price,
+              stock: variant.stock,
+              sku: variant.sku,
+              imageUrl: variant.imageUrl,
+              isActive: variant.isActive,
+            }
+          })
+        } else {
+          // Crear nueva
+          await prisma.productVariant.create({
+            data: {
+              productId: id,
+              size: variant.size,
+              color: variant.color,
+              colorHex: variant.colorHex,
+              material: variant.material,
+              price: variant.price,
+              stock: variant.stock,
+              sku: variant.sku,
+              imageUrl: variant.imageUrl,
+              isActive: variant.isActive,
+            }
+          })
+        }
+      }
+    } else if (validated.hasVariants === false) {
+      // Si se desactivan las variantes, eliminar todas
+      await prisma.productVariant.deleteMany({
+        where: { productId: id }
+      })
+    }
+
+    // Obtener producto actualizado con variantes
+    const updatedProduct = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        category: {
+          select: { id: true, name: true, slug: true },
+        },
+        variants: true,
       },
     })
 
     return NextResponse.json({
       product: {
-        ...product,
-        price: Number(product.price),
-        compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+        ...updatedProduct!,
+        price: Number(updatedProduct!.price),
+        compareAtPrice: updatedProduct!.compareAtPrice ? Number(updatedProduct!.compareAtPrice) : null,
+        variants: updatedProduct!.variants.map(v => ({
+          ...v,
+          price: v.price ? Number(v.price) : null,
+        })),
       },
     })
   } catch (error) {
@@ -183,7 +290,7 @@ export async function DELETE(
       })
     }
 
-    // Hard delete si no tiene pedidos
+    // Hard delete si no tiene pedidos (las variantes se eliminan en cascada)
     await prisma.product.delete({ where: { id } })
 
     return NextResponse.json({

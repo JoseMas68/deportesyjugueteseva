@@ -10,9 +10,10 @@ interface PageProps {
 export default async function EditarProductoPage({ params }: PageProps) {
   const { id } = await params
 
-  // Obtener producto
+  // Obtener producto con variantes
   const product = await prisma.product.findUnique({
     where: { id },
+    include: { variants: true },
   })
 
   if (!product) {
@@ -44,6 +45,19 @@ export default async function EditarProductoPage({ params }: PageProps) {
     isNew: product.isNew,
     isBestSeller: product.isBestSeller,
     isActive: product.isActive,
+    hasVariants: product.hasVariants,
+    variants: (product as unknown as { variants: Array<{ id: string; size: string | null; color: string | null; colorHex: string | null; material: string | null; price: { toNumber: () => number } | null; stock: number; sku: string | null; imageUrl: string | null; isActive: boolean }> }).variants?.map(v => ({
+      id: v.id,
+      size: v.size,
+      color: v.color,
+      colorHex: v.colorHex,
+      material: v.material,
+      price: v.price ? Number(v.price) : null,
+      stock: v.stock,
+      sku: v.sku,
+      imageUrl: v.imageUrl,
+      isActive: v.isActive,
+    })) || [],
   }
 
   return (

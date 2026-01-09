@@ -1,0 +1,115 @@
+---
+// Contenedor de Toast notifications
+---
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+  <!-- Los toasts se insertan aquí via JS -->
+</div>
+
+<style>
+  .toast {
+    pointer-events: auto;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+
+  .toast.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  .toast.hide {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+</style>
+
+<script>
+  interface ToastOptions {
+    message: string;
+    type?: 'success' | 'error' | 'warning' | 'info';
+    duration?: number;
+    action?: {
+      label: string;
+      onClick: () => void;
+    };
+  }
+
+  const iconMap = {
+    success: 'check_circle',
+    error: 'error',
+    warning: 'warning',
+    info: 'info',
+  };
+
+  const colorMap = {
+    success: 'bg-green-600',
+    error: 'bg-red-600',
+    warning: 'bg-yellow-500',
+    info: 'bg-blue-600',
+  };
+
+  function showToast(options: ToastOptions) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const { message, type = 'info', duration = 3000, action } = options;
+
+    const toast = document.createElement('div');
+    toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white min-w-[300px] max-w-md ${colorMap[type]}`;
+
+    const icon = iconMap[type];
+
+    toast.innerHTML = `
+      <i class="material-icons text-xl">${icon}</i>
+      <span class="flex-1 text-sm font-medium">${message}</span>
+      ${action ? `<button class="toast-action text-xs font-bold uppercase hover:underline">${action.label}</button>` : ''}
+      <button class="toast-close p-1 hover:bg-white/20 rounded transition-colors">
+        <i class="material-icons text-lg">close</i>
+      </button>
+    `;
+
+    container.appendChild(toast);
+
+    // Trigger animation
+    requestAnimationFrame(() => {
+      toast.classList.add('show');
+    });
+
+    // Close button
+    const closeBtn = toast.querySelector('.toast-close');
+    closeBtn?.addEventListener('click', () => removeToast(toast));
+
+    // Action button
+    if (action) {
+      const actionBtn = toast.querySelector('.toast-action');
+      actionBtn?.addEventListener('click', () => {
+        action.onClick();
+        removeToast(toast);
+      });
+    }
+
+    // Auto remove
+    if (duration > 0) {
+      setTimeout(() => removeToast(toast), duration);
+    }
+
+    return toast;
+  }
+
+  function removeToast(toast: HTMLElement) {
+    toast.classList.remove('show');
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 300);
+  }
+
+  // Expose to global scope
+  (window as any).showToast = showToast;
+
+  // Custom event listener
+  window.addEventListener('show-toast', ((e: CustomEvent<ToastOptions>) => {
+    showToast(e.detail);
+  }) as EventListener);
+</script>
