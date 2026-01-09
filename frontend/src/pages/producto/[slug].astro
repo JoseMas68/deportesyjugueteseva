@@ -1,0 +1,374 @@
+---
+export const prerender = false;
+
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import ProductCard from '@/components/ProductCard.astro';
+
+// Mock product data - will be replaced with API call
+const product = {
+  id: 1,
+  name: 'Balón de Baloncesto Pro Grip Elite 7',
+  slug: 'balon-baloncesto-pro-grip',
+  brand: 'Wilson',
+  price: 34.99,
+  originalPrice: 45.99,
+  discount: 24,
+  category: 'Deportes',
+  subcategory: 'Baloncesto',
+  description: 'Balón de baloncesto profesional con agarre superior y durabilidad excepcional. Diseñado para uso indoor y outdoor. Cumple con las especificaciones oficiales de la FIBA.',
+  rating: 4.5,
+  reviews: 42,
+  stock: 'En stock',
+  images: [
+    '/products/balon-basket-1.jpg',
+    '/products/balon-basket-2.jpg',
+    '/products/balon-basket-3.jpg',
+    '/products/balon-basket-4.jpg'
+  ],
+  sizes: [
+    { value: '5', label: '5', available: true },
+    { value: '6', label: '6', available: true },
+    { value: '7', label: '7', available: true, popular: true }
+  ],
+  specs: [
+    { label: 'Material', value: 'Cuero sintético compuesto' },
+    { label: 'Uso', value: 'Indoor / Outdoor' },
+    { label: 'Peso', value: '600g (Oficial)' },
+    { label: 'Circunferencia', value: '75cm (Talla 7)' }
+  ],
+  badge: 'NUEVO'
+};
+
+// Mock related products
+const relatedProducts = [
+  {
+    id: 2,
+    name: 'Nike Air Zoom GT',
+    slug: 'nike-air-zoom-gt',
+    price: 129.99,
+    originalPrice: 149.99,
+    category: 'Deportes',
+    image: '/products/zapatillas-basket.jpg',
+    badge: '-15%'
+  },
+  {
+    id: 3,
+    name: 'Mochila Deportiva Pro',
+    slug: 'mochila-deportiva-pro',
+    price: 49.99,
+    category: 'Deportes',
+    image: '/products/mochila.jpg'
+  },
+  {
+    id: 4,
+    name: 'Bomba de Balones',
+    slug: 'bomba-balones',
+    price: 14.99,
+    category: 'Deportes',
+    image: '/products/bomba.jpg'
+  },
+  {
+    id: 5,
+    name: 'Red de Baloncesto',
+    slug: 'red-baloncesto',
+    price: 24.99,
+    category: 'Deportes',
+    image: '/products/red.jpg'
+  }
+];
+---
+
+<Layout title={`${product.name} - Deportes y Juguetes Eva`} description={product.description}>
+  <Header />
+
+  <main class="bg-background-light min-h-screen">
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b border-gray-200">
+      <div class="container mx-auto px-4 py-4">
+        <nav class="flex items-center text-sm flex-wrap">
+          <a href="/" class="text-gray-500 hover:text-primary transition-colors">Inicio</a>
+          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          <a href="/deportes" class="text-gray-500 hover:text-primary transition-colors">Deportes</a>
+          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          <a href="/deportes/baloncesto" class="text-gray-500 hover:text-primary transition-colors">{product.subcategory}</a>
+          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          <span class="text-secondary font-medium truncate">{product.name}</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 lg:py-12">
+      <div class="grid lg:grid-cols-2 gap-12">
+        <!-- Galería de Imágenes -->
+        <div class="product-gallery flex flex-col-reverse lg:flex-row gap-4">
+          <!-- Thumbnails -->
+          <div class="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-y-auto lg:h-[600px] no-scrollbar py-2 lg:py-0">
+            {product.images.map((img, index) => (
+              <button
+                class={`thumbnail w-20 h-20 flex-shrink-0 border-2 rounded-lg overflow-hidden transition-all ${index === 0 ? 'border-primary' : 'border-gray-200 hover:border-primary'}`}
+                data-image={img}
+              >
+                <img class="w-full h-full object-cover" src={img} alt={`${product.name} ${index + 1}`} />
+              </button>
+            ))}
+          </div>
+
+          <!-- Imagen Principal -->
+          <div class="flex-1 aspect-square lg:aspect-auto lg:h-[600px] bg-white rounded-xl overflow-hidden shadow-sm relative group">
+            <img
+              id="main-image"
+              class="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+              src={product.images[0]}
+              alt={product.name}
+            />
+            {product.badge && (
+              <span class="absolute top-4 left-4 bg-black text-primary text-xs font-bold px-3 py-1 uppercase tracking-wider rounded-sm">
+                {product.badge}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <!-- Información del Producto -->
+        <div>
+          <!-- Marca -->
+          <p class="text-primary font-bold text-sm mb-2">{product.brand}</p>
+
+          <!-- Título -->
+          <h1 class="text-3xl lg:text-5xl font-display font-extrabold uppercase italic text-secondary mb-4">
+            {product.name}
+          </h1>
+
+          <!-- Rating -->
+          <div class="flex items-center gap-2 mb-6">
+            <div class="flex items-center gap-0.5">
+              {Array.from({ length: Math.floor(product.rating) }).map(() => (
+                <i class="material-icons text-primary text-lg">star</i>
+              ))}
+              {product.rating % 1 !== 0 && (
+                <i class="material-icons text-primary text-lg">star_half</i>
+              )}
+            </div>
+            <span class="text-sm text-gray-600">({product.reviews} reseñas)</span>
+          </div>
+
+          <!-- Precio -->
+          <div class="flex items-center gap-4 mb-6">
+            <p class="text-4xl font-bold text-secondary">{product.price.toFixed(2)}€</p>
+            {product.originalPrice && (
+              <>
+                <p class="text-xl text-gray-400 line-through">{product.originalPrice.toFixed(2)}€</p>
+                <span class="bg-accent text-white text-sm font-bold px-2 py-1 rounded">-{product.discount}%</span>
+              </>
+            )}
+          </div>
+
+          <!-- Descripción -->
+          <p class="text-gray-600 leading-relaxed mb-8">
+            {product.description}
+          </p>
+
+          <!-- Selector de Talla -->
+          <div class="mb-8 border-t border-b border-gray-200 py-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-medium text-secondary">Talla</h3>
+              <a class="text-sm text-primary hover:underline" href="#">Guía de tallas</a>
+            </div>
+            <div class="grid grid-cols-3 gap-4 sm:grid-cols-6">
+              {product.sizes.map((size) => (
+                <label class={`group relative border rounded-md py-3 px-4 flex items-center justify-center text-sm font-medium uppercase hover:bg-gray-50 cursor-pointer transition-colors ${size.popular ? 'border-2 border-primary' : ''}`}>
+                  <input class="sr-only" name="size-choice" type="radio" value={size.value} checked={size.popular} />
+                  <span class={size.popular ? 'font-bold' : ''}>{size.label}</span>
+                  {size.popular && (
+                    <div class="absolute top-0 right-0 -mt-2 -mr-2 bg-primary text-black text-[10px] px-1 font-bold rounded">
+                      Popular
+                    </div>
+                  )}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <!-- Cantidad -->
+          <div class="mb-8">
+            <h3 class="text-sm font-medium text-secondary mb-4">Cantidad</h3>
+            <div class="flex items-center border border-gray-200 rounded-lg w-32">
+              <button class="px-4 py-2 hover:bg-gray-50 transition-colors" aria-label="Disminuir cantidad">
+                <i class="material-icons text-gray-600">remove</i>
+              </button>
+              <input
+                type="number"
+                value="1"
+                min="1"
+                class="flex-1 text-center border-x border-gray-200 py-2 focus:outline-none"
+              />
+              <button class="px-4 py-2 hover:bg-gray-50 transition-colors" aria-label="Aumentar cantidad">
+                <i class="material-icons text-gray-600">add</i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Botones de Acción -->
+          <div class="flex gap-4 mb-8">
+            <button class="flex-1 bg-primary border border-transparent py-3 px-8 flex items-center justify-center text-base font-bold text-black hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary uppercase tracking-wider rounded-lg shadow-lg hover:shadow-primary/50 transition-all duration-300 transform hover:-translate-y-1">
+              <i class="material-icons mr-2">shopping_bag</i>
+              Añadir al Carrito
+            </button>
+            <button class="border-2 border-gray-300 py-3 px-6 rounded-lg hover:border-red-500 hover:text-red-500 transition-colors" aria-label="Añadir a favoritos">
+              <i class="material-icons">favorite_border</i>
+            </button>
+          </div>
+
+          <!-- Acordeón Características -->
+          <div class="border border-gray-200 rounded-lg overflow-hidden">
+            <button class="accordion-button w-full flex justify-between items-center p-4 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+              <span class="font-bold text-secondary uppercase text-sm">Características Técnicas</span>
+              <i class="material-icons">expand_more</i>
+            </button>
+            <div class="accordion-content p-4 bg-white border-t border-gray-200 text-sm text-gray-600 space-y-2">
+              {product.specs.map((spec) => (
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                  <span>{spec.label}:</span>
+                  <span class="font-medium text-secondary">{spec.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <!-- Beneficios -->
+          <div class="mt-8 grid grid-cols-3 gap-4 text-center">
+            <div class="flex flex-col items-center gap-2">
+              <i class="material-icons text-primary text-2xl">local_shipping</i>
+              <p class="text-xs text-gray-600">Envío gratis +50€</p>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <i class="material-icons text-primary text-2xl">verified_user</i>
+              <p class="text-xs text-gray-600">Compra segura</p>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <i class="material-icons text-primary text-2xl">sync</i>
+              <p class="text-xs text-gray-600">Devolución 30 días</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Productos Relacionados -->
+      <section class="mt-16 border-t border-gray-200 pt-12">
+        <h2 class="text-3xl font-display font-extrabold uppercase italic text-secondary mb-8">
+          Productos <span class="text-primary">Relacionados</span>
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {relatedProducts.map((relProduct) => (
+            <div class="group relative bg-background-light rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
+              <div class="aspect-[4/5] bg-white overflow-hidden relative">
+                <img class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" src={relProduct.image} alt={relProduct.name} />
+
+                {relProduct.badge && (
+                  <div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+                    {relProduct.badge}
+                  </div>
+                )}
+
+                <!-- Overlay con botón -->
+                <div class="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/80 to-transparent">
+                  <button class="w-full bg-primary text-black font-bold py-2 rounded text-sm uppercase hover:bg-yellow-400 transition-colors">
+                    Añadir
+                  </button>
+                </div>
+              </div>
+              <div class="p-4">
+                <h3 class="text-lg font-bold text-secondary mb-1">{relProduct.name}</h3>
+                <p class="text-sm text-gray-500 mb-2">{relProduct.category}</p>
+                <div class="flex justify-between items-center">
+                  <p class="text-lg font-bold text-secondary">{relProduct.price.toFixed(2)}€</p>
+                  {relProduct.originalPrice && (
+                    <p class="text-sm text-gray-400 line-through">{relProduct.originalPrice.toFixed(2)}€</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  // Cambio de imagen principal al hacer click en thumbnail
+  const thumbnails = document.querySelectorAll('.thumbnail');
+  const mainImage = document.getElementById('main-image') as HTMLImageElement;
+
+  thumbnails.forEach((thumb) => {
+    thumb.addEventListener('click', () => {
+      const newImage = thumb.getAttribute('data-image');
+      if (newImage && mainImage) {
+        mainImage.src = newImage;
+
+        // Actualizar border de thumbnails
+        thumbnails.forEach((t) => {
+          t.classList.remove('border-primary');
+          t.classList.add('border-gray-200');
+        });
+        thumb.classList.remove('border-gray-200');
+        thumb.classList.add('border-primary');
+      }
+    });
+  });
+
+  // Contador de cantidad
+  const quantityInput = document.querySelector('input[type="number"]') as HTMLInputElement;
+  const decreaseBtn = document.querySelector('[aria-label="Disminuir cantidad"]');
+  const increaseBtn = document.querySelector('[aria-label="Aumentar cantidad"]');
+
+  decreaseBtn?.addEventListener('click', () => {
+    const currentValue = parseInt(quantityInput.value);
+    if (currentValue > 1) {
+      quantityInput.value = (currentValue - 1).toString();
+    }
+  });
+
+  increaseBtn?.addEventListener('click', () => {
+    const currentValue = parseInt(quantityInput.value);
+    quantityInput.value = (currentValue + 1).toString();
+  });
+
+  // Acordeón
+  const accordionButton = document.querySelector('.accordion-button');
+  const accordionContent = document.querySelector('.accordion-content');
+  const accordionIcon = accordionButton?.querySelector('.material-icons');
+
+  accordionButton?.addEventListener('click', () => {
+    accordionContent?.classList.toggle('hidden');
+    accordionIcon?.classList.toggle('rotate-180');
+  });
+</script>
+
+<style>
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .accordion-button:not(.collapsed) + .accordion-content {
+    max-height: 500px;
+  }
+
+  .material-icons {
+    transition: transform 0.3s ease;
+  }
+</style>

@@ -1,0 +1,339 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+
+// Mock user data
+const user = {
+  name: 'Juan Pérez',
+  email: 'juan.perez@ejemplo.com',
+  phone: '+34 600 123 456',
+  memberSince: '2023',
+  vip: true
+};
+
+// Mock stats
+const stats = {
+  totalOrders: 12,
+  inTransit: 1,
+  points: 450
+};
+
+// Mock recent orders
+const recentOrders = [
+  {
+    id: '#EVA-9834',
+    date: '12 Oct, 2023',
+    status: 'Enviado',
+    statusColor: 'green',
+    total: 45.00
+  },
+  {
+    id: '#EVA-9721',
+    date: '05 Oct, 2023',
+    status: 'Completado',
+    statusColor: 'gray',
+    total: 89.99
+  },
+  {
+    id: '#EVA-9512',
+    date: '28 Sep, 2023',
+    status: 'Cancelado',
+    statusColor: 'red',
+    total: 120.50
+  }
+];
+
+// Mock address
+const mainAddress = {
+  name: 'Juan Pérez',
+  street: 'Calle de los Juguetes 123, 2ºB',
+  city: '28001 Madrid, España'
+};
+
+// Mock wishlist
+const wishlist = [
+  {
+    id: 1,
+    name: 'Figura de Acción Legend',
+    brand: 'HASBRO',
+    price: 24.99,
+    image: '/products/figura.jpg'
+  },
+  {
+    id: 2,
+    name: 'Set de Construcción Space',
+    brand: 'LEGO',
+    price: 79.99,
+    image: '/products/lego-space.jpg'
+  },
+  {
+    id: 3,
+    name: 'Muñeca Fashion Nova',
+    brand: 'MATTEL',
+    price: 34.99,
+    image: '/products/muneca.jpg'
+  },
+  {
+    id: 4,
+    name: 'Coche RC Turbo',
+    brand: 'HOT WHEELS',
+    price: 59.99,
+    image: '/products/coche-rc.jpg'
+  }
+];
+
+const menuItems = [
+  { icon: 'dashboard', label: 'Panel de Control', href: '/cuenta', active: true },
+  { icon: 'package', label: 'Mis Pedidos', href: '/cuenta/pedidos', active: false },
+  { icon: 'account_circle', label: 'Detalles de Cuenta', href: '/cuenta/detalles', active: false },
+  { icon: 'home_pin', label: 'Direcciones', href: '/cuenta/direcciones', active: false },
+  { icon: 'favorite', label: 'Lista de Deseos', href: '/cuenta/favoritos', active: false }
+];
+---
+
+<Layout title="Mi Cuenta - Deportes y Juguetes Eva" description="Panel de control de tu cuenta">
+  <Header />
+
+  <main class="bg-background-light min-h-screen">
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b border-gray-200">
+      <div class="container mx-auto px-4 py-4">
+        <nav class="flex items-center text-sm">
+          <a href="/" class="text-gray-500 hover:text-primary transition-colors">Inicio</a>
+          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          <span class="text-secondary font-medium">Mi Cuenta</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 lg:py-12">
+      <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar de Navegación -->
+        <aside class="w-full lg:w-72 shrink-0">
+          <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 sticky top-24">
+            <div class="mb-8">
+              <h1 class="text-xl font-bold text-secondary">{user.name}</h1>
+              <p class="text-primary text-sm">Cliente VIP desde {user.memberSince}</p>
+            </div>
+
+            <nav class="flex flex-col gap-1">
+              {menuItems.map((item) => (
+                <a
+                  class={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                    item.active
+                      ? 'bg-primary text-black font-bold'
+                      : 'hover:bg-gray-50 text-gray-700'
+                  }`}
+                  href={item.href}
+                >
+                  <i class="material-icons text-xl">{item.icon}</i>
+                  <span>{item.label}</span>
+                </a>
+              ))}
+
+              <!-- Botón logout -->
+              <div class="mt-8 pt-6 border-t border-gray-200">
+                <button class="w-full flex items-center justify-center gap-2 bg-secondary text-white py-3 rounded-lg font-bold hover:bg-black transition-all">
+                  <i class="material-icons text-sm">logout</i>
+                  Cerrar Sesión
+                </button>
+              </div>
+            </nav>
+          </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <div class="flex-1 space-y-8">
+          <!-- Page Header -->
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 class="text-4xl font-black text-secondary mb-2">Panel de Control</h2>
+              <p class="text-gray-600">Gestiona tu cuenta y pedidos</p>
+            </div>
+            <button class="bg-primary/20 border border-primary/30 text-secondary font-bold px-6 py-3 rounded-lg hover:bg-primary/30 transition-colors">
+              Editar Perfil
+            </button>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-xl border border-gray-200 flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-gray-600">Pedidos Totales</p>
+                <i class="material-icons text-primary">shopping_bag</i>
+              </div>
+              <p class="text-3xl font-bold text-secondary">{stats.totalOrders}</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border border-gray-200 flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-gray-600">En Camino</p>
+                <i class="material-icons text-primary">local_shipping</i>
+              </div>
+              <p class="text-3xl font-bold text-green-600">0{stats.inTransit}</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border border-gray-200 flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-gray-600">Puntos Eva</p>
+                <i class="material-icons text-primary">star</i>
+              </div>
+              <p class="text-3xl font-bold text-secondary">{stats.points}</p>
+            </div>
+          </div>
+
+          <!-- Pedidos Recientes -->
+          <section class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+              <h3 class="font-bold text-lg text-secondary">Pedidos Recientes</h3>
+              <a class="text-sm font-bold text-primary hover:underline" href="/cuenta/pedidos">Ver todos</a>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                    <th class="px-6 py-4">ID Pedido</th>
+                    <th class="px-6 py-4">Fecha</th>
+                    <th class="px-6 py-4">Estado</th>
+                    <th class="px-6 py-4 text-right">Total</th>
+                    <th class="px-6 py-4">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  {recentOrders.map((order) => (
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-6 py-4 font-bold text-sm text-secondary">{order.id}</td>
+                      <td class="px-6 py-4 text-sm text-gray-600">{order.date}</td>
+                      <td class="px-6 py-4">
+                        <span class={`px-2 py-1 text-xs font-bold rounded ${
+                          order.statusColor === 'green' ? 'bg-green-100 text-green-700' :
+                          order.statusColor === 'red' ? 'bg-red-100 text-red-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-sm font-bold text-secondary text-right">{order.total.toFixed(2)}€</td>
+                      <td class="px-6 py-4">
+                        <button class="text-primary hover:text-secondary font-bold text-sm transition-colors">
+                          Detalles
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Grid 2 Columnas -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Información de Perfil -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 relative">
+              <h3 class="font-bold mb-6 flex items-center gap-2 text-secondary">
+                <i class="material-icons">account_circle</i>
+                Información de Perfil
+              </h3>
+              <div class="space-y-4">
+                <div class="flex flex-col">
+                  <span class="text-xs text-gray-600 uppercase">Nombre Completo</span>
+                  <span class="font-medium text-secondary">{user.name}</span>
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-xs text-gray-600 uppercase">Correo Electrónico</span>
+                  <span class="font-medium text-secondary">{user.email}</span>
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-xs text-gray-600 uppercase">Teléfono</span>
+                  <span class="font-medium text-secondary">{user.phone}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dirección de Envío -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200">
+              <h3 class="font-bold mb-6 flex items-center gap-2 text-secondary">
+                <i class="material-icons">home_pin</i>
+                Dirección de Envío Principal
+              </h3>
+              <div class="space-y-2 mb-6">
+                <p class="font-bold text-secondary">{mainAddress.name}</p>
+                <p class="text-sm text-gray-600">{mainAddress.street}</p>
+                <p class="text-sm text-gray-600">{mainAddress.city}</p>
+              </div>
+              <button class="w-full py-2 bg-gray-50 hover:bg-primary/20 hover:text-primary transition-all rounded-lg text-sm font-bold border border-gray-200">
+                Cambiar Dirección
+              </button>
+            </div>
+          </div>
+
+          <!-- Lista de Deseos -->
+          <section>
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-2xl font-black text-secondary">Tu Lista de Deseos</h3>
+              <a href="/cuenta/favoritos" class="text-primary font-bold hover:underline">Ver todos</a>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {wishlist.map((product) => (
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden group hover:shadow-lg transition-all">
+                  <div class="aspect-square bg-gray-50 relative">
+                    <img class="w-full h-full object-cover" src={product.image} alt={product.name} />
+                    <button class="absolute top-2 right-2 p-1.5 bg-white rounded-full text-red-500 shadow-sm hover:scale-110 transition-transform">
+                      <i class="material-icons text-sm">favorite</i>
+                    </button>
+                  </div>
+                  <div class="p-4">
+                    <p class="text-xs text-primary font-bold">{product.brand}</p>
+                    <h4 class="font-bold text-sm mb-2 line-clamp-1 text-secondary">{product.name}</h4>
+                    <p class="font-black text-primary">{product.price.toFixed(2)}€</p>
+                    <button class="mt-3 w-full bg-secondary text-white hover:bg-primary hover:text-black py-2 rounded-lg font-bold text-xs uppercase transition-colors">
+                      Añadir al Carrito
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  // Cerrar sesión
+  const logoutBtn = document.querySelector('button:has(.material-icons[textContent="logout"])');
+  logoutBtn?.addEventListener('click', () => {
+    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+      // En producción, aquí se llamaría al API para cerrar sesión
+      window.location.href = '/';
+    }
+  });
+
+  // Eliminar de favoritos
+  const favoriteButtons = document.querySelectorAll('button:has(.material-icons[textContent="favorite"])');
+  favoriteButtons.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('¿Eliminar de la lista de deseos?')) {
+        // En producción, aquí se llamaría al API
+        const card = btn.closest('.group');
+        card?.remove();
+      }
+    });
+  });
+
+  // Ver detalles del pedido
+  const detailButtons = document.querySelectorAll('button:contains("Detalles")');
+  detailButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const orderId = btn.closest('tr')?.querySelector('td:first-child')?.textContent;
+      window.location.href = `/cuenta/pedido/${orderId}`;
+    });
+  });
+</script>

@@ -1,0 +1,62 @@
+---
+import '@/styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Deportes y Juguetes Eva',
+  description = 'Tu tienda online de deportes, juguetes y coleccionismo'
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet" />
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+
+    <!-- Script para actualizar el contador del carrito -->
+    <script>
+      import { getCartCount } from '@/lib/cart';
+
+      function updateCartBadge() {
+        const badge = document.getElementById('cart-count');
+        if (badge) {
+          const count = getCartCount();
+          badge.textContent = count.toString();
+          badge.style.display = count > 0 ? 'flex' : 'none';
+        }
+      }
+
+      // Actualizar al cargar
+      document.addEventListener('DOMContentLoaded', updateCartBadge);
+
+      // Actualizar cuando cambie el carrito
+      window.addEventListener('cart-updated', updateCartBadge);
+    </script>
+  </body>
+</html>

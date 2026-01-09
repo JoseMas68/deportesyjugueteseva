@@ -1,0 +1,419 @@
+---
+export const prerender = false;
+
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import ProductCard from '@/components/ProductCard.astro';
+
+// Mock ofertas data - will be replaced with API call
+const ofertasDestacadas = [
+  {
+    id: 1,
+    name: 'Balón de Fútbol Pro',
+    slug: 'balon-futbol-pro',
+    price: 24.99,
+    originalPrice: 29.99,
+    discount: 17,
+    category: 'Deportes',
+    image: '/products/balon-futbol.jpg',
+    badge: '-17%',
+    endsIn: '2 días'
+  },
+  {
+    id: 2,
+    name: 'Raqueta Tenis Pro',
+    slug: 'raqueta-tenis-pro',
+    price: 129.99,
+    originalPrice: 149.99,
+    discount: 13,
+    category: 'Deportes',
+    image: '/products/raqueta.jpg',
+    badge: '-13%',
+    endsIn: '5 días'
+  },
+  {
+    id: 3,
+    name: 'Set Scalextric Rally',
+    slug: 'scalextric-rally',
+    price: 159.99,
+    originalPrice: 189.99,
+    discount: 16,
+    category: 'Hobbies',
+    image: '/products/scalextric.jpg',
+    badge: '-16%',
+    endsIn: '3 días'
+  }
+];
+
+const todasLasOfertas = [
+  ...ofertasDestacadas,
+  {
+    id: 4,
+    name: 'Zapatillas Trail Running X2',
+    slug: 'zapatillas-trail-x2',
+    price: 119.99,
+    originalPrice: 159.99,
+    discount: 25,
+    category: 'Deportes',
+    image: '/products/zapatillas-trail.jpg',
+    badge: '-25%'
+  },
+  {
+    id: 5,
+    name: 'Mochila Deportiva Pro',
+    slug: 'mochila-deportiva-pro',
+    price: 39.99,
+    originalPrice: 54.99,
+    discount: 27,
+    category: 'Deportes',
+    image: '/products/mochila.jpg',
+    badge: '-27%'
+  },
+  {
+    id: 6,
+    name: 'Bloques Construcción 1000 piezas',
+    slug: 'bloques-construccion-1000',
+    price: 59.99,
+    originalPrice: 79.99,
+    discount: 25,
+    category: 'Juguetes',
+    image: '/products/lego-grande.jpg',
+    badge: '-25%'
+  },
+  {
+    id: 7,
+    name: 'Muñeca con Accesorios',
+    slug: 'muneca-accesorios',
+    price: 34.99,
+    originalPrice: 49.99,
+    discount: 30,
+    category: 'Juguetes',
+    image: '/products/muneca-deluxe.jpg',
+    badge: '-30%'
+  },
+  {
+    id: 8,
+    name: 'Maqueta Avión Clásico',
+    slug: 'maqueta-avion',
+    price: 44.99,
+    originalPrice: 59.99,
+    discount: 25,
+    category: 'Hobbies',
+    image: '/products/maqueta-avion.jpg',
+    badge: '-25%'
+  },
+  {
+    id: 9,
+    name: 'Tren Eléctrico Deluxe Set',
+    slug: 'tren-electrico-deluxe',
+    price: 199.99,
+    originalPrice: 249.99,
+    discount: 20,
+    category: 'Hobbies',
+    image: '/products/tren-deluxe.jpg',
+    badge: '-20%'
+  },
+  {
+    id: 10,
+    name: 'Pelota Fitness 65cm',
+    slug: 'pelota-fitness',
+    price: 19.99,
+    originalPrice: 29.99,
+    discount: 33,
+    category: 'Deportes',
+    image: '/products/pelota-fitness.jpg',
+    badge: '-33%'
+  },
+  {
+    id: 11,
+    name: 'Puzzle Educativo 200 piezas',
+    slug: 'puzzle-educativo-200',
+    price: 14.99,
+    originalPrice: 21.99,
+    discount: 32,
+    category: 'Juguetes',
+    image: '/products/puzzle-grande.jpg',
+    badge: '-32%'
+  },
+  {
+    id: 12,
+    name: 'Guantes Boxeo Pro',
+    slug: 'guantes-boxeo-pro',
+    price: 49.99,
+    originalPrice: 69.99,
+    discount: 29,
+    category: 'Deportes',
+    image: '/products/guantes-boxeo.jpg',
+    badge: '-29%'
+  }
+];
+---
+
+<Layout title="Ofertas y Descuentos - Deportes y Juguetes Eva" description="Descubre nuestras mejores ofertas en deportes, juguetes y hobbies. ¡Ahorra hasta un 50%!">
+  <Header />
+
+  <main class="bg-background-light min-h-screen">
+    <!-- Hero Banner de Ofertas -->
+    <section class="bg-gradient-to-r from-accent via-red-500 to-accent text-white py-16 relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute transform rotate-12 -left-20 top-10 text-9xl font-black">%</div>
+        <div class="absolute transform -rotate-12 right-10 bottom-10 text-9xl font-black">%</div>
+      </div>
+
+      <div class="container mx-auto px-4 relative z-10">
+        <div class="text-center max-w-3xl mx-auto">
+          <div class="inline-block bg-white text-accent px-6 py-2 rounded-full font-bold text-sm mb-4 animate-pulse">
+            ¡OFERTAS LIMITADAS!
+          </div>
+          <h1 class="text-5xl md:text-7xl font-display font-extrabold uppercase italic mb-4">
+            Super <span class="text-primary">Ofertas</span>
+          </h1>
+          <p class="text-xl md:text-2xl mb-8 font-medium">
+            Descuentos de hasta el 50% en productos seleccionados
+          </p>
+          <div class="flex items-center justify-center gap-4 flex-wrap">
+            <div class="bg-white/20 backdrop-blur-sm px-6 py-3 rounded-lg">
+              <i class="material-icons text-primary mr-2">local_shipping</i>
+              <span class="font-bold">Envío gratis en pedidos +50€</span>
+            </div>
+            <div class="bg-white/20 backdrop-blur-sm px-6 py-3 rounded-lg">
+              <i class="material-icons text-primary mr-2">verified</i>
+              <span class="font-bold">Garantía de satisfacción</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b border-gray-200">
+      <div class="container mx-auto px-4 py-4">
+        <nav class="flex items-center text-sm">
+          <a href="/" class="text-gray-500 hover:text-primary transition-colors">Inicio</a>
+          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          <span class="text-secondary font-medium">Ofertas</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      <!-- Ofertas Destacadas -->
+      <section class="mb-16">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h2 class="text-3xl md:text-4xl font-display font-extrabold text-secondary mb-2">
+              Ofertas <span class="text-accent">Destacadas</span>
+            </h2>
+            <p class="text-gray-600">Los mejores descuentos que no puedes dejar pasar</p>
+          </div>
+          <div class="hidden md:flex items-center gap-2 text-accent">
+            <i class="material-icons animate-pulse">schedule</i>
+            <span class="font-bold">¡Por tiempo limitado!</span>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8 mb-8">
+          {ofertasDestacadas.map((producto) => (
+            <div class="group relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+              <!-- Badge de descuento grande -->
+              <div class="absolute top-4 right-4 z-20">
+                <div class="bg-accent text-white rounded-full w-20 h-20 flex flex-col items-center justify-center shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
+                  <span class="text-2xl font-black leading-none">-{producto.discount}%</span>
+                </div>
+              </div>
+
+              {/* Timer de oferta */}
+              {producto.endsIn && (
+                <div class="absolute top-4 left-4 z-20 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                  <i class="material-icons text-xs">schedule</i>
+                  Termina en {producto.endsIn}
+                </div>
+              )}
+
+              <!-- Imagen -->
+              <div class="aspect-square bg-background-light overflow-hidden relative">
+                <img
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  src={producto.image}
+                  alt={producto.name}
+                />
+
+                <!-- Overlay con botón -->
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                  <a
+                    href={`/producto/${producto.slug}`}
+                    class="w-full bg-primary text-secondary font-bold py-3 rounded-lg text-center uppercase tracking-wider hover:bg-yellow-400 transition-colors"
+                  >
+                    Ver Oferta
+                  </a>
+                </div>
+              </div>
+
+              <!-- Info -->
+              <div class="p-6">
+                <p class="text-sm text-gray-500 mb-1">{producto.category}</p>
+                <h3 class="text-xl font-bold text-secondary mb-3 group-hover:text-primary transition-colors">
+                  {producto.name}
+                </h3>
+
+                <div class="flex items-end gap-3">
+                  <div>
+                    <p class="text-3xl font-black text-accent">{producto.price.toFixed(2)}€</p>
+                  </div>
+                  <div class="mb-1">
+                    <p class="text-lg text-gray-400 line-through">{producto.originalPrice.toFixed(2)}€</p>
+                  </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                  <p class="text-sm text-gray-600">
+                    <span class="font-bold text-green-600">Ahorras: {(producto.originalPrice - producto.price).toFixed(2)}€</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Todas las Ofertas -->
+      <section>
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h2 class="text-3xl md:text-4xl font-display font-extrabold text-secondary mb-2">
+              Todas las <span class="text-primary">Ofertas</span>
+            </h2>
+            <p class="text-gray-600">Explora todos nuestros productos en promoción</p>
+          </div>
+
+          <!-- Ordenar -->
+          <div class="hidden md:block">
+            <select class="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-primary">
+              <option>Mayor descuento</option>
+              <option>Menor precio</option>
+              <option>Mayor precio</option>
+              <option>Más recientes</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filtros rápidos -->
+        <div class="flex flex-wrap gap-3 mb-8">
+          <button class="px-4 py-2 bg-primary text-secondary font-bold rounded-lg hover:bg-yellow-400 transition-colors">
+            Todos
+          </button>
+          <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:border-primary hover:text-primary transition-colors">
+            <i class="material-icons text-sm mr-1">sports_soccer</i>
+            Deportes
+          </button>
+          <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:border-primary hover:text-primary transition-colors">
+            <i class="material-icons text-sm mr-1">toys</i>
+            Juguetes
+          </button>
+          <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:border-primary hover:text-primary transition-colors">
+            <i class="material-icons text-sm mr-1">palette</i>
+            Hobbies
+          </button>
+          <button class="px-4 py-2 bg-white border border-accent text-accent font-medium rounded-lg hover:bg-accent hover:text-white transition-colors">
+            <i class="material-icons text-sm mr-1">local_fire_department</i>
+            Más del 30% OFF
+          </button>
+        </div>
+
+        <!-- Grid de productos -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
+          {todasLasOfertas.map((producto) => (
+            <ProductCard product={producto} />
+          ))}
+        </div>
+
+        <!-- Paginación -->
+        <div class="mt-12 flex justify-center">
+          <nav class="flex items-center gap-2">
+            <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-400 cursor-not-allowed" disabled>
+              <i class="material-icons text-sm">chevron_left</i>
+            </button>
+            <button class="px-4 py-2 bg-primary text-secondary font-bold rounded-lg">1</button>
+            <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">2</button>
+            <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">3</button>
+            <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">
+              <i class="material-icons text-sm">chevron_right</i>
+            </button>
+          </nav>
+        </div>
+      </section>
+
+      <!-- Banner de Newsletter -->
+      <section class="mt-16 bg-gradient-to-r from-secondary to-black rounded-2xl p-8 md:p-12 text-white text-center">
+        <i class="material-icons text-5xl text-primary mb-4">notifications_active</i>
+        <h3 class="text-3xl font-display font-bold mb-3">
+          ¡No te pierdas nuestras <span class="text-primary">ofertas exclusivas</span>!
+        </h3>
+        <p class="text-lg mb-6 text-gray-300">
+          Suscríbete a nuestro newsletter y recibe un 10% de descuento en tu primera compra
+        </p>
+        <form class="max-w-md mx-auto flex gap-3">
+          <input
+            type="email"
+            placeholder="Tu email..."
+            class="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <button
+            type="submit"
+            class="bg-primary text-secondary font-bold px-6 py-3 rounded-lg hover:bg-yellow-400 transition-colors whitespace-nowrap"
+          >
+            Suscribirse
+          </button>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  // Filtros de categoría
+  const filterButtons = document.querySelectorAll('button[class*="border-gray-200"]');
+  const allButton = filterButtons[0];
+
+  filterButtons.forEach((button, index) => {
+    button.addEventListener('click', () => {
+      // Remover selección de todos
+      filterButtons.forEach(btn => {
+        btn.classList.remove('bg-primary', 'text-secondary', 'border-primary');
+        btn.classList.add('bg-white', 'border-gray-200', 'text-gray-700');
+      });
+
+      // Seleccionar el clickeado
+      button.classList.remove('bg-white', 'border-gray-200', 'text-gray-700');
+      button.classList.add('bg-primary', 'text-secondary', 'border-primary');
+
+      // Aquí iría la lógica de filtrado cuando se conecte al backend
+      console.log('Filter clicked:', button.textContent?.trim());
+    });
+  });
+
+  // Prevenir envío del formulario de newsletter (por ahora)
+  const newsletterForm = document.querySelector('form');
+  newsletterForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    alert('¡Gracias por suscribirte! Esta funcionalidad se activará cuando el backend esté conectado.');
+  });
+</script>
+
+<style>
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+</style>

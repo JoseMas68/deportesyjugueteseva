@@ -1,0 +1,352 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+
+// Mock cart items
+const cartItems = [
+  {
+    id: 1,
+    name: 'Balón de Fútbol Pro',
+    slug: 'balon-futbol-pro',
+    price: 29.99,
+    quantity: 1,
+    size: '5',
+    stock: 'En Stock',
+    image: '/products/balon-futbol.jpg'
+  },
+  {
+    id: 2,
+    name: 'Zapatillas Running X1',
+    slug: 'zapatillas-running-x1',
+    price: 89.99,
+    quantity: 1,
+    size: '42',
+    stock: 'En Stock',
+    image: '/products/zapatillas.jpg'
+  }
+];
+
+// Mock "podría interesarte" products
+const suggestedProducts = [
+  {
+    id: 3,
+    name: 'Mochila Deportiva',
+    slug: 'mochila-deportiva',
+    price: 39.99,
+    originalPrice: 49.99,
+    discount: 20,
+    image: '/products/mochila.jpg'
+  },
+  {
+    id: 4,
+    name: 'Botella Térmica',
+    slug: 'botella-termica',
+    price: 19.99,
+    image: '/products/botella.jpg'
+  },
+  {
+    id: 5,
+    name: 'Toalla Microfibra',
+    slug: 'toalla-microfibra',
+    price: 14.99,
+    image: '/products/toalla.jpg'
+  },
+  {
+    id: 6,
+    name: 'Guantes Gimnasio',
+    slug: 'guantes-gimnasio',
+    price: 24.99,
+    originalPrice: 34.99,
+    discount: 29,
+    image: '/products/guantes-gym.jpg'
+  }
+];
+
+const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+const shipping = subtotal > 50 ? 0 : 5.90;
+const tax = subtotal * 0.19;
+const total = subtotal + shipping + tax;
+---
+
+<Layout title="Carrito de Compras - Deportes y Juguetes Eva" description="Tu carrito de compras">
+  <Header />
+
+  <main class="bg-background-light min-h-screen">
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b border-gray-200">
+      <div class="container mx-auto px-4 py-4">
+        <nav class="flex items-center text-sm">
+          <a href="/" class="text-gray-500 hover:text-primary transition-colors">Inicio</a>
+          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          <span class="text-secondary font-medium">Carrito de Compras</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 lg:py-12">
+      <!-- Título -->
+      <h1 class="text-4xl lg:text-5xl font-display font-extrabold uppercase italic text-secondary mb-2">
+        Tu <span class="text-primary">Carrito</span>
+      </h1>
+      <p class="text-gray-600 mb-8">{cartItems.length} artículos en tu carrito</p>
+
+      <div class="grid lg:grid-cols-12 gap-8">
+        <!-- Tabla de Productos -->
+        <div class="lg:col-span-8">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <!-- Header (Desktop only) -->
+            <div class="hidden sm:grid sm:grid-cols-6 gap-6 p-6 bg-gray-50 border-b border-gray-200 text-sm font-bold text-gray-600 uppercase">
+              <div class="col-span-3">Producto</div>
+              <div class="text-center">Precio</div>
+              <div class="text-center">Cantidad</div>
+              <div class="text-right">Total</div>
+            </div>
+
+            <!-- Items -->
+            <div>
+              {cartItems.map((item) => (
+                <div class="p-4 sm:p-6 border-b border-gray-200 hover:bg-gray-50 transition-colors group">
+                  <div class="flex flex-col sm:grid sm:grid-cols-6 gap-6 items-center">
+                    <!-- Producto -->
+                    <div class="col-span-3 flex items-center w-full">
+                      <div class="flex-shrink-0 w-24 h-24 bg-white rounded-md border border-gray-200 overflow-hidden relative">
+                        <img class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300" src={item.image} alt={item.name} />
+                      </div>
+                      <div class="ml-4 flex-1">
+                        <h3 class="text-lg font-bold font-display uppercase italic text-secondary">
+                          <a href={`/producto/${item.slug}`} class="hover:text-primary transition-colors">{item.name}</a>
+                        </h3>
+                        <p class="mt-1 text-sm text-gray-500">Talla: {item.size}</p>
+                        <p class="mt-1 text-sm text-green-600 font-medium">{item.stock}</p>
+                        <!-- Botón eliminar mobile -->
+                        <button class="sm:hidden mt-2 text-red-500 text-sm flex items-center gap-1 hover:text-red-700 transition-colors remove-item" data-id={item.id}>
+                          <i class="material-icons text-sm">delete</i> Eliminar
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Precio -->
+                    <div class="text-center w-full sm:w-auto">
+                      <span class="sm:hidden text-gray-500 text-xs uppercase mr-2">Precio:</span>
+                      <span class="font-medium text-secondary">{item.price.toFixed(2)}€</span>
+                    </div>
+
+                    <!-- Cantidad -->
+                    <div class="flex justify-center w-full sm:w-auto">
+                      <div class="flex items-center border border-gray-200 rounded bg-white">
+                        <button class="decrease-qty px-2 py-1 text-gray-600 hover:bg-gray-100 transition-colors" data-id={item.id}>
+                          <i class="material-icons text-sm">remove</i>
+                        </button>
+                        <input class="quantity-input w-10 text-center text-sm border-0 focus:ring-0 bg-transparent p-1 text-secondary" type="text" value={item.quantity} data-id={item.id} />
+                        <button class="increase-qty px-2 py-1 text-gray-600 hover:bg-gray-100 transition-colors" data-id={item.id}>
+                          <i class="material-icons text-sm">add</i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Total -->
+                    <div class="text-right flex flex-col items-end justify-between h-full w-full sm:w-auto">
+                      <span class="font-bold text-secondary text-lg item-total" data-id={item.id}>{(item.price * item.quantity).toFixed(2)}€</span>
+                      <button class="hidden sm:flex text-gray-400 hover:text-red-500 transition-colors mt-2 remove-item" data-id={item.id} title="Eliminar producto">
+                        <i class="material-icons">delete_outline</i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div class="flex w-full sm:w-auto gap-2">
+                <input class="w-full sm:w-48 rounded border-gray-300 bg-white text-sm focus:border-primary focus:ring-primary px-3 py-2" placeholder="Código de cupón" type="text" />
+                <button class="bg-secondary text-white px-4 py-2 rounded text-sm font-medium hover:bg-black transition-colors uppercase tracking-wide">
+                  Aplicar
+                </button>
+              </div>
+              <button class="text-sm text-primary hover:text-yellow-600 font-medium underline uppercase tracking-wide clear-cart">
+                Vaciar Carrito
+              </button>
+            </div>
+          </div>
+
+          <!-- Continuar Comprando -->
+          <a href="/" class="inline-flex items-center gap-2 mt-6 text-secondary hover:text-primary transition-colors font-medium">
+            <i class="material-icons">arrow_back</i>
+            Continuar Comprando
+          </a>
+        </div>
+
+        <!-- Resumen del Pedido -->
+        <div class="lg:col-span-4">
+          <div class="bg-white shadow-lg rounded-lg border-t-4 border-primary p-6 sticky top-24">
+            <h2 class="text-xl font-bold font-display uppercase italic text-secondary mb-6">Resumen del Pedido</h2>
+
+            <dl class="space-y-4 text-sm text-gray-600">
+              <div class="flex justify-between">
+                <dt>Subtotal</dt>
+                <dd class="font-medium text-secondary" id="cart-subtotal">{subtotal.toFixed(2)}€</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="flex items-center">
+                  Envío
+                  <i class="ml-1.5 material-icons text-xs text-gray-400 cursor-help" title="Calculado en el siguiente paso">help_outline</i>
+                </dt>
+                <dd class="font-medium text-secondary" id="cart-shipping">{shipping === 0 ? 'Gratis' : shipping.toFixed(2) + '€'}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt>Impuestos (19%)</dt>
+                <dd class="font-medium text-secondary" id="cart-tax">{tax.toFixed(2)}€</dd>
+              </div>
+              <div class="border-t border-gray-200 pt-4 flex justify-between items-center">
+                <dt class="text-base font-bold text-secondary uppercase">Total</dt>
+                <dd class="text-2xl font-bold text-primary font-display italic" id="cart-total">{total.toFixed(2)}€</dd>
+              </div>
+            </dl>
+
+            <!-- Botón Finalizar -->
+            <div class="mt-8">
+              <a href="/checkout" class="w-full bg-primary hover:bg-yellow-400 text-black font-bold py-4 px-6 rounded shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 uppercase tracking-widest flex justify-center items-center gap-2 group">
+                Finalizar Compra
+                <i class="material-icons group-hover:translate-x-1 transition-transform">arrow_forward</i>
+              </a>
+            </div>
+
+            <!-- Métodos de pago -->
+            <div class="mt-6 flex justify-center gap-2 grayscale opacity-60">
+              <div class="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-[10px] font-bold">VISA</div>
+              <div class="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-[10px] font-bold">MC</div>
+              <div class="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-[10px] font-bold">AMEX</div>
+              <div class="h-8 w-12 bg-gray-200 rounded flex items-center justify-center text-[10px] font-bold">PAY</div>
+            </div>
+
+            <!-- Texto seguridad -->
+            <div class="mt-6 text-center">
+              <p class="text-xs text-gray-500">
+                Compra segura. Tus datos están protegidos con encriptación SSL de 256 bits.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Podría Interesarte -->
+      <section class="mt-16 border-t border-gray-200 pt-12">
+        <h2 class="text-3xl font-display font-extrabold uppercase italic text-secondary mb-8">
+          Podría <span class="text-primary">Interesarte</span>
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {suggestedProducts.map((product) => (
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all">
+              <div class="aspect-square bg-gray-50 flex items-center justify-center overflow-hidden relative">
+                <img class="object-contain h-48 hover:scale-110 transition duration-300" src={product.image} alt={product.name} />
+                {product.discount && (
+                  <span class="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
+                    -{product.discount}%
+                  </span>
+                )}
+              </div>
+              <div class="p-4">
+                <h3 class="font-bold text-secondary text-sm leading-tight mb-2 line-clamp-2">{product.name}</h3>
+                <div class="flex items-center justify-between mb-3">
+                  <div>
+                    {product.originalPrice && (
+                      <span class="text-gray-400 line-through text-xs mr-2">{product.originalPrice.toFixed(2)}€</span>
+                    )}
+                    <span class="text-lg font-bold text-secondary">{product.price.toFixed(2)}€</span>
+                  </div>
+                </div>
+                <button class="w-full bg-secondary text-white hover:bg-primary hover:text-black py-2 px-4 rounded-lg font-bold text-sm uppercase transition-colors">
+                  Agregar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  // Incrementar/Decrementar cantidad
+  const decreaseButtons = document.querySelectorAll('.decrease-qty');
+  const increaseButtons = document.querySelectorAll('.increase-qty');
+  const quantityInputs = document.querySelectorAll('.quantity-input');
+
+  decreaseButtons.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget as HTMLButtonElement;
+      const id = target.getAttribute('data-id');
+      const input = document.querySelector(`.quantity-input[data-id="${id}"]`) as HTMLInputElement;
+      const currentValue = parseInt(input.value);
+      if (currentValue > 1) {
+        input.value = (currentValue - 1).toString();
+        updateItemTotal(id);
+      }
+    });
+  });
+
+  increaseButtons.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget as HTMLButtonElement;
+      const id = target.getAttribute('data-id');
+      const input = document.querySelector(`.quantity-input[data-id="${id}"]`) as HTMLInputElement;
+      const currentValue = parseInt(input.value);
+      input.value = (currentValue + 1).toString();
+      updateItemTotal(id);
+    });
+  });
+
+  // Eliminar producto
+  const removeButtons = document.querySelectorAll('.remove-item');
+  removeButtons.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget as HTMLButtonElement;
+      const id = target.getAttribute('data-id');
+      if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+        // Aquí iría la llamada al API para eliminar el item
+        const item = target.closest('.group');
+        item?.remove();
+        updateCartTotals();
+      }
+    });
+  });
+
+  // Vaciar carrito
+  const clearCartBtn = document.querySelector('.clear-cart');
+  clearCartBtn?.addEventListener('click', () => {
+    if (confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
+      // Aquí iría la llamada al API
+      window.location.reload();
+    }
+  });
+
+  // Actualizar total del item
+  function updateItemTotal(itemId: string | null) {
+    if (!itemId) return;
+
+    const input = document.querySelector(`.quantity-input[data-id="${itemId}"]`) as HTMLInputElement;
+    const itemTotal = document.querySelector(`.item-total[data-id="${itemId}"]`);
+
+    // Mock price - en producción vendría del servidor
+    const pricePerUnit = 29.99; // Esto debería venir de los datos del producto
+    const quantity = parseInt(input.value);
+    const total = pricePerUnit * quantity;
+
+    if (itemTotal) {
+      itemTotal.textContent = `${total.toFixed(2)}€`;
+    }
+
+    updateCartTotals();
+  }
+
+  // Actualizar totales del carrito
+  function updateCartTotals() {
+    // En producción, esto haría una llamada al API para recalcular totales
+    console.log('Actualizando totales del carrito...');
+  }
+</script>

@@ -1,0 +1,130 @@
+---
+import type { Product } from '@/lib/api';
+
+interface Props {
+  product: Product;
+}
+
+const { product } = Astro.props;
+
+const image = product.image || product.thumbnailUrl || (product.images && product.images[0]) || '/placeholder.jpg';
+const hasDiscount = product.compareAtPrice && product.compareAtPrice > product.price;
+const discountPercent = hasDiscount
+  ? Math.round(((product.compareAtPrice! - product.price) / product.compareAtPrice!) * 100)
+  : 0;
+
+// Rating (mock por ahora)
+const rating = 4.5;
+const fullStars = Math.floor(rating);
+const hasHalfStar = rating % 1 >= 0.5;
+const totalReviews = 42;
+---
+
+<div class="bg-surface-light rounded-xl shadow-sm border border-gray-100 hover:shadow-xl transition group">
+  <!-- Imagen con Badge -->
+  <div class="relative p-4">
+    {hasDiscount && (
+      <span class="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded z-10">
+        -{discountPercent}%
+      </span>
+    )}
+    {product.isNew && !hasDiscount && (
+      <span class="absolute top-2 left-2 bg-primary text-secondary text-xs font-bold px-2 py-1 rounded z-10">
+        NUEVO
+      </span>
+    )}
+
+    <div class="aspect-square bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden">
+      <img
+        src={image}
+        alt={product.name}
+        class="object-contain h-40 group-hover:scale-110 transition duration-300"
+        loading="lazy"
+      />
+    </div>
+
+    {product.stock === 0 && (
+      <div class="absolute inset-0 bg-black/70 flex items-center justify-center rounded-lg">
+        <span class="text-white font-bold text-lg">AGOTADO</span>
+      </div>
+    )}
+  </div>
+
+  <!-- Info del producto -->
+  <div class="p-4 pt-0">
+    <!-- Categoría -->
+    {product.category && (
+      <p class="text-xs text-gray-500 mb-1">{product.category.name}</p>
+    )}
+
+    <!-- Nombre -->
+    <a href={`/productos/${product.slug}`}>
+      <h3 class="font-bold text-secondary text-lg leading-tight mb-2 group-hover:text-primary transition-colors line-clamp-2">
+        {product.name}
+      </h3>
+    </a>
+
+    <!-- Estrellas de rating -->
+    <div class="flex items-center gap-1 mb-3">
+      {Array.from({ length: fullStars }).map(() => (
+        <i class="material-icons text-primary text-sm">star</i>
+      ))}
+      {hasHalfStar && (
+        <i class="material-icons text-primary text-sm">star_half</i>
+      )}
+      {Array.from({ length: 5 - fullStars - (hasHalfStar ? 1 : 0) }).map(() => (
+        <i class="material-icons text-gray-300 text-sm">star</i>
+      ))}
+      <span class="text-xs text-gray-400 ml-1">({totalReviews})</span>
+    </div>
+
+    <!-- Precio y botón -->
+    <div class="flex items-center justify-between">
+      <div>
+        {hasDiscount && (
+          <div class="text-gray-400 line-through text-xs">
+            {product.compareAtPrice!.toFixed(2)}€
+          </div>
+        )}
+        <div class="text-xl font-bold text-secondary">
+          {product.price.toFixed(2)}€
+        </div>
+      </div>
+      <button
+        class="bg-secondary text-primary hover:bg-black p-2 rounded-lg transition shadow-md"
+        aria-label="Añadir al carrito"
+        data-product-id={product.id}
+      >
+        <i class="material-icons text-lg">add_shopping_cart</i>
+      </button>
+    </div>
+
+    <!-- Aviso de stock bajo -->
+    {product.stock > 0 && product.stock <= 5 && (
+      <p class="text-xs text-orange-600 mt-2">
+        ¡Solo quedan {product.stock} unidades!
+      </p>
+    )}
+  </div>
+</div>
+
+<script>
+  // Añadir al carrito desde la tarjeta
+  document.addEventListener('DOMContentLoaded', () => {
+    const addToCartButtons = document.querySelectorAll('[data-product-id]');
+
+    addToCartButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        const productId = (button as HTMLElement).dataset.productId;
+
+        // TODO: Implementar lógica de añadir al carrito
+        console.log('Añadir al carrito:', productId);
+
+        // Feedback visual
+        button.classList.add('scale-90');
+        setTimeout(() => button.classList.remove('scale-90'), 200);
+      });
+    });
+  });
+</script>

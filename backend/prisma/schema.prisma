@@ -1,0 +1,312 @@
+// Schema Prisma - Deportes y Juguetes Eva
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ PRODUCTOS Y CATEGORÍAS ============
+model Category {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?    @db.Text
+  imageUrl    String?
+
+  // Jerarquía: Deportes > Running, Juguetes > Infantiles, etc.
+  parentId    String?
+  parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryToCategory")
+
+  products    Product[]
+
+  // Para megamenu: 'deportes', 'juguetes', 'hobbies'
+  menuSection String?
+
+  displayOrder Int      @default(0)
+  isActive    Boolean   @default(true)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([parentId])
+  @@index([slug])
+  @@index([menuSection])
+}
+
+enum SportType {
+  RUNNING
+  TRAIL_RUNNING
+  FITNESS
+  NATACION
+  OUTDOOR
+  CASUAL
+}
+
+enum CollectionType {
+  SCALEXTRIC
+  TRENES_ELECTRICOS
+  MAQUETAS
+  OTROS
+}
+
+model Product {
+  id               String          @id @default(cuid())
+  name             String
+  slug             String          @unique
+  description      String          @db.Text
+  shortDescription String?         // Para cards de producto
+  price            Decimal         @db.Decimal(10, 2)
+  compareAtPrice   Decimal?        @db.Decimal(10, 2) // Precio antes de descuento
+  stock            Int             @default(0)
+  sku              String?         @unique
+
+  // Imágenes (URLs de Supabase Storage)
+  images           String[]
+  thumbnailUrl     String?
+
+  // Categorización
+  categoryId       String
+  category         Category        @relation(fields: [categoryId], references: [id])
+  sportType        SportType?
+  isCollectible    Boolean         @default(false)
+  collectionType   CollectionType?
+
+  // Características adicionales
+  brand            String?
+  color            String?
+  size             String?
+  weight           String?
+  specifications   Json?           // Objeto flexible para specs técnicas
+
+  // SEO
+  metaTitle        String?
+  metaDescription  String?
+
+  // Destacados
+  isFeatured       Boolean         @default(false)
+  isNew            Boolean         @default(false)
+  isBestSeller     Boolean         @default(false)
+
+  // Relaciones
+  orderItems       OrderItem[]
+
+  isActive         Boolean         @default(true)
+  publishedAt      DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([categoryId])
+  @@index([slug])
+  @@index([isActive])
+  @@index([isFeatured])
+  @@index([sportType])
+  @@index([collectionType])
+}
+
+// ============ PEDIDOS ============
+enum OrderStatus {
+  PENDING     // Creado, esperando pago
+  PAID        // Pagado
+  PROCESSING  // En preparación
+  SHIPPED     // Enviado
+  DELIVERED   // Entregado
+  CANCELLED   // Cancelado
+}
+
+enum PaymentMethod {
+  STRIPE
+  TRANSFER
+  CASH
+}
+
+model Order {
+  id                      String        @id @default(cuid())
+  orderNumber             String        @unique // EVA-20260109-0001
+
+  // Cliente
+  userEmail               String
+  userName                String
+  userPhone               String
+
+  // Dirección de envío
+  shippingAddress         String
+  shippingCity            String
+  shippingPostalCode      String
+  shippingProvince        String?
+  shippingCountry         String        @default("España")
+
+  // Dirección de facturación (opcional, si diferente)
+  billingAddress          String?
+  billingCity             String?
+  billingPostalCode       String?
+  billingProvince         String?
+  billingCountry          String?
+
+  // DNI/NIE (para factura)
+  taxId                   String?
+
+  // Pedido
+  items                   OrderItem[]
+  subtotal                Decimal       @db.Decimal(10, 2)
+  shippingCost            Decimal       @db.Decimal(10, 2) @default(0)
+  discount                Decimal       @db.Decimal(10, 2) @default(0)
+  total                   Decimal       @db.Decimal(10, 2)
+  status                  OrderStatus   @default(PENDING)
+
+  // Método de pago
+  paymentMethod           PaymentMethod
+  paymentStatus           String        @default("pending")
+
+  // Control de emails enviados
+  emailSentConfirmed      Boolean       @default(false)
+  emailSentPaid           Boolean       @default(false)
+  emailSentShipped        Boolean       @default(false)
+  emailSentDelivered      Boolean       @default(false)
+  emailSentCancelled      Boolean       @default(false)
+
+  // Pago Stripe
+  stripePaymentIntentId   String?       @unique
+  stripeSessionId         String?       @unique
+  paidAt                  DateTime?
+
+  // Envío
+  trackingNumber          String?
+  shippingCarrier         String?
+  shippedAt               DateTime?
+  deliveredAt             DateTime?
+
+  // Cancelación
+  cancellationReason      String?       @db.Text
+  cancelledAt             DateTime?
+  refundedAt              DateTime?
+
+  // Notas
+  customerNotes           String?       @db.Text
+  adminNotes              String?       @db.Text
+
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  @@index([userEmail])
+  @@index([status])
+  @@index([orderNumber])
+  @@index([createdAt])
+  @@index([paymentMethod])
+}
+
+model OrderItem {
+  id           String   @id @default(cuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+
+  quantity     Int
+  unitPrice    Decimal  @db.Decimal(10, 2)
+  totalPrice   Decimal  @db.Decimal(10, 2)
+
+  // Snapshot de datos (por si el producto cambia/se elimina)
+  productName  String
+  productImage String?
+  productSku   String?
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ============ SISTEMA DE EMAILS ============
+enum EmailType {
+  CONFIRMATION          // Cliente: Pedido creado
+  PAID                  // Cliente: Pedido pagado
+  PROCESSING            // Cliente: Pedido en preparación
+  SHIPPED               // Cliente: Pedido enviado
+  DELIVERED             // Cliente: Pedido entregado
+  CANCELLED             // Cliente: Pedido cancelado
+  WELCOME               // Cliente: Cuenta creada (futuro)
+  ADMIN_NEW_ORDER       // Admin: Nuevo pedido
+  ADMIN_PAID            // Admin: Pedido pagado
+  ADMIN_CANCELLED       // Admin: Pedido cancelado
+}
+
+model EmailTemplate {
+  id          String    @id @default(cuid())
+  type        EmailType @unique
+  subject     String
+  body        String    @db.Text
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([type])
+}
+
+model EmailLog {
+  id          String   @id @default(cuid())
+  type        EmailType
+  recipient   String
+  subject     String
+  orderId     String?
+  status      String   // 'sent', 'failed', 'pending'
+  errorMessage String?  @db.Text
+  sentAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([orderId])
+  @@index([recipient])
+  @@index([status])
+}
+
+// ============ USUARIOS ADMIN ============
+model AdminUser {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  supabaseId  String   @unique
+  name        String?
+  role        String   @default("admin") // 'admin', 'super_admin'
+  isActive    Boolean  @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([supabaseId])
+  @@index([email])
+}
+
+// ============ CONFIGURACIÓN ============
+model SiteConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   @db.Text
+  description String?
+  group       String?  // 'general', 'payment', 'shipping', 'email'
+  type        String   @default("text") // 'text', 'number', 'boolean', 'json'
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+  @@index([group])
+}
+
+// Configuración específica para métodos de pago
+model PaymentMethodConfig {
+  id            String        @id @default(cuid())
+  method        PaymentMethod @unique
+  isEnabled     Boolean       @default(false)
+  displayName   String
+  description   String?       @db.Text
+  instructions  String?       @db.Text // Instrucciones para el cliente
+  displayOrder  Int           @default(0)
+
+  // Configuración específica por método
+  config        Json?         // Ej: {accountNumber, bankName} para transfer
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([method])
+  @@index([isEnabled])
+}

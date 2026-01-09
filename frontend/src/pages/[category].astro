@@ -1,0 +1,265 @@
+---
+export const prerender = false;
+
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import ProductCard from '@/components/ProductCard.astro';
+
+// Mock data - will be replaced with API calls
+const category = Astro.params.category || 'deportes';
+const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+
+const products = [
+  {
+    id: 1,
+    name: 'Balón de Fútbol Pro',
+    slug: 'balon-futbol-pro',
+    price: 24.99,
+    originalPrice: 29.99,
+    category: 'Deportes',
+    image: '/products/balon-futbol.jpg',
+    badge: 'NUEVO'
+  },
+  {
+    id: 2,
+    name: 'Zapatillas Running X1',
+    slug: 'zapatillas-running-x1',
+    price: 89.99,
+    category: 'Deportes',
+    image: '/products/zapatillas.jpg'
+  },
+  {
+    id: 3,
+    name: 'Raqueta Tenis Pro',
+    slug: 'raqueta-tenis-pro',
+    price: 129.99,
+    originalPrice: 149.99,
+    category: 'Deportes',
+    image: '/products/raqueta.jpg',
+    badge: '-13%'
+  },
+  {
+    id: 4,
+    name: 'Balón Baloncesto',
+    slug: 'balon-baloncesto',
+    price: 34.99,
+    category: 'Deportes',
+    image: '/products/balon-basket.jpg'
+  },
+  {
+    id: 5,
+    name: 'Pelota Pádel Pack 3',
+    slug: 'pelota-padel-pack',
+    price: 12.99,
+    category: 'Deportes',
+    image: '/products/pelotas-padel.jpg'
+  },
+  {
+    id: 6,
+    name: 'Guantes Portero',
+    slug: 'guantes-portero',
+    price: 44.99,
+    category: 'Deportes',
+    image: '/products/guantes.jpg',
+    badge: 'NUEVO'
+  },
+  {
+    id: 7,
+    name: 'Mancuernas 10kg',
+    slug: 'mancuernas-10kg',
+    price: 39.99,
+    category: 'Deportes',
+    image: '/products/mancuernas.jpg'
+  },
+  {
+    id: 8,
+    name: 'Cuerda de Saltar',
+    slug: 'cuerda-saltar',
+    price: 9.99,
+    category: 'Deportes',
+    image: '/products/cuerda.jpg'
+  }
+];
+
+const filters = {
+  priceRanges: [
+    { label: 'Menos de 25€', value: '0-25' },
+    { label: '25€ - 50€', value: '25-50' },
+    { label: '50€ - 100€', value: '50-100' },
+    { label: 'Más de 100€', value: '100+' }
+  ],
+  brands: [
+    { label: 'Nike', value: 'nike', count: 23 },
+    { label: 'Adidas', value: 'adidas', count: 18 },
+    { label: 'Wilson', value: 'wilson', count: 12 },
+    { label: 'Puma', value: 'puma', count: 15 }
+  ]
+};
+---
+
+<Layout title={`${categoryName} - Deportes y Juguetes Eva`} description={`Explora nuestra colección de ${categoryName.toLowerCase()}`}>
+  <Header />
+
+  <main class="bg-background-light min-h-screen">
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b border-gray-200">
+      <div class="container mx-auto px-4 py-4">
+        <nav class="flex items-center text-sm">
+          <a href="/" class="text-gray-500 hover:text-primary transition-colors">Inicio</a>
+          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          <span class="text-secondary font-medium">{categoryName}</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      <!-- Header de Categoría -->
+      <div class="mb-8">
+        <h1 class="text-4xl md:text-5xl font-display font-extrabold text-secondary mb-4">
+          {categoryName}
+        </h1>
+        <p class="text-gray-600 text-lg">Descubre nuestra selección de productos de {categoryName.toLowerCase()}</p>
+      </div>
+
+      <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar de Filtros -->
+        <aside class="lg:w-64 flex-shrink-0">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="font-display font-bold text-lg">Filtros</h2>
+              <button class="text-sm text-primary hover:underline">Limpiar</button>
+            </div>
+
+            <!-- Precio -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+              <h3 class="font-bold text-secondary mb-4">Precio</h3>
+              <div class="space-y-2">
+                {filters.priceRanges.map((range) => (
+                  <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                    <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">{range.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <!-- Marca -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+              <h3 class="font-bold text-secondary mb-4">Marca</h3>
+              <div class="space-y-2">
+                {filters.brands.map((brand) => (
+                  <label class="flex items-center justify-between cursor-pointer group">
+                    <div class="flex items-center gap-2">
+                      <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                      <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">{brand.label}</span>
+                    </div>
+                    <span class="text-xs text-gray-400">({brand.count})</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <!-- Disponibilidad -->
+            <div>
+              <h3 class="font-bold text-secondary mb-4">Disponibilidad</h3>
+              <label class="flex items-center gap-2 cursor-pointer group">
+                <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">En stock</span>
+              </label>
+            </div>
+
+            <!-- Botón aplicar filtros (mobile) -->
+            <button class="lg:hidden w-full mt-6 bg-primary text-secondary font-bold py-3 rounded-lg hover:bg-yellow-400 transition-colors">
+              Aplicar Filtros
+            </button>
+          </div>
+        </aside>
+
+        <!-- Productos -->
+        <div class="flex-1">
+          <!-- Barra de ordenación -->
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <p class="text-gray-600">
+              Mostrando <span class="font-bold text-secondary">{products.length}</span> productos
+            </p>
+
+            <div class="flex items-center gap-4">
+              <!-- Vista (Grid/List) -->
+              <div class="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-1">
+                <button class="p-2 bg-primary rounded text-secondary" aria-label="Vista de cuadrícula">
+                  <i class="material-icons text-lg">grid_view</i>
+                </button>
+                <button class="p-2 text-gray-400 hover:text-secondary rounded" aria-label="Vista de lista">
+                  <i class="material-icons text-lg">view_list</i>
+                </button>
+              </div>
+
+              <!-- Ordenar -->
+              <select class="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-primary">
+                <option>Más relevantes</option>
+                <option>Precio: menor a mayor</option>
+                <option>Precio: mayor a menor</option>
+                <option>Novedades</option>
+                <option>Mejor valorados</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Grid de Productos -->
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <ProductCard product={product} />
+            ))}
+          </div>
+
+          <!-- Paginación -->
+          <div class="mt-12 flex justify-center">
+            <nav class="flex items-center gap-2">
+              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-400 cursor-not-allowed" disabled>
+                <i class="material-icons text-sm">chevron_left</i>
+              </button>
+              <button class="px-4 py-2 bg-primary text-secondary font-bold rounded-lg">1</button>
+              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">2</button>
+              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">3</button>
+              <span class="px-2 text-gray-400">...</span>
+              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">10</button>
+              <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">
+                <i class="material-icons text-sm">chevron_right</i>
+              </button>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  // Toggle filtros en mobile
+  const filterBtn = document.querySelector('[aria-label="Abrir filtros"]');
+  const sidebar = document.querySelector('aside');
+
+  // Vista grid/list toggle
+  const gridBtn = document.querySelector('[aria-label="Vista de cuadrícula"]');
+  const listBtn = document.querySelector('[aria-label="Vista de lista"]');
+  const productsGrid = document.querySelector('.grid');
+
+  gridBtn?.addEventListener('click', () => {
+    gridBtn.classList.add('bg-primary', 'text-secondary');
+    gridBtn.classList.remove('text-gray-400');
+    listBtn?.classList.remove('bg-primary', 'text-secondary');
+    listBtn?.classList.add('text-gray-400');
+    productsGrid?.classList.remove('grid-cols-1');
+  });
+
+  listBtn?.addEventListener('click', () => {
+    listBtn.classList.add('bg-primary', 'text-secondary');
+    listBtn.classList.remove('text-gray-400');
+    gridBtn?.classList.remove('bg-primary', 'text-secondary');
+    gridBtn?.classList.add('text-gray-400');
+    productsGrid?.classList.add('grid-cols-1');
+  });
+</script>

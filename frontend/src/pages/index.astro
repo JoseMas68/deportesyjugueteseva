@@ -1,0 +1,405 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import ProductCard from '@/components/ProductCard.astro';
+
+// Categorías populares con imágenes de Unsplash
+const categoriasPopulares = [
+  {
+    name: 'Fútbol',
+    slug: 'futbol',
+    image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400&h=500&fit=crop',
+    description: 'Balones, Botas, Equipaciones'
+  },
+  {
+    name: 'Construcción',
+    slug: 'construccion',
+    image: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=500&fit=crop',
+    description: 'LEGO, Bloques, Sets'
+  },
+  {
+    name: 'Sobre Ruedas',
+    slug: 'outdoor',
+    image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=500&fit=crop',
+    description: 'Bicis, Patinetes, Skates'
+  },
+  {
+    name: 'Juegos de Mesa',
+    slug: 'juegos-mesa',
+    image: 'https://images.unsplash.com/photo-1606167668584-78701c57f13d?w=400&h=500&fit=crop',
+    description: 'Estrategia, Familiares, Cartas'
+  }
+];
+
+// Productos más vendidos (mock data con imágenes de Unsplash)
+const productosMasVendidos = [
+  {
+    id: 1,
+    name: 'Balón Pro League 2024',
+    slug: 'balon-pro-league',
+    category: 'Deportes',
+    price: 24.99,
+    originalPrice: 29.99,
+    image: 'https://images.unsplash.com/photo-1614632537239-1f61f7e94638?w=300&h=300&fit=crop',
+    rating: 4.5,
+    reviews: 42,
+    badge: '-15%'
+  },
+  {
+    id: 2,
+    name: 'Casa de Muñecas Deluxe',
+    slug: 'casa-munecas-deluxe',
+    category: 'Juguetes',
+    price: 89.95,
+    image: 'https://images.unsplash.com/photo-1530325553241-4f6e7690cf36?w=300&h=300&fit=crop',
+    rating: 4,
+    reviews: 18
+  },
+  {
+    id: 3,
+    name: 'Mega Castillo 1000 Pzs',
+    slug: 'mega-castillo',
+    category: 'Construcción',
+    price: 54.00,
+    image: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=300&h=300&fit=crop',
+    rating: 5,
+    reviews: 124,
+    badge: 'Nuevo'
+  },
+  {
+    id: 4,
+    name: 'Raqueta Speed Pro',
+    slug: 'raqueta-speed-pro',
+    category: 'Tenis',
+    price: 120.00,
+    image: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=300&h=300&fit=crop',
+    rating: 4,
+    reviews: 9
+  }
+];
+---
+
+<Layout title="Deportes y Juguetes Eva - Tu tienda online">
+  <Header />
+
+  <main>
+    <!-- Hero Section -->
+    <section class="relative bg-secondary overflow-hidden">
+      <div class="absolute inset-0 opacity-20">
+        <div class="absolute -right-20 -top-20 w-96 h-96 bg-primary rounded-full blur-3xl"></div>
+        <div class="absolute -left-20 bottom-0 w-72 h-72 bg-gray-700 rounded-full blur-3xl"></div>
+      </div>
+
+      <div class="container mx-auto px-4 py-16 md:py-24 relative z-10">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div class="space-y-6">
+            <span class="inline-block bg-primary text-secondary px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-sm">
+              Nueva Colección 2024
+            </span>
+            <h1 class="text-4xl md:text-6xl font-display font-extrabold text-white leading-tight">
+              Diversión sin límites <br/>
+              <span class="text-primary">Para todas las edades</span>
+            </h1>
+            <p class="text-gray-300 text-lg max-w-md">
+              Descubre lo último en equipamiento deportivo y los juguetes más buscados del momento. Calidad garantizada en Deportes y Juguetes Eva.
+            </p>
+            <div class="flex gap-4 pt-4">
+              <a href="/buscar?categoria=juguetes" class="bg-primary text-secondary hover:bg-yellow-500 px-8 py-3 rounded font-bold transition transform hover:-translate-y-1 shadow-lg shadow-yellow-500/20">
+                Ver Juguetes
+              </a>
+              <a href="/buscar?categoria=deportes" class="border-2 border-white text-white hover:bg-white hover:text-secondary px-8 py-3 rounded font-bold transition">
+                Ver Deportes
+              </a>
+            </div>
+          </div>
+
+          <div class="relative">
+            <div class="bg-gradient-to-tr from-gray-800 to-gray-700 rounded-2xl p-8 transform rotate-2 hover:rotate-0 transition duration-500 shadow-2xl border-4 border-secondary">
+              <img
+                src="https://images.unsplash.com/photo-1560523160-754a9e25c68f?w=600&h=400&fit=crop"
+                alt="Niños jugando con juguetes deportivos"
+                class="rounded-lg shadow-lg w-full h-80 object-cover"
+              />
+
+              <div class="absolute -bottom-6 -left-6 bg-surface-light p-4 rounded-lg shadow-xl flex items-center gap-3">
+                <div class="bg-green-100 text-green-600 p-2 rounded-full">
+                  <i class="material-icons">verified</i>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500 uppercase font-bold">Calidad</p>
+                  <p class="font-display font-bold text-secondary">Marcas Oficiales</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Categorías Populares -->
+    <section class="py-16 bg-background-light">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-end mb-8">
+          <div>
+            <h2 class="text-3xl font-display font-bold text-secondary">Categorías Populares</h2>
+            <div class="h-1 w-20 bg-primary mt-2"></div>
+          </div>
+          <a href="/buscar" class="text-sm font-bold text-gray-500 hover:text-secondary transition flex items-center">
+            Ver todo <i class="material-icons text-base ml-1">arrow_forward</i>
+          </a>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {categoriasPopulares.map((categoria) => (
+            <a href={`/${categoria.slug}`} class="group relative rounded-xl overflow-hidden h-64 shadow-md">
+              <img
+                src={categoria.image}
+                alt={categoria.name}
+                class="w-full h-full object-cover transform group-hover:scale-110 transition duration-700"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+              <div class="absolute bottom-0 left-0 p-4 w-full">
+                <h3 class="text-white font-display font-bold text-xl group-hover:text-primary transition-colors">
+                  {categoria.name}
+                </h3>
+                <p class="text-gray-300 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {categoria.description}
+                </p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Banner de Descuentos -->
+    <section class="py-8 bg-surface-light border-y border-gray-200">
+      <div class="container mx-auto px-4">
+        <div class="bg-primary rounded-xl p-8 md:p-12 relative overflow-hidden shadow-lg">
+          <div class="absolute right-0 top-0 w-64 h-full bg-black opacity-10 transform skew-x-12 translate-x-12"></div>
+
+          <div class="flex flex-col md:flex-row items-center justify-between relative z-10 gap-6">
+            <div class="text-center md:text-left">
+              <h2 class="text-2xl md:text-3xl font-display font-extrabold text-secondary mb-2">
+                ¡Descuentos de Temporada!
+              </h2>
+              <p class="text-secondary font-medium text-lg">
+                Hasta un <span class="bg-secondary text-primary px-1 font-bold">40% OFF</span> en equipamiento deportivo.
+              </p>
+            </div>
+            <div class="flex-shrink-0">
+              <a href="/ofertas" class="inline-block bg-secondary text-white hover:bg-black px-8 py-3 rounded-lg font-bold shadow-lg transition transform hover:-translate-y-1">
+                Ver Ofertas
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Los Más Vendidos -->
+    <section class="py-16">
+      <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-display font-bold text-secondary mb-8 text-center">Los Más Vendidos</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {productosMasVendidos.map((producto) => (
+            <div class="bg-surface-light rounded-xl shadow-sm border border-gray-100 hover:shadow-xl transition group">
+              <div class="relative">
+                {producto.badge && (
+                  <span class={`absolute top-3 left-3 text-white text-xs font-bold px-2 py-1 rounded z-10 ${
+                    producto.badge === 'Nuevo' ? 'bg-primary text-secondary' : 'bg-accent'
+                  }`}>
+                    {producto.badge}
+                  </span>
+                )}
+                <div class="aspect-square bg-gray-50 rounded-t-xl overflow-hidden">
+                  <img
+                    src={producto.image}
+                    alt={producto.name}
+                    class="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+                  />
+                </div>
+              </div>
+
+              <div class="p-4">
+                <p class="text-xs text-gray-500 mb-1">{producto.category}</p>
+                <h3 class="font-bold text-secondary text-lg leading-tight mb-2 group-hover:text-gray-600 transition-colors">
+                  {producto.name}
+                </h3>
+
+                <div class="flex items-center gap-1 mb-3">
+                  {Array.from({ length: Math.floor(producto.rating) }).map(() => (
+                    <i class="material-icons text-amber-400 text-sm">star</i>
+                  ))}
+                  {producto.rating % 1 !== 0 && (
+                    <i class="material-icons text-amber-400 text-sm">star_half</i>
+                  )}
+                  {Array.from({ length: 5 - Math.ceil(producto.rating) }).map(() => (
+                    <i class="material-icons text-gray-300 text-sm">star</i>
+                  ))}
+                  <span class="text-xs text-gray-400 ml-1">({producto.reviews})</span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div class="flex flex-col">
+                    {producto.originalPrice && (
+                      <span class="text-gray-400 line-through text-xs">{producto.originalPrice.toFixed(2)}€</span>
+                    )}
+                    <span class="text-xl font-bold text-secondary">{producto.price.toFixed(2)}€</span>
+                  </div>
+                  <button class="bg-secondary text-primary hover:bg-black p-2 rounded-lg transition shadow-md">
+                    <i class="material-icons text-lg">add_shopping_cart</i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Beneficios -->
+    <section class="relative py-24 overflow-hidden">
+      <!-- Fondo con patrón sutil -->
+      <div class="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-50"></div>
+      <div class="absolute inset-0 opacity-5" style="background-image: radial-gradient(circle at 1px 1px, #111 1px, transparent 0); background-size: 40px 40px;"></div>
+
+      <div class="container mx-auto px-4 relative z-10">
+        <!-- Título de sección -->
+        <div class="mb-16">
+          <div class="text-center mb-4">
+            <span class="inline-block bg-secondary text-primary px-4 py-1 text-xs font-bold uppercase tracking-wider rounded-full">
+              Tu compra segura
+            </span>
+          </div>
+          <div class="text-center">
+            <div class="inline-block">
+              <h2 class="text-4xl md:text-5xl font-display font-extrabold text-secondary">
+                Compra con Total Confianza
+              </h2>
+              <div class="h-1 w-20 bg-primary mt-2"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <!-- Envío Rápido -->
+          <div class="group relative">
+            <!-- Tarjeta principal -->
+            <div class="relative bg-white p-8 rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 border-2 border-gray-200 overflow-hidden">
+              <!-- Decoración superior -->
+              <div class="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+
+              <!-- Icono flotante -->
+              <div class="relative mb-6">
+                <div class="inline-flex p-5 bg-gradient-to-br from-primary to-yellow-400 rounded-2xl shadow-lg transform group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500">
+                  <i class="material-icons text-5xl text-secondary">local_shipping</i>
+                </div>
+                <!-- Badge decorativo -->
+                <div class="absolute -top-2 -right-2 w-8 h-8 bg-accent rounded-full flex items-center justify-center transform group-hover:scale-125 transition-transform">
+                  <span class="text-white text-xs font-bold">!</span>
+                </div>
+              </div>
+
+              <!-- Contenido -->
+              <div class="relative">
+                <h3 class="text-2xl font-display font-extrabold text-secondary mb-3">
+                  Envío Rápido
+                </h3>
+                <div class="w-12 h-1 bg-primary mb-4 rounded-full"></div>
+                <p class="text-gray-600 leading-relaxed mb-6">
+                  Recibe tus productos en <span class="font-bold text-secondary">24-48h</span> en península.
+                </p>
+
+                <!-- Característica destacada -->
+                <div class="bg-gradient-to-r from-primary/10 to-transparent p-4 rounded-xl border-l-4 border-primary">
+                  <p class="text-sm font-bold text-secondary">
+                    <i class="material-icons text-lg align-middle mr-1">local_offer</i>
+                    GRATIS en pedidos +50€
+                  </p>
+                </div>
+              </div>
+
+              <!-- Línea decorativa inferior -->
+              <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+            </div>
+          </div>
+
+          <!-- Pago Seguro -->
+          <div class="group relative">
+            <div class="relative bg-white p-8 rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 border-2 border-gray-200 overflow-hidden">
+              <div class="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-green-500/20 to-green-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+
+              <div class="relative mb-6">
+                <div class="inline-flex p-5 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg transform group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500">
+                  <i class="material-icons text-5xl text-white">verified_user</i>
+                </div>
+                <div class="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center transform group-hover:scale-125 transition-transform">
+                  <i class="material-icons text-white text-sm">check</i>
+                </div>
+              </div>
+
+              <div class="relative">
+                <h3 class="text-2xl font-display font-extrabold text-secondary mb-3">
+                  Pago Seguro
+                </h3>
+                <div class="w-12 h-1 bg-green-500 mb-4 rounded-full"></div>
+                <p class="text-gray-600 leading-relaxed mb-6">
+                  Protección <span class="font-bold text-secondary">100%</span> con pasarelas certificadas.
+                </p>
+
+                <div class="bg-gradient-to-r from-green-500/10 to-transparent p-4 rounded-xl border-l-4 border-green-500">
+                  <p class="text-sm font-bold text-secondary">
+                    <i class="material-icons text-lg align-middle mr-1">lock</i>
+                    Cifrado SSL 256-bit
+                  </p>
+                </div>
+              </div>
+
+              <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-green-500 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+            </div>
+          </div>
+
+          <!-- Devolución Fácil -->
+          <div class="group relative">
+            <div class="relative bg-white p-8 rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 border-2 border-gray-200 overflow-hidden">
+              <div class="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-500/20 to-blue-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+
+              <div class="relative mb-6">
+                <div class="inline-flex p-5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg transform group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500">
+                  <i class="material-icons text-5xl text-white">sync</i>
+                </div>
+                <div class="absolute -top-2 -right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center transform group-hover:scale-125 transition-transform">
+                  <span class="text-white text-xs font-bold">30</span>
+                </div>
+              </div>
+
+              <div class="relative">
+                <h3 class="text-2xl font-display font-extrabold text-secondary mb-3">
+                  Devolución Fácil
+                </h3>
+                <div class="w-12 h-1 bg-blue-500 mb-4 rounded-full"></div>
+                <p class="text-gray-600 leading-relaxed mb-6">
+                  Tienes <span class="font-bold text-secondary">30 días</span> para devoluciones sin complicaciones.
+                </p>
+
+                <div class="bg-gradient-to-r from-blue-500/10 to-transparent p-4 rounded-xl border-l-4 border-blue-500">
+                  <p class="text-sm font-bold text-secondary">
+                    <i class="material-icons text-lg align-middle mr-1">autorenew</i>
+                    Sin preguntas, sin problemas
+                  </p>
+                </div>
+              </div>
+
+              <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>

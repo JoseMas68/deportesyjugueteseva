@@ -1,0 +1,441 @@
+---
+export const prerender = false;
+
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import ProductCard from '@/components/ProductCard.astro';
+
+// Get query parameters
+const url = new URL(Astro.request.url);
+const searchQuery = url.searchParams.get('q') || '';
+const categoryFilter = url.searchParams.get('categoria') || '';
+
+// Mock product data - will be replaced with API call
+const allProducts = [
+  {
+    id: 1,
+    name: 'Balón de Fútbol Pro',
+    slug: 'balon-futbol-pro',
+    price: 24.99,
+    originalPrice: 29.99,
+    category: 'deportes',
+    subcategory: 'futbol',
+    brand: 'Nike',
+    image: '/products/balon-futbol.jpg',
+    badge: 'NUEVO',
+    inStock: true
+  },
+  {
+    id: 2,
+    name: 'Zapatillas Running X1',
+    slug: 'zapatillas-running-x1',
+    price: 89.99,
+    category: 'deportes',
+    subcategory: 'running',
+    brand: 'Adidas',
+    image: '/products/zapatillas.jpg',
+    inStock: true
+  },
+  {
+    id: 3,
+    name: 'Raqueta Tenis Pro',
+    slug: 'raqueta-tenis-pro',
+    price: 129.99,
+    originalPrice: 149.99,
+    category: 'deportes',
+    subcategory: 'tenis',
+    brand: 'Wilson',
+    image: '/products/raqueta.jpg',
+    badge: '-13%',
+    inStock: true
+  },
+  {
+    id: 4,
+    name: 'Muñeca Interactiva',
+    slug: 'muneca-interactiva',
+    price: 49.99,
+    category: 'juguetes',
+    subcategory: 'munecas-figuras',
+    brand: 'Mattel',
+    image: '/products/muneca.jpg',
+    inStock: true
+  },
+  {
+    id: 5,
+    name: 'Set Scalextric Rally',
+    slug: 'scalextric-rally',
+    price: 159.99,
+    originalPrice: 189.99,
+    category: 'hobbies',
+    subcategory: 'scalextric',
+    brand: 'Scalextric',
+    image: '/products/scalextric.jpg',
+    badge: '-16%',
+    inStock: true
+  },
+  {
+    id: 6,
+    name: 'Bloques Construcción 500 piezas',
+    slug: 'bloques-construccion',
+    price: 34.99,
+    category: 'juguetes',
+    subcategory: 'construccion',
+    brand: 'LEGO',
+    image: '/products/lego.jpg',
+    inStock: false
+  },
+  {
+    id: 7,
+    name: 'Maqueta Barco Pirata',
+    slug: 'maqueta-barco',
+    price: 79.99,
+    category: 'hobbies',
+    subcategory: 'maquetas',
+    brand: 'Revell',
+    image: '/products/maqueta.jpg',
+    inStock: true
+  },
+  {
+    id: 8,
+    name: 'Balón Baloncesto Pro Grip',
+    slug: 'balon-baloncesto',
+    price: 34.99,
+    category: 'deportes',
+    subcategory: 'baloncesto',
+    brand: 'Wilson',
+    image: '/products/balon-basket.jpg',
+    inStock: true
+  },
+  {
+    id: 9,
+    name: 'Tren Eléctrico Starter Pack',
+    slug: 'tren-electrico-starter',
+    price: 129.99,
+    category: 'hobbies',
+    subcategory: 'trenes-electricos',
+    brand: 'Märklin',
+    image: '/products/tren.jpg',
+    badge: 'NUEVO',
+    inStock: true
+  },
+  {
+    id: 10,
+    name: 'Pelota Pádel Pack 3',
+    slug: 'pelota-padel-pack',
+    price: 12.99,
+    category: 'deportes',
+    subcategory: 'padel',
+    brand: 'Dunlop',
+    image: '/products/pelotas-padel.jpg',
+    inStock: true
+  },
+  {
+    id: 11,
+    name: 'Puzzle Educativo ABC',
+    slug: 'puzzle-abc',
+    price: 19.99,
+    category: 'juguetes',
+    subcategory: 'educativos',
+    brand: 'Fisher-Price',
+    image: '/products/puzzle.jpg',
+    inStock: true
+  },
+  {
+    id: 12,
+    name: 'Guantes Portero Pro',
+    slug: 'guantes-portero',
+    price: 44.99,
+    category: 'deportes',
+    subcategory: 'futbol',
+    brand: 'Adidas',
+    image: '/products/guantes.jpg',
+    badge: 'NUEVO',
+    inStock: true
+  }
+];
+
+// Filter products based on search query and category
+let filteredProducts = allProducts;
+
+if (categoryFilter) {
+  filteredProducts = filteredProducts.filter(p => p.category === categoryFilter);
+}
+
+if (searchQuery) {
+  const query = searchQuery.toLowerCase();
+  filteredProducts = filteredProducts.filter(p =>
+    p.name.toLowerCase().includes(query) ||
+    p.category.toLowerCase().includes(query) ||
+    p.subcategory.toLowerCase().includes(query) ||
+    p.brand.toLowerCase().includes(query)
+  );
+}
+
+// Get unique brands and subcategories from filtered products for filter sidebar
+const availableBrands = [...new Set(filteredProducts.map(p => p.brand))];
+const availableSubcategories = [...new Set(filteredProducts.map(p => p.subcategory))];
+
+const categoryNames: { [key: string]: string } = {
+  'deportes': 'Deportes',
+  'juguetes': 'Juguetes',
+  'hobbies': 'Hobbies y Coleccionismo'
+};
+
+const pageTitle = categoryFilter
+  ? `${categoryNames[categoryFilter]} - Búsqueda`
+  : searchQuery
+    ? `Resultados para "${searchQuery}"`
+    : 'Búsqueda de Productos';
+
+const filters = {
+  priceRanges: [
+    { label: 'Menos de 25€', value: '0-25' },
+    { label: '25€ - 50€', value: '25-50' },
+    { label: '50€ - 100€', value: '50-100' },
+    { label: 'Más de 100€', value: '100+' }
+  ]
+};
+---
+
+<Layout title={`${pageTitle} - Deportes y Juguetes Eva`} description="Encuentra los mejores productos de deportes, juguetes y hobbies">
+  <Header />
+
+  <main class="bg-background-light min-h-screen">
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b border-gray-200">
+      <div class="container mx-auto px-4 py-4">
+        <nav class="flex items-center text-sm flex-wrap">
+          <a href="/" class="text-gray-500 hover:text-primary transition-colors">Inicio</a>
+          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          {categoryFilter ? (
+            <>
+              <a href="/buscar" class="text-gray-500 hover:text-primary transition-colors">Búsqueda</a>
+              <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+              <span class="text-secondary font-medium">{categoryNames[categoryFilter]}</span>
+            </>
+          ) : (
+            <span class="text-secondary font-medium">Búsqueda</span>
+          )}
+        </nav>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      <!-- Header de Búsqueda -->
+      <div class="mb-8">
+        <h1 class="text-4xl md:text-5xl font-display font-extrabold text-secondary mb-4">
+          {pageTitle}
+        </h1>
+        {searchQuery && (
+          <p class="text-gray-600 text-lg">
+            Mostrando resultados para: <span class="font-bold text-secondary">"{searchQuery}"</span>
+          </p>
+        )}
+        {categoryFilter && !searchQuery && (
+          <p class="text-gray-600 text-lg">Explora toda nuestra selección de {categoryNames[categoryFilter].toLowerCase()}</p>
+        )}
+      </div>
+
+      <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar de Filtros -->
+        <aside class="lg:w-64 flex-shrink-0">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="font-display font-bold text-lg">Filtros</h2>
+              <button class="text-sm text-primary hover:underline" onclick="window.location.href='/buscar'">
+                Limpiar
+              </button>
+            </div>
+
+            <!-- Categoría (si no hay filtro de categoría aplicado) -->
+            {!categoryFilter && (
+              <div class="mb-6 pb-6 border-b border-gray-200">
+                <h3 class="font-bold text-secondary mb-4">Categoría</h3>
+                <div class="space-y-2">
+                  <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" data-filter="category" value="deportes" />
+                    <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">Deportes</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" data-filter="category" value="juguetes" />
+                    <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">Juguetes</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" data-filter="category" value="hobbies" />
+                    <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">Hobbies</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            <!-- Precio -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+              <h3 class="font-bold text-secondary mb-4">Precio</h3>
+              <div class="space-y-2">
+                {filters.priceRanges.map((range) => (
+                  <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" data-filter="price" value={range.value} />
+                    <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">{range.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <!-- Marca -->
+            {availableBrands.length > 0 && (
+              <div class="mb-6 pb-6 border-b border-gray-200">
+                <h3 class="font-bold text-secondary mb-4">Marca</h3>
+                <div class="space-y-2">
+                  {availableBrands.map((brand) => (
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                      <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" data-filter="brand" value={brand} />
+                      <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">{brand}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <!-- Disponibilidad -->
+            <div>
+              <h3 class="font-bold text-secondary mb-4">Disponibilidad</h3>
+              <label class="flex items-center gap-2 cursor-pointer group">
+                <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" data-filter="stock" value="true" />
+                <span class="text-sm text-gray-700 group-hover:text-primary transition-colors">En stock</span>
+              </label>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Productos -->
+        <div class="flex-1">
+          <!-- Barra de ordenación -->
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <p class="text-gray-600">
+              Mostrando <span class="font-bold text-secondary" id="product-count">{filteredProducts.length}</span> productos
+            </p>
+
+            <div class="flex items-center gap-4">
+              <!-- Vista (Grid/List) -->
+              <div class="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-1">
+                <button id="grid-view-btn" class="p-2 bg-primary rounded text-secondary" aria-label="Vista de cuadrícula">
+                  <i class="material-icons text-lg">grid_view</i>
+                </button>
+                <button id="list-view-btn" class="p-2 text-gray-400 hover:text-secondary rounded" aria-label="Vista de lista">
+                  <i class="material-icons text-lg">view_list</i>
+                </button>
+              </div>
+
+              <!-- Ordenar -->
+              <select id="sort-select" class="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-primary">
+                <option value="relevance">Más relevantes</option>
+                <option value="price-asc">Precio: menor a mayor</option>
+                <option value="price-desc">Precio: mayor a menor</option>
+                <option value="name-asc">Nombre: A-Z</option>
+                <option value="name-desc">Nombre: Z-A</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Mensaje si no hay resultados -->
+          {filteredProducts.length === 0 && (
+            <div class="bg-white rounded-xl p-12 text-center">
+              <i class="material-icons text-6xl text-gray-300 mb-4">search_off</i>
+              <h3 class="text-2xl font-bold text-secondary mb-2">No se encontraron productos</h3>
+              <p class="text-gray-600 mb-6">
+                {searchQuery
+                  ? `No encontramos productos que coincidan con "${searchQuery}"`
+                  : 'Intenta ajustar los filtros o busca algo diferente'
+                }
+              </p>
+              <a href="/buscar" class="inline-flex items-center gap-2 bg-primary text-secondary font-bold px-6 py-3 rounded-lg hover:bg-yellow-400 transition-colors">
+                <i class="material-icons">refresh</i>
+                Limpiar búsqueda
+              </a>
+            </div>
+          )}
+
+          <!-- Grid de Productos -->
+          {filteredProducts.length > 0 && (
+            <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard product={product} />
+              ))}
+            </div>
+          )}
+
+          <!-- Paginación (placeholder para futuro) -->
+          {filteredProducts.length > 12 && (
+            <div class="mt-12 flex justify-center">
+              <nav class="flex items-center gap-2">
+                <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-400 cursor-not-allowed" disabled>
+                  <i class="material-icons text-sm">chevron_left</i>
+                </button>
+                <button class="px-4 py-2 bg-primary text-secondary font-bold rounded-lg">1</button>
+                <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">2</button>
+                <button class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-colors">
+                  <i class="material-icons text-sm">chevron_right</i>
+                </button>
+              </nav>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  // Toggle vista grid/list
+  const gridBtn = document.getElementById('grid-view-btn');
+  const listBtn = document.getElementById('list-view-btn');
+  const productsGrid = document.getElementById('products-grid');
+
+  gridBtn?.addEventListener('click', () => {
+    gridBtn.classList.add('bg-primary', 'text-secondary');
+    gridBtn.classList.remove('text-gray-400');
+    listBtn?.classList.remove('bg-primary', 'text-secondary');
+    listBtn?.classList.add('text-gray-400');
+    productsGrid?.classList.remove('grid-cols-1');
+    productsGrid?.classList.add('grid-cols-2', 'md:grid-cols-3', 'xl:grid-cols-4');
+  });
+
+  listBtn?.addEventListener('click', () => {
+    listBtn.classList.add('bg-primary', 'text-secondary');
+    listBtn.classList.remove('text-gray-400');
+    gridBtn?.classList.remove('bg-primary', 'text-secondary');
+    gridBtn?.classList.add('text-gray-400');
+    productsGrid?.classList.remove('grid-cols-2', 'md:grid-cols-3', 'xl:grid-cols-4');
+    productsGrid?.classList.add('grid-cols-1');
+  });
+
+  // Filtros interactivos (placeholder - será implementado con JavaScript más complejo)
+  const filterCheckboxes = document.querySelectorAll('[data-filter]');
+
+  filterCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      // Esta funcionalidad será implementada completamente cuando se conecte con el backend
+      // Por ahora solo registra los cambios
+      console.log('Filter changed:', checkbox.getAttribute('data-filter'), checkbox.value, checkbox.checked);
+    });
+  });
+
+  // Ordenamiento (placeholder)
+  const sortSelect = document.getElementById('sort-select');
+
+  sortSelect?.addEventListener('change', (e) => {
+    const value = (e.target as HTMLSelectElement).value;
+    console.log('Sort changed:', value);
+    // La ordenación real se implementará cuando se conecte con el backend
+  });
+</script>
+
+<style>
+  /* Transiciones suaves para cambios de vista */
+  #products-grid {
+    transition: all 0.3s ease;
+  }
+</style>

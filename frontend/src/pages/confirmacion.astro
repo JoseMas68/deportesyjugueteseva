@@ -1,0 +1,293 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+
+// Mock order data
+const order = {
+  id: '#EVA-8492',
+  email: 'cliente@email.com',
+  date: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }),
+  estimatedDelivery: 'Martes, 24 de Octubre',
+  status: 'confirmed',
+  items: [
+    {
+      id: 1,
+      name: 'Balón de Fútbol Pro League 2023',
+      variant: 'Talla: 5, Color: Blanco/Negro',
+      price: 29.99,
+      quantity: 1,
+      image: '/products/balon-futbol.jpg'
+    },
+    {
+      id: 2,
+      name: 'Zapatillas Running X1',
+      variant: 'Talla: 42, Color: Negro/Amarillo',
+      price: 89.99,
+      quantity: 1,
+      image: '/products/zapatillas.jpg'
+    }
+  ],
+  subtotal: 119.98,
+  shipping: 5.90,
+  tax: 21.55,
+  total: 147.43,
+  shippingAddress: {
+    name: 'Juan Pérez',
+    street: 'Calle Mayor 123, 4º B',
+    city: '28001, Madrid',
+    country: 'España',
+    phone: '+34 600 000 000'
+  },
+  paymentMethod: {
+    type: 'Tarjeta de Crédito',
+    last4: '4242'
+  }
+};
+
+// Mock suggested products
+const suggestedProducts = [
+  {
+    id: 3,
+    name: 'Mochila Deportiva Pro',
+    slug: 'mochila-deportiva-pro',
+    price: 49.99,
+    category: 'Deportes',
+    image: '/products/mochila.jpg'
+  },
+  {
+    id: 4,
+    name: 'Botella Térmica',
+    slug: 'botella-termica',
+    price: 19.99,
+    category: 'Deportes',
+    image: '/products/botella.jpg'
+  },
+  {
+    id: 5,
+    name: 'Toalla Microfibra',
+    slug: 'toalla-microfibra',
+    price: 14.99,
+    category: 'Deportes',
+    image: '/products/toalla.jpg'
+  },
+  {
+    id: 6,
+    name: 'Guantes Gimnasio',
+    slug: 'guantes-gimnasio',
+    price: 24.99,
+    category: 'Deportes',
+    image: '/products/guantes-gym.jpg'
+  }
+];
+---
+
+<Layout title="Pedido Confirmado - Deportes y Juguetes Eva" description="Tu pedido ha sido confirmado">
+  <Header />
+
+  <main class="bg-background-light min-h-screen">
+    <div class="container mx-auto px-4 py-8 lg:py-12">
+      <!-- Hero de Confirmación -->
+      <div class="text-center mb-12">
+        <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-primary/20 mb-6">
+          <i class="material-icons text-5xl text-yellow-600">check_circle</i>
+        </div>
+
+        <h1 class="text-4xl font-display font-extrabold text-secondary tracking-tight mb-2">
+          ¡Gracias por tu pedido!
+        </h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          Tu pedido <span class="font-bold text-secondary">{order.id}</span> ha sido confirmado y pronto estará en camino.
+        </p>
+        <p class="text-sm text-gray-600 mt-2">
+          Hemos enviado un correo de confirmación a <span class="font-medium">{order.email}</span>
+        </p>
+      </div>
+
+      <div class="grid lg:grid-cols-12 gap-8">
+        <!-- Contenido Principal -->
+        <div class="lg:col-span-8 space-y-8">
+          <!-- Estado del Envío -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+            <h2 class="text-xl font-display font-bold text-secondary mb-6 flex items-center gap-2">
+              <i class="material-icons text-primary">local_shipping</i>
+              Estado del Envío
+            </h2>
+
+            <!-- Barra de progreso -->
+            <div class="relative">
+              <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
+                <div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary transition-all duration-500" style="width: 25%"></div>
+              </div>
+
+              <div class="flex justify-between text-xs sm:text-sm font-medium text-gray-600">
+                <div class="text-secondary font-bold">Confirmado</div>
+                <div>Procesando</div>
+                <div>Enviado</div>
+                <div>Entregado</div>
+              </div>
+            </div>
+
+            <!-- Card fecha estimada -->
+            <div class="mt-8 bg-background-light rounded-lg p-4 border border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <p class="text-sm text-gray-600">Fecha estimada de entrega</p>
+                <p class="text-lg font-bold text-secondary">{order.estimatedDelivery}</p>
+              </div>
+              <button class="text-sm font-semibold text-primary hover:underline">
+                Rastrear pedido
+              </button>
+            </div>
+          </div>
+
+          <!-- Resumen de Artículos -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h2 class="text-lg font-display font-bold text-secondary">Resumen de Artículos</h2>
+            </div>
+
+            <ul class="divide-y divide-gray-200" role="list">
+              {order.items.map((item) => (
+                <li class="p-6 flex flex-col sm:flex-row gap-6">
+                  <div class="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-white">
+                    <img class="h-full w-full object-cover object-center" src={item.image} alt={item.name} />
+                  </div>
+                  <div class="flex flex-1 flex-col">
+                    <div>
+                      <div class="flex justify-between text-base font-medium text-secondary">
+                        <h3>
+                          <a href={`/producto/${item.name.toLowerCase().replace(/ /g, '-')}`} class="hover:text-primary transition-colors">
+                            {item.name}
+                          </a>
+                        </h3>
+                        <p class="ml-4">{item.price.toFixed(2)}€</p>
+                      </div>
+                      <p class="mt-1 text-sm text-gray-600">{item.variant}</p>
+                    </div>
+                    <div class="flex flex-1 items-end justify-between text-sm">
+                      <p class="text-gray-600">Cant: {item.quantity}</p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <!-- Botones de Acción -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button class="w-full bg-secondary text-white hover:bg-black font-bold py-3 px-4 rounded-lg shadow transition-colors flex justify-center items-center gap-2">
+              <i class="material-icons">print</i>
+              Descargar Factura
+            </button>
+            <a href="/" class="w-full bg-primary text-black hover:bg-yellow-400 font-bold py-3 px-4 rounded-lg shadow transition-colors text-center">
+              Seguir Comprando
+            </a>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-4 space-y-6">
+          <!-- Resumen del Pedido -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+            <h2 class="text-lg font-display font-bold text-secondary mb-6">Resumen del Pedido</h2>
+            <div class="flow-root">
+              <dl class="-my-4 text-sm divide-y divide-gray-200">
+                <div class="py-4 flex items-center justify-between">
+                  <dt class="text-gray-600">Subtotal</dt>
+                  <dd class="font-medium text-secondary">{order.subtotal.toFixed(2)}€</dd>
+                </div>
+                <div class="py-4 flex items-center justify-between">
+                  <dt class="text-gray-600">Envío</dt>
+                  <dd class="font-medium text-secondary">{order.shipping.toFixed(2)}€</dd>
+                </div>
+                <div class="py-4 flex items-center justify-between">
+                  <dt class="text-gray-600">Impuestos (21% IVA)</dt>
+                  <dd class="font-medium text-secondary">{order.tax.toFixed(2)}€</dd>
+                </div>
+                <div class="py-4 flex items-center justify-between border-t-2 border-primary">
+                  <dt class="text-base font-bold text-secondary">Total</dt>
+                  <dd class="text-xl font-display font-bold text-secondary">{order.total.toFixed(2)}€</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <!-- Dirección de Envío -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+            <h3 class="text-lg font-display font-bold text-secondary mb-4">Dirección de Envío</h3>
+            <address class="not-italic text-sm text-gray-600 space-y-2">
+              <p class="font-bold text-secondary">{order.shippingAddress.name}</p>
+              <p>{order.shippingAddress.street}</p>
+              <p>{order.shippingAddress.city}</p>
+              <p>{order.shippingAddress.country}</p>
+              <p class="mt-4 flex items-center gap-2">
+                <i class="material-icons text-base">phone</i>
+                {order.shippingAddress.phone}
+              </p>
+            </address>
+          </div>
+
+          <!-- Método de Pago -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+            <h3 class="text-lg font-display font-bold text-secondary mb-4">Método de Pago</h3>
+            <div class="flex items-center gap-3 text-sm text-gray-600">
+              <i class="material-icons text-3xl text-secondary">credit_card</i>
+              <div class="flex flex-col">
+                <span class="font-medium text-secondary">{order.paymentMethod.type}</span>
+                <span>Terminada en **** {order.paymentMethod.last4}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- También te podría interesar -->
+      <section class="mt-16 border-t border-gray-200 pt-12">
+        <h2 class="text-3xl font-display font-extrabold uppercase italic text-secondary mb-8">
+          También te <span class="text-primary">Podría Interesar</span>
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {suggestedProducts.map((product) => (
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all group">
+              <div class="aspect-square bg-gray-50 flex items-center justify-center overflow-hidden relative">
+                <img class="object-contain h-48 group-hover:scale-110 transition duration-300" src={product.image} alt={product.name} />
+              </div>
+              <div class="p-4">
+                <p class="text-xs text-gray-500 mb-1">{product.category}</p>
+                <h3 class="font-bold text-secondary text-sm leading-tight mb-2 line-clamp-2">{product.name}</h3>
+                <p class="text-lg font-bold text-secondary mb-3">{product.price.toFixed(2)}€</p>
+                <a
+                  href={`/producto/${product.slug}`}
+                  class="w-full bg-secondary text-white hover:bg-primary hover:text-black py-2 px-4 rounded-lg font-bold text-sm uppercase transition-colors text-center block"
+                >
+                  Ver Producto
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  // Animación de la barra de progreso al cargar
+  document.addEventListener('DOMContentLoaded', () => {
+    const progressBar = document.querySelector('.bg-primary');
+    if (progressBar) {
+      progressBar.style.width = '0%';
+      setTimeout(() => {
+        progressBar.style.width = '25%';
+      }, 300);
+    }
+  });
+
+  // Función para descargar factura (simulada)
+  const downloadButton = document.querySelector('[href*="Descargar"]')?.closest('button');
+  downloadButton?.addEventListener('click', () => {
+    alert('Generando factura... (En producción se descargaría un PDF)');
+  });
+</script>

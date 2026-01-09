@@ -1,0 +1,278 @@
+---
+// VERSIÓN REDISEÑADA - Basada en HTML de muestra
+// Navegación horizontal simple + Top bar con info de contacto
+
+const deportes = [
+  { name: 'Running', slug: 'running', icon: 'directions_run' },
+  { name: 'Trail Running', slug: 'trail-running', icon: 'terrain' },
+  { name: 'Fútbol', slug: 'futbol', icon: 'sports_soccer' },
+  { name: 'Fitness', slug: 'fitness', icon: 'fitness_center' },
+  { name: 'Natación', slug: 'natacion', icon: 'pool' },
+  { name: 'Outdoor', slug: 'outdoor', icon: 'landscape' },
+  { name: 'Casual / Lifestyle', slug: 'casual', icon: 'checkroom' },
+];
+
+const juguetes = [
+  { name: 'Infantiles (0-3 años)', slug: 'infantiles', icon: 'child_care' },
+  { name: 'Educativos', slug: 'educativos', icon: 'school' },
+  { name: 'Construcción', slug: 'construccion', icon: 'handyman' },
+  { name: 'Aire Libre', slug: 'aire-libre', icon: 'park' },
+  { name: 'Muñecas y Figuras', slug: 'munecas-figuras', icon: 'person' },
+];
+
+const hobbies = [
+  { name: 'Scalextric', slug: 'scalextric', icon: 'speed' },
+  { name: 'Trenes Eléctricos', slug: 'trenes-electricos', icon: 'train' },
+  { name: 'Maquetas', slug: 'maquetas', icon: 'precision_manufacturing' },
+  { name: 'Modelismo', slug: 'modelismo', icon: 'palette' },
+];
+---
+
+<header>
+  <!-- Top Bar -->
+  <div class="bg-secondary text-white text-xs py-2">
+    <div class="container mx-auto px-4 flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <a href="tel:+34123456789" class="flex items-center gap-2 hover:text-primary transition-colors">
+          <i class="material-icons text-sm">phone</i>
+          <span>+34 123 456 789</span>
+        </a>
+        <a href="mailto:info@deportesyjugueteseva.com" class="hidden md:flex items-center gap-2 hover:text-primary transition-colors">
+          <i class="material-icons text-sm">email</i>
+          <span>info@deportesyjugueteseva.com</span>
+        </a>
+      </div>
+      <div class="flex items-center gap-2">
+        <i class="material-icons text-sm text-primary">local_shipping</i>
+        <span class="font-semibold">¡Envío gratis en pedidos superiores a 50€!</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header Principal -->
+  <div class="bg-surface-light shadow-md sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between gap-6">
+        <!-- Logo -->
+        <a href="/" class="flex-shrink-0">
+          <img src="/logo.png" alt="EVA Deportes y Juguetes" class="h-20 md:h-24" />
+        </a>
+
+        <!-- Buscador (Desktop) -->
+        <form action="/buscar" method="get" class="hidden lg:flex flex-1 max-w-2xl">
+          <div class="relative flex-1">
+            <input
+              type="search"
+              name="q"
+              placeholder="Buscar productos..."
+              class="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-l-lg focus:outline-none focus:border-primary"
+            />
+            <i class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">search</i>
+          </div>
+          <button type="submit" class="bg-secondary text-primary px-8 py-3 rounded-r-lg font-bold hover:bg-black transition-colors">
+            Buscar
+          </button>
+        </form>
+
+        <!-- Iconos de Acción -->
+        <div class="flex items-center gap-4">
+          <!-- Favoritos -->
+          <a href="/favoritos" class="hidden md:flex items-center gap-2 hover:text-primary transition-colors">
+            <i class="material-icons text-2xl">favorite_border</i>
+          </a>
+
+          <!-- Carrito -->
+          <a href="/carrito" class="relative flex items-center gap-2 hover:text-primary transition-colors">
+            <i class="material-icons text-2xl">shopping_cart</i>
+            <span id="cart-count" class="absolute -top-2 -right-2 bg-accent text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center" style="display: none;">
+              0
+            </span>
+          </a>
+
+          <!-- Mobile menu button -->
+          <button id="mobile-menu-btn" class="lg:hidden" aria-label="Menú">
+            <i class="material-icons text-3xl">menu</i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Buscador (Mobile) -->
+      <form action="/buscar" method="get" class="lg:hidden mt-4">
+        <div class="relative">
+          <input
+            type="search"
+            name="q"
+            placeholder="Buscar productos..."
+            class="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary"
+          />
+          <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 bg-secondary text-primary px-4 py-2 rounded-lg">
+            <i class="material-icons">search</i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Navegación Horizontal con Megamenu -->
+    <nav class="hidden lg:block border-t border-gray-200">
+      <div class="container mx-auto px-4">
+        <ul class="flex items-center justify-center">
+          <!-- Deportes con Megamenu -->
+          <li class="group relative">
+            <button class="block px-6 py-4 font-bold text-secondary hover:-translate-y-0.5 transition-transform flex items-center gap-1">
+              Deportes
+              <i class="material-icons text-sm">expand_more</i>
+            </button>
+
+            <!-- Megamenu Dropdown -->
+            <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-64">
+                <div class="grid gap-2">
+                  {deportes.map((cat) => (
+                    <a href={`/${cat.slug}`} class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-primary transition-colors group/item">
+                      <i class="material-icons text-secondary">{cat.icon}</i>
+                      <span class="font-medium text-secondary">{cat.name}</span>
+                    </a>
+                  ))}
+                  <div class="border-t border-gray-200 mt-2 pt-2">
+                    <a href="/buscar?categoria=deportes" class="flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
+                      Ver Todos
+                      <i class="material-icons text-sm">arrow_forward</i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+
+          <!-- Juguetes con Megamenu -->
+          <li class="group relative">
+            <button class="block px-6 py-4 font-bold text-secondary hover:-translate-y-0.5 transition-transform flex items-center gap-1">
+              Juguetes
+              <i class="material-icons text-sm">expand_more</i>
+            </button>
+
+            <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-64">
+                <div class="grid gap-2">
+                  {juguetes.map((cat) => (
+                    <a href={`/${cat.slug}`} class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-primary transition-colors group/item">
+                      <i class="material-icons text-secondary">{cat.icon}</i>
+                      <span class="font-medium text-secondary">{cat.name}</span>
+                    </a>
+                  ))}
+                  <div class="border-t border-gray-200 mt-2 pt-2">
+                    <a href="/buscar?categoria=juguetes" class="flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
+                      Ver Todos
+                      <i class="material-icons text-sm">arrow_forward</i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+
+          <!-- Hobbies con Megamenu -->
+          <li class="group relative">
+            <button class="block px-6 py-4 font-bold text-secondary hover:-translate-y-0.5 transition-transform flex items-center gap-1">
+              Hobbies y Coleccionismo
+              <i class="material-icons text-sm">expand_more</i>
+            </button>
+
+            <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-64">
+                <div class="grid gap-2">
+                  {hobbies.map((cat) => (
+                    <a href={`/${cat.slug}`} class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-primary transition-colors group/item">
+                      <i class="material-icons text-secondary">{cat.icon}</i>
+                      <span class="font-medium text-secondary">{cat.name}</span>
+                    </a>
+                  ))}
+                  <div class="border-t border-gray-200 mt-2 pt-2">
+                    <a href="/buscar?categoria=hobbies" class="flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
+                      Ver Todos
+                      <i class="material-icons text-sm">arrow_forward</i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+
+          <!-- Ofertas (sin megamenu) -->
+          <li>
+            <a href="/ofertas" class="block px-6 py-4 font-bold text-accent hover:scale-110 transition-transform flex items-center gap-2">
+              <i class="material-icons">local_offer</i>
+              Ofertas
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="lg:hidden hidden bg-white border-t border-gray-200 shadow-lg">
+    <div class="container mx-auto px-4 py-4">
+      <ul class="space-y-2">
+        <li>
+          <a href="/deportes" class="block py-3 px-4 hover:bg-gray-100 rounded font-bold text-secondary">
+            Deportes
+          </a>
+          <ul class="pl-6 space-y-1">
+            {deportes.map((cat) => (
+              <li>
+                <a href={`/${cat.slug}`} class="block py-2 px-4 hover:bg-gray-100 rounded text-sm text-gray-600">
+                  {cat.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </li>
+        <li>
+          <a href="/juguetes" class="block py-3 px-4 hover:bg-gray-100 rounded font-bold text-secondary">
+            Juguetes
+          </a>
+          <ul class="pl-6 space-y-1">
+            {juguetes.map((cat) => (
+              <li>
+                <a href={`/${cat.slug}`} class="block py-2 px-4 hover:bg-gray-100 rounded text-sm text-gray-600">
+                  {cat.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </li>
+        <li>
+          <a href="/hobbies" class="block py-3 px-4 hover:bg-gray-100 rounded font-bold text-secondary">
+            Hobbies y Coleccionismo
+          </a>
+          <ul class="pl-6 space-y-1">
+            {hobbies.map((cat) => (
+              <li>
+                <a href={`/${cat.slug}`} class="block py-2 px-4 hover:bg-gray-100 rounded text-sm text-gray-600">
+                  {cat.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </li>
+        <li>
+          <a href="/ofertas" class="block py-3 px-4 hover:bg-gray-100 rounded font-bold text-accent flex items-center gap-2">
+            <i class="material-icons">local_offer</i>
+            Ofertas
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Toggle mobile menu
+  const btn = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-menu');
+
+  btn?.addEventListener('click', () => {
+    menu?.classList.toggle('hidden');
+  });
+</script>
