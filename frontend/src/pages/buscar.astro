@@ -5,7 +5,7 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import ProductCard from '@/components/ProductCard.astro';
-import { getProducts } from '@/lib/api';
+import { getProducts, getBrands } from '@/lib/api';
 
 // Get query parameters
 const url = new URL(Astro.request.url);
@@ -55,8 +55,14 @@ const categoryList = [
   { value: 'hobbies', label: 'Hobbies' },
 ];
 
-// Marcas
-const brandList = ['Nike', 'Adidas', 'Salomon', 'Arena', 'Speedo', 'Puma', 'The North Face', 'LEGO', 'Hasbro', 'Scalextric', 'Märklin'];
+// Marcas - cargar desde la API (todas las marcas activas)
+let brandList: { id: string; name: string; slug: string }[] = [];
+try {
+  brandList = await getBrands();
+} catch (error) {
+  console.error('Error al cargar marcas:', error);
+  brandList = [];
+}
 
 // Colores disponibles
 const colorList = ['Negro', 'Blanco', 'Azul', 'Rojo', 'Verde', 'Amarillo', 'Naranja', 'Rosa', 'Gris', 'Multicolor'];
@@ -152,27 +158,30 @@ const pageTitle = searchQuery
             </div>
 
             <!-- Marca -->
-            <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
-              <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
-                <span class="font-bold text-secondary text-sm">Marca</span>
-                <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
-              </button>
-              <div class="filter-accordion-content">
-                <div class="p-3 bg-white border-t border-gray-200 space-y-2 max-h-48 overflow-y-auto">
-                  {brandList.map((brandName) => (
-                    <label class="flex items-center gap-2 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        class="filter-checkbox w-4 h-4 rounded border-gray-300 text-secondary focus:ring-secondary"
-                        data-filter="brand"
-                        data-value={brandName}
-                      />
-                      <span class="text-sm text-gray-700 group-hover:text-secondary transition-colors">{brandName}</span>
-                    </label>
-                  ))}
+            {brandList.length > 0 && (
+              <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+                <button class="filter-accordion-button w-full flex justify-between items-center p-3 bg-gray-50 text-left focus:outline-none hover:bg-gray-100 transition-colors">
+                  <span class="font-bold text-secondary text-sm">Marca</span>
+                  <i class="material-icons filter-accordion-icon text-gray-500">expand_more</i>
+                </button>
+                <div class="filter-accordion-content">
+                  <div class="p-3 bg-white border-t border-gray-200 space-y-2 max-h-48 overflow-y-auto">
+                    {brandList.map((brand) => (
+                      <label class="flex items-center gap-2 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          class="filter-checkbox w-4 h-4 rounded border-gray-300 text-secondary focus:ring-secondary"
+                          data-filter="brand"
+                          data-value={brand.slug}
+                          data-label={brand.name}
+                        />
+                        <span class="text-sm text-gray-700 group-hover:text-secondary transition-colors">{brand.name}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <!-- Color -->
             <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
@@ -672,9 +681,12 @@ const pageTitle = searchQuery
       });
 
       // Brand tags
-      state.brands.forEach(brand => {
-        html += `<button class="remove-filter inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors" data-filter="brand" data-value="${brand}">
-          ${brand}
+      state.brands.forEach(brandSlug => {
+        // Buscar el label de la marca por su slug
+        const brandCheckbox = document.querySelector(`[data-filter="brand"][data-value="${brandSlug}"]`) as HTMLInputElement;
+        const brandLabel = brandCheckbox?.dataset.label || brandSlug;
+        html += `<button class="remove-filter inline-flex items-center gap-1 bg-primary/20 text-secondary text-xs px-2 py-1 rounded hover:bg-primary/30 transition-colors" data-filter="brand" data-value="${brandSlug}">
+          ${brandLabel}
           <i class="material-icons text-xs">close</i>
         </button>`;
       });

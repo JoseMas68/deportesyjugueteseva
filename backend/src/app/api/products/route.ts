@@ -90,20 +90,18 @@ export async function GET(request: NextRequest) {
         OR: [
           { name: { contains: search, mode: 'insensitive' } },
           { description: { contains: search, mode: 'insensitive' } },
-          { brand: { contains: search, mode: 'insensitive' } },
+          { brand: { name: { contains: search, mode: 'insensitive' } } },
         ],
       })
     }
 
     if (brand) {
-      // Soportar múltiples marcas separadas por coma
-      const brands = brand.split(',').map(b => b.trim()).filter(Boolean)
-      if (brands.length === 1) {
-        where.brand = { equals: brands[0], mode: 'insensitive' }
-      } else if (brands.length > 1) {
-        where.AND.push({
-          OR: brands.map(b => ({ brand: { equals: b, mode: 'insensitive' } }))
-        })
+      // Soportar múltiples marcas separadas por coma (usando slug de la marca)
+      const brandSlugs = brand.split(',').map(b => b.trim()).filter(Boolean)
+      if (brandSlugs.length === 1) {
+        where.brand = { slug: brandSlugs[0] }
+      } else if (brandSlugs.length > 1) {
+        where.brand = { slug: { in: brandSlugs } }
       }
     }
 
@@ -140,6 +138,7 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           category: true,
+          brand: true,
         },
         orderBy,
         take: limit,

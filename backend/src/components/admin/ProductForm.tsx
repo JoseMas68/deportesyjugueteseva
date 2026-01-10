@@ -8,16 +8,22 @@ interface Category {
   name: string
 }
 
+interface Brand {
+  id: string
+  name: string
+  slug: string
+}
+
 interface ProductVariant {
   id?: string
-  size?: string
-  color?: string
-  colorHex?: string
-  material?: string
+  size?: string | null
+  color?: string | null
+  colorHex?: string | null
+  material?: string | null
   price?: number | null
   stock: number
-  sku?: string
-  imageUrl?: string
+  sku?: string | null
+  imageUrl?: string | null
   isActive: boolean
 }
 
@@ -33,7 +39,7 @@ interface Product {
   categoryId: string
   images: string[]
   thumbnailUrl?: string | null
-  brand?: string | null
+  brandId?: string | null
   isFeatured: boolean
   isNew: boolean
   isBestSeller: boolean
@@ -45,9 +51,10 @@ interface Product {
 interface ProductFormProps {
   product?: Product
   categories: Category[]
+  brands: Brand[]
 }
 
-export default function ProductForm({ product, categories }: ProductFormProps) {
+export default function ProductForm({ product, categories, brands }: ProductFormProps) {
   const router = useRouter()
   const isEditing = !!product?.id
 
@@ -62,7 +69,7 @@ export default function ProductForm({ product, categories }: ProductFormProps) {
     categoryId: product?.categoryId || '',
     images: product?.images || [],
     thumbnailUrl: product?.thumbnailUrl || null,
-    brand: product?.brand || '',
+    brandId: product?.brandId || null,
     isFeatured: product?.isFeatured || false,
     isNew: product?.isNew || false,
     isBestSeller: product?.isBestSeller || false,
@@ -800,12 +807,18 @@ export default function ProductForm({ product, categories }: ProductFormProps) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Marca
                 </label>
-                <input
-                  type="text"
-                  value={formData.brand || ''}
-                  onChange={(e) => setFormData({ ...formData, brand: e.target.value || null })}
+                <select
+                  value={formData.brandId || ''}
+                  onChange={(e) => setFormData({ ...formData, brandId: e.target.value || null })}
                   className="input"
-                />
+                >
+                  <option value="">Sin marca</option>
+                  {brands.map((brand) => (
+                    <option key={brand.id} value={brand.id}>
+                      {brand.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>

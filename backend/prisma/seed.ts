@@ -245,7 +245,7 @@ async function main() {
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; background: #f4f4f4;">
   <div style="background: #000; padding: 30px; text-align: center;">
-    <h1 style="color: #CCFF00; margin: 0; font-size: 32px; font-weight: bold;">EVA</h1>
+    <h1 style="color: #FFF64C; margin: 0; font-size: 32px; font-weight: bold;">EVA</h1>
     <p style="color: #fff; margin: 10px 0 0 0; font-size: 14px;">DEPORTES Y JUGUETES</p>
   </div>
 
@@ -269,7 +269,7 @@ async function main() {
           <td style="padding: 8px 0;"><strong>Envío:</strong></td>
           <td style="text-align: right; padding: 8px 0;">{shipping_cost}</td>
         </tr>
-        <tr style="font-size: 20px; color: #CCFF00; background: #000;">
+        <tr style="font-size: 20px; color: #FFF64C; background: #000;">
           <td style="padding: 15px;"><strong>Total:</strong></td>
           <td style="text-align: right; padding: 15px;"><strong>{total}</strong></td>
         </tr>
@@ -283,7 +283,7 @@ async function main() {
 
     <div style="text-align: center; margin: 40px 0;">
       <a href="https://deportesyjugueteseva.com/pedidos/{order_id}"
-         style="background: #CCFF00; color: #000; padding: 15px 40px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold; font-size: 16px;">
+         style="background: #FFF64C; color: #000; padding: 15px 40px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold; font-size: 16px;">
         Ver estado del pedido
       </a>
     </div>
@@ -308,7 +308,7 @@ async function main() {
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; background: #f4f4f4;">
   <div style="background: #000; padding: 30px; text-align: center;">
-    <h1 style="color: #CCFF00; margin: 0; font-size: 32px; font-weight: bold;">EVA</h1>
+    <h1 style="color: #FFF64C; margin: 0; font-size: 32px; font-weight: bold;">EVA</h1>
   </div>
 
   <div style="background: #fff; padding: 40px 30px;">
@@ -325,7 +325,7 @@ async function main() {
 
     <div style="text-align: center; margin: 40px 0;">
       <a href="https://deportesyjugueteseva.com/pedidos/{order_id}"
-         style="background: #CCFF00; color: #000; padding: 15px 40px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+         style="background: #FFF64C; color: #000; padding: 15px 40px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
         Ver mi pedido
       </a>
     </div>
@@ -348,7 +348,7 @@ async function main() {
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; background: #f4f4f4;">
   <div style="background: #000; padding: 30px; text-align: center;">
-    <h1 style="color: #CCFF00; margin: 0; font-size: 32px; font-weight: bold;">EVA</h1>
+    <h1 style="color: #FFF64C; margin: 0; font-size: 32px; font-weight: bold;">EVA</h1>
   </div>
 
   <div style="background: #fff; padding: 40px 30px;">
@@ -359,14 +359,14 @@ async function main() {
 
     <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 30px 0;">
       <p style="margin: 0 0 10px 0;"><strong>Número de seguimiento:</strong></p>
-      <p style="margin: 0; font-size: 18px; color: #CCFF00; background: #000; padding: 15px; border-radius: 4px; text-align: center; font-weight: bold;">{tracking_number}</p>
+      <p style="margin: 0; font-size: 18px; color: #FFF64C; background: #000; padding: 15px; border-radius: 4px; text-align: center; font-weight: bold;">{tracking_number}</p>
     </div>
 
     <p>Recibirás tu pedido en los próximos días laborables.</p>
 
     <div style="text-align: center; margin: 40px 0;">
       <a href="https://deportesyjugueteseva.com/pedidos/{order_id}"
-         style="background: #CCFF00; color: #000; padding: 15px 40px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+         style="background: #FFF64C; color: #000; padding: 15px 40px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
         Seguir mi pedido
       </a>
     </div>
@@ -389,7 +389,7 @@ async function main() {
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; background: #f4f4f4;">
   <div style="background: #000; padding: 30px; text-align: center;">
-    <h1 style="color: #CCFF00; margin: 0; font-size: 32px; font-weight: bold;">EVA</h1>
+    <h1 style="color: #FFF64C; margin: 0; font-size: 32px; font-weight: bold;">EVA</h1>
   </div>
 
   <div style="background: #fff; padding: 40px 30px;">
@@ -408,7 +408,7 @@ async function main() {
 
     <div style="text-align: center; margin: 40px 0;">
       <a href="https://deportesyjugueteseva.com/contacto"
-         style="background: #CCFF00; color: #000; padding: 15px 40px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+         style="background: #FFF64C; color: #000; padding: 15px 40px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
         Contactar soporte
       </a>
     </div>
@@ -425,25 +425,25 @@ async function main() {
       subject: '[ADMIN] Nuevo pedido {order_number}',
       body: `<!DOCTYPE html>
 <html>
-<body style="font-family: monospace; padding: 20px; background: #000; color: #CCFF00;">
+<body style="font-family: monospace; padding: 20px; background: #000; color: #FFF64C;">
   <h2>🔔 NUEVO PEDIDO RECIBIDO</h2>
 
   <p><strong>Pedido:</strong> {order_number}</p>
   <p><strong>Cliente:</strong> {user_name} ({user_email})</p>
   <p><strong>Total:</strong> {total}</p>
 
-  <hr style="border-color: #CCFF00;">
+  <hr style="border-color: #FFF64C;">
 
   <h3>Productos:</h3>
   {products}
 
-  <hr style="border-color: #CCFF00;">
+  <hr style="border-color: #FFF64C;">
 
   <p><strong>Dirección de envío:</strong></p>
   <p style="white-space: pre-line;">{address}</p>
 
   <p style="margin-top: 30px;">
-    <a href="{admin_link}" style="background: #CCFF00; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+    <a href="{admin_link}" style="background: #FFF64C; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">
       VER EN PANEL ADMIN
     </a>
   </p>

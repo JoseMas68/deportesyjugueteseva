@@ -20,12 +20,19 @@ export default async function EditarProductoPage({ params }: PageProps) {
     notFound()
   }
 
-  // Obtener categorias (solo subcategorias)
-  const categories = await prisma.category.findMany({
-    where: { parentId: { not: null } },
-    select: { id: true, name: true },
-    orderBy: { name: 'asc' },
-  })
+  // Obtener categorias (solo subcategorias) y marcas
+  const [categories, brands] = await Promise.all([
+    prisma.category.findMany({
+      where: { parentId: { not: null } },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.brand.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, slug: true },
+      orderBy: { name: 'asc' },
+    })
+  ])
 
   // Formatear producto para el formulario
   const formattedProduct = {
@@ -40,7 +47,7 @@ export default async function EditarProductoPage({ params }: PageProps) {
     categoryId: product.categoryId,
     images: product.images,
     thumbnailUrl: product.thumbnailUrl,
-    brand: product.brand,
+    brandId: product.brandId,
     isFeatured: product.isFeatured,
     isNew: product.isNew,
     isBestSeller: product.isBestSeller,
@@ -79,7 +86,7 @@ export default async function EditarProductoPage({ params }: PageProps) {
       </div>
 
       {/* Formulario */}
-      <ProductForm product={formattedProduct} categories={categories} />
+      <ProductForm product={formattedProduct} categories={categories} brands={brands} />
     </div>
   )
 }

@@ -94,12 +94,13 @@
 ## 🚧 Pendiente
 
 ### Frontend (Funcionalidades Pendientes)
-- [ ] Filtros de productos (precio, marca, subcategoría) - NO FUNCIONAN
+- [x] Filtros de productos (precio, marca, subcategoría) - COMPLETADO con multiselección
+- [x] Paginación funcional en listados de productos - COMPLETADO
+- [x] Transiciones suaves entre vista lista/cuadrícula - COMPLETADO
 - [ ] Conectar checkout con API backend
 - [ ] Gestión de estados de carga y errores mejorada
 - [ ] Implementar búsqueda en tiempo real con debounce
 - [ ] Sistema de favoritos funcional
-- [ ] Paginación funcional en listados de productos
 
 ### Panel Admin (Next.js) - ✅ COMPLETADO
 - [x] Middleware de autenticación con Supabase
@@ -377,7 +378,7 @@ npm run dev
 2. ✅ ~~**Carrito Funcional**~~ - COMPLETADO
 3. ✅ ~~**Panel Admin**~~ - COMPLETADO (gestión de productos, pedidos, categorías, configuración)
 4. ✅ ~~**Autenticación Admin**~~ - COMPLETADO (Supabase Auth + middleware)
-5. ⚠️ **Filtros de Productos**: NO FUNCIONAN (precio, marca, subcategoría)
+5. ✅ ~~**Filtros de Productos**~~ - COMPLETADO (multiselección con checkboxes, transiciones suaves)
 6. ❌ **Checkout Real**: Integrar con Stripe y API de pedidos
 
 ### Integraciones Pendientes
@@ -389,7 +390,287 @@ npm run dev
 ### Mejoras Futuras
 - Tests unitarios y de integración
 - Optimización de imágenes con CDN
-- Sistema de reviews y ratings reales
 - Analytics y monitoreo
-- Página de favoritos funcional
-- Paginación funcional en listados
+
+## 📝 Funcionalidades Faltantes (Por Implementar)
+
+Las siguientes funcionalidades tienen sus modelos creados en el schema de Prisma pero aún no están implementadas:
+
+### Sistema de Cupones y Descuentos
+- [ ] API para gestión de cupones (CRUD)
+- [ ] Validación de cupones en checkout
+- [ ] Panel admin para crear/editar cupones
+- [ ] Aplicar descuento en carrito
+- **Modelos creados**: `Coupon`, `CouponType` (enum)
+
+### Sistema de Reseñas y Valoraciones
+- [ ] API para crear/listar reseñas de productos
+- [ ] Moderación de reseñas en admin
+- [ ] Mostrar reseñas en página de producto
+- [ ] Verificación de compra para reseñas
+- [ ] Sistema de votos "útil/no útil"
+- **Modelo creado**: `Review`
+
+### Wishlist / Lista de Deseos (Frontend)
+- [ ] Botón de añadir/quitar de favoritos en productos
+- [ ] Página de favoritos funcional
+- [ ] Sincronización con API de wishlist
+- **Modelos creados**: `WishlistItem` (ya conectado a `Customer`)
+
+### Páginas Legales y de Contenido
+- [ ] Página de Política de Privacidad
+- [ ] Página de Términos y Condiciones
+- [ ] Página de Política de Cookies
+- [ ] Página de Devoluciones y Reembolsos
+- [ ] Editor de páginas en admin
+- **Modelo creado**: `Page`
+
+### Página de Contacto
+- [ ] Formulario de contacto funcional
+- [ ] Envío de email al admin
+- [ ] Gestión de mensajes en admin
+- [ ] Responder desde admin
+- **Modelo creado**: `ContactMessage`
+
+### Página de FAQ (Preguntas Frecuentes)
+- [ ] Página pública de FAQ con categorías
+- [ ] Gestión de FAQ en admin
+- [ ] Contador de visualizaciones
+- [ ] Marcar como "útil"
+- **Modelos creados**: `FaqCategory`, `FaqQuestion`
+
+### Notificaciones de Stock
+- [ ] Formulario "Avísame cuando haya stock"
+- [ ] Sistema de emails automáticos cuando hay stock
+- [ ] Gestión de notificaciones pendientes en admin
+- **Modelo creado**: `StockNotification`
+
+### Sistema de Puntos de Fidelidad
+- [ ] Acumular puntos por compras (ya existe campo `loyaltyPoints` en Customer)
+- [ ] Canjear puntos por descuentos
+- [ ] Historial de puntos
+- [ ] Niveles VIP con beneficios
+
+### Campañas de Email Marketing
+- [ ] Crear y programar campañas
+- [ ] Segmentación de audiencia
+- [ ] Estadísticas de apertura/clicks
+- [ ] Gestionar suscriptores
+- **Modelos creados**: `EmailCampaign`, `CampaignEmailLog`, `EmailSubscriber`
+
+### Feature Flags
+- [ ] Panel de gestión de feature flags
+- [ ] Activar/desactivar funcionalidades
+- **Modelo creado**: `FeatureFlag`
+
+### Gestión de Marcas
+- [ ] CRUD de marcas en admin
+- [ ] Página pública de marcas
+- [ ] Filtro por marca en búsqueda
+- **Modelo creado**: `Brand`
+
+## 🧾 Sistema de Facturación con Verifactu (Por Implementar)
+
+Sistema completo de facturación electrónica integrado con Verifactu (Sistema de Verificación de Facturas de la AEAT), obligatorio en España a partir de 2026.
+
+### Requisitos Legales
+- **Verifactu**: Sistema de la Agencia Tributaria para verificación de facturas
+- **Obligatoriedad**: Empresas y autónomos deben emitir facturas electrónicas verificables
+- **Formato**: Facturae o formato compatible con la AEAT
+- **Firma electrónica**: Las facturas deben estar firmadas digitalmente
+- **Código QR**: Cada factura debe incluir un código QR de verificación
+
+### Modelos de Base de Datos Necesarios
+```prisma
+// Factura
+model Invoice {
+  id                String        @id @default(cuid())
+  invoiceNumber     String        @unique // Numeración correlativa: EVA-2026-00001
+  orderId           String        @unique
+  order             Order         @relation(fields: [orderId], references: [id])
+
+  // Datos del emisor (tienda)
+  issuerName        String
+  issuerTaxId       String        // NIF de la empresa
+  issuerAddress     String
+
+  // Datos del cliente
+  customerId        String?
+  customerName      String
+  customerTaxId     String?       // DNI/NIF del cliente
+  customerAddress   String
+  customerEmail     String
+
+  // Importes
+  subtotal          Decimal       @db.Decimal(10, 2)
+  taxBase           Decimal       @db.Decimal(10, 2) // Base imponible
+  taxRate           Decimal       @db.Decimal(5, 2)  // Tipo IVA (21%, 10%, 4%, 0%)
+  taxAmount         Decimal       @db.Decimal(10, 2) // Cuota IVA
+  total             Decimal       @db.Decimal(10, 2)
+
+  // Verifactu
+  verifactuId       String?       @unique // ID de registro en Verifactu
+  verifactuQR       String?       // Código QR de verificación
+  verifactuHash     String?       // Hash de la factura
+  verifactuStatus   String        @default("pending") // pending, sent, verified, error
+  verifactuSentAt   DateTime?
+  verifactuError    String?       @db.Text
+
+  // Firma electrónica
+  signatureData     String?       @db.Text // Firma digital en base64
+  signedAt          DateTime?
+
+  // PDF generado
+  pdfUrl            String?       // URL del PDF en Supabase Storage
+
+  // Tipo de factura
+  type              String        @default("standard") // standard, simplified, rectifying
+  rectifiesInvoice  String?       // ID de factura rectificada (para facturas rectificativas)
+
+  // Estado
+  status            String        @default("draft") // draft, issued, sent, paid, cancelled
+  issuedAt          DateTime?
+  sentAt            DateTime?
+  paidAt            DateTime?
+  cancelledAt       DateTime?
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  items             InvoiceItem[]
+
+  @@index([orderId])
+  @@index([customerId])
+  @@index([status])
+  @@index([verifactuStatus])
+  @@index([invoiceNumber])
+}
+
+// Líneas de factura
+model InvoiceItem {
+  id            String    @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  description   String
+  quantity      Int
+  unitPrice     Decimal   @db.Decimal(10, 2)
+  taxRate       Decimal   @db.Decimal(5, 2)
+  subtotal      Decimal   @db.Decimal(10, 2)
+  taxAmount     Decimal   @db.Decimal(10, 2)
+  total         Decimal   @db.Decimal(10, 2)
+
+  // Referencia al producto
+  productId     String?
+  productSku    String?
+
+  @@index([invoiceId])
+}
+
+// Configuración de facturación
+model InvoiceConfig {
+  id                  String    @id @default(cuid())
+
+  // Datos fiscales de la empresa
+  companyName         String
+  companyTaxId        String    // NIF
+  companyAddress      String
+  companyCity         String
+  companyPostalCode   String
+  companyProvince     String
+  companyCountry      String    @default("España")
+  companyEmail        String
+  companyPhone        String?
+
+  // Numeración
+  invoicePrefix       String    @default("EVA")
+  nextInvoiceNumber   Int       @default(1)
+  currentYear         Int
+
+  // Certificado digital para firma
+  certificatePath     String?   // Ruta al certificado .p12
+  certificatePassword String?   // Contraseña del certificado (encriptada)
+
+  // API Verifactu
+  verifactuApiKey     String?
+  verifactuEndpoint   String?
+  verifactuEnabled    Boolean   @default(false)
+
+  // Opciones
+  autoGenerateInvoice Boolean   @default(true)  // Generar factura al pagar pedido
+  autoSendToVerifactu Boolean   @default(true)  // Enviar automáticamente a Verifactu
+  defaultTaxRate      Decimal   @default(21)    @db.Decimal(5, 2)
+
+  updatedAt           DateTime  @updatedAt
+}
+```
+
+### Funcionalidades a Implementar
+
+#### Panel de Administración
+- [ ] Dashboard de facturación con estadísticas
+- [ ] Lista de facturas con filtros (estado, fecha, cliente)
+- [ ] Ver/descargar factura en PDF
+- [ ] Generar factura manualmente desde pedido
+- [ ] Facturas rectificativas (para devoluciones)
+- [ ] Configuración de datos fiscales de la empresa
+- [ ] Gestión de certificado digital
+- [ ] Monitor de estado Verifactu (facturas pendientes/errores)
+
+#### Generación de Facturas
+- [ ] Generación automática al confirmar pago
+- [ ] Numeración correlativa por año (EVA-2026-00001)
+- [ ] Cálculo automático de IVA (21%, 10%, 4%, 0%)
+- [ ] Soporte para múltiples tipos de IVA por línea
+- [ ] Generación de PDF con formato legal
+- [ ] Inclusión de código QR Verifactu
+
+#### Integración Verifactu
+- [ ] Conexión con API de la AEAT
+- [ ] Firma electrónica de facturas (certificado digital)
+- [ ] Envío automático a Verifactu
+- [ ] Recepción de confirmación y código de verificación
+- [ ] Gestión de errores y reintentos
+- [ ] Log de comunicaciones con Verifactu
+
+#### Cliente/Frontend
+- [ ] Descarga de factura desde cuenta de usuario
+- [ ] Envío de factura por email al cliente
+- [ ] Solicitar factura con datos fiscales diferentes
+
+### APIs Necesarias
+```
+/api/admin/invoices
+├── GET     /               # Lista de facturas con filtros
+├── POST    /               # Crear factura manualmente
+├── GET     /[id]           # Detalle de factura
+├── GET     /[id]/pdf       # Descargar PDF
+├── POST    /[id]/send      # Reenviar a cliente
+├── POST    /[id]/verifactu # Enviar/reenviar a Verifactu
+└── POST    /[id]/rectify   # Crear factura rectificativa
+
+/api/admin/invoices/config
+├── GET     /               # Obtener configuración
+└── PUT     /               # Actualizar configuración
+
+/api/admin/invoices/stats
+└── GET     /               # Estadísticas de facturación
+```
+
+### Dependencias Necesarias
+- `@pdfme/generator` o `puppeteer`: Generación de PDFs
+- `node-forge` o similar: Firma digital de facturas
+- `qrcode`: Generación de códigos QR
+- SDK de Verifactu (cuando esté disponible) o llamadas REST directas
+
+### Notas Importantes
+- La integración con Verifactu requiere certificado digital de la empresa
+- Las facturas deben cumplir con el formato Facturae 3.2.2
+- Es obligatorio conservar las facturas durante 4 años
+- Las facturas simplificadas (tickets) también deben reportarse
+- Penalizaciones por incumplimiento: hasta 10.000€ por factura no declarada
+
+### Referencias
+- [Web oficial Verifactu - AEAT](https://sede.agenciatributaria.gob.es)
+- [Especificaciones técnicas Verifactu](https://sede.agenciatributaria.gob.es/Sede/verifactu.html)
+- [Formato Facturae](https://www.facturae.gob.es/)

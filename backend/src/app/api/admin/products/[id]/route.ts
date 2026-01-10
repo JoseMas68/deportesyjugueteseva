@@ -30,7 +30,7 @@ const updateProductSchema = z.object({
   categoryId: z.string().optional(),
   images: z.array(z.string()).optional(),
   thumbnailUrl: z.string().optional().nullable(),
-  brand: z.string().optional().nullable(),
+  brandId: z.string().optional().nullable(),
   isFeatured: z.boolean().optional(),
   isNew: z.boolean().optional(),
   isBestSeller: z.boolean().optional(),
@@ -60,6 +60,9 @@ export async function GET(
       where: { id },
       include: {
         category: {
+          select: { id: true, name: true, slug: true },
+        },
+        brand: {
           select: { id: true, name: true, slug: true },
         },
         variants: true,
@@ -149,28 +152,54 @@ export async function PUT(
         category: {
           select: { id: true, name: true, slug: true },
         },
+        brand: {
+          select: { id: true, name: true, slug: true },
+        },
         variants: true,
       },
     })
 
     // Manejar variantes si se proporcionan
     if (newVariants !== undefined && validated.hasVariants) {
-      // IDs de variantes existentes
+      // IDs de variantes existentes del producto
       const existingVariantIds = existing.variants.map(v => v.id)
-      // IDs de variantes en la actualizacion
+      // IDs de variantes en la actualizacion (solo las que tienen id)
       const newVariantIds = newVariants.filter(v => v.id).map(v => v.id!)
 
       // Eliminar variantes que ya no estan
-      const variantsToDelete = existingVariantIds.filter(id => !newVariantIds.includes(id))
+      const variantsToDelete = existingVariantIds.filter(existingId => !newVariantIds.includes(existingId))
       if (variantsToDelete.length > 0) {
         await prisma.productVariant.deleteMany({
           where: { id: { in: variantsToDelete } }
         })
       }
 
+      // Verificar SKUs duplicados en las nuevas variantes (sin id)
+      const newVariantsWithoutId = newVariants.filter(v => !v.id && v.sku)
+      if (newVariantsWithoutId.length > 0) {
+        const skusToCheck = newVariantsWithoutId.map(v => v.sku!).filter(Boolean)
+        if (skusToCheck.length > 0) {
+          const existingSkus = await prisma.productVariant.findMany({
+            where: { sku: { in: skusToCheck } },
+            select: { sku: true }
+          })
+          if (existingSkus.length > 0) {
+            return NextResponse.json(
+              { error: `SKU duplicado: ${existingSkus.map(s => s.sku).join(', ')}` },
+              { status: 400 }
+            )
+          }
+        }
+      }
+
       // Actualizar o crear variantes
       for (const variant of newVariants) {
-        if (variant.id && existingVariantIds.includes(variant.id)) {
+        // Verificar si la variante existe en la base de datos
+        const existingVariant = variant.id
+          ? await prisma.productVariant.findUnique({ where: { id: variant.id } })
+          : null
+
+        if (existingVariant) {
           // Actualizar existente
           await prisma.productVariant.update({
             where: { id: variant.id },
@@ -181,13 +210,13 @@ export async function PUT(
               material: variant.material,
               price: variant.price,
               stock: variant.stock,
-              sku: variant.sku,
+              sku: variant.sku || null,
               imageUrl: variant.imageUrl,
               isActive: variant.isActive,
             }
           })
         } else {
-          // Crear nueva
+          // Crear nueva (sin id o con id que no existe)
           await prisma.productVariant.create({
             data: {
               productId: id,
@@ -197,7 +226,7 @@ export async function PUT(
               material: variant.material,
               price: variant.price,
               stock: variant.stock,
-              sku: variant.sku,
+              sku: variant.sku || null,
               imageUrl: variant.imageUrl,
               isActive: variant.isActive,
             }
@@ -216,6 +245,9 @@ export async function PUT(
       where: { id },
       include: {
         category: {
+          select: { id: true, name: true, slug: true },
+        },
+        brand: {
           select: { id: true, name: true, slug: true },
         },
         variants: true,

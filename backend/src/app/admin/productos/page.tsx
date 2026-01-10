@@ -56,6 +56,9 @@ export default async function ProductosPage({
         category: {
           select: { id: true, name: true },
         },
+        brand: {
+          select: { id: true, name: true },
+        },
         variants: {
           select: { id: true, size: true, color: true, colorHex: true, stock: true },
         },
@@ -210,7 +213,7 @@ export default async function ProductosPage({
                       <div>
                         <p className="font-medium text-gray-900">{product.name}</p>
                         {product.brand && (
-                          <p className="text-sm text-gray-500">{product.brand}</p>
+                          <p className="text-sm text-gray-500">{product.brand.name}</p>
                         )}
                       </div>
                     </div>

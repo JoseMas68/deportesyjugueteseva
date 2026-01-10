@@ -11,7 +11,7 @@ const config: Config = {
       colors: {
         // Paleta EVA
         eva: {
-          yellow: '#CCFF00',
+          yellow: '#FFF64C',
           black: '#000000',
           white: '#FFFFFF',
           gray: {
@@ -26,6 +26,19 @@ const config: Config = {
             800: '#1f2937',
             900: '#111827',
           },
+        },
+        // Reemplazar yellow de Tailwind con nuestro amarillo
+        yellow: {
+          50: '#FFFEF0',
+          100: '#FFFDE0',
+          200: '#FFFBC2',
+          300: '#FFF994',
+          400: '#FFF64C',
+          500: '#F5EC00',
+          600: '#D4C800',
+          700: '#A89F00',
+          800: '#7D7600',
+          900: '#524D00',
         },
       },
       fontFamily: {
@@ -60,7 +73,7 @@ const config: Config = {
         'md': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
         'lg': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
         'xl': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-        'eva': '0 0 20px rgba(204, 255, 0, 0.2)',
+        'eva': '0 0 20px rgba(255, 246, 76, 0.2)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',

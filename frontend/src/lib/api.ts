@@ -36,6 +36,14 @@ export interface Category {
   menuSection?: string;
 }
 
+export interface Brand {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl?: string;
+  isActive: boolean;
+}
+
 export interface CartItem {
   productId: string;
   quantity: number;
@@ -191,6 +199,23 @@ export interface HomeSection {
 export async function getHomeSections(): Promise<{ sections: HomeSection[] }> {
   const response = await fetch(`${API_URL}/home-sections`);
   if (!response.ok) throw new Error('Error fetching home sections');
+
+  return response.json();
+}
+
+// ============ BRANDS ============
+
+/**
+ * Obtiene las marcas activas, opcionalmente filtradas por categoría
+ */
+export async function getBrands(category?: string): Promise<Brand[]> {
+  const params = new URLSearchParams();
+  if (category) {
+    params.set('category', category);
+  }
+
+  const response = await fetch(`${API_URL}/brands?${params}`);
+  if (!response.ok) throw new Error('Error fetching brands');
 
   return response.json();
 }

@@ -30,7 +30,7 @@ const createProductSchema = z.object({
   categoryId: z.string().min(1, 'La categoria es obligatoria'),
   images: z.array(z.string()).default([]),
   thumbnailUrl: z.string().optional().nullable(),
-  brand: z.string().optional().nullable(),
+  brandId: z.string().optional().nullable(),
   isFeatured: z.boolean().default(false),
   isNew: z.boolean().default(false),
   isBestSeller: z.boolean().default(false),
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { sku: { contains: search, mode: 'insensitive' } },
-        { brand: { contains: search, mode: 'insensitive' } },
+        { brand: { name: { contains: search, mode: 'insensitive' } } },
       ]
     }
 
@@ -89,6 +89,9 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           category: {
+            select: { id: true, name: true, slug: true },
+          },
+          brand: {
             select: { id: true, name: true, slug: true },
           },
           variants: true,
@@ -174,12 +177,11 @@ export async function POST(request: NextRequest) {
         description: validated.description || '',
         price: validated.price,
         compareAtPrice: validated.compareAtPrice,
-        stock: validated.stock,
         sku,
         categoryId: validated.categoryId,
         images: validated.images,
         thumbnailUrl: validated.thumbnailUrl || validated.images[0] || null,
-        brand: validated.brand,
+        brandId: validated.brandId || null,
         isFeatured: validated.isFeatured,
         isNew: validated.isNew,
         isBestSeller: validated.isBestSeller,
@@ -207,6 +209,9 @@ export async function POST(request: NextRequest) {
       },
       include: {
         category: {
+          select: { id: true, name: true, slug: true },
+        },
+        brand: {
           select: { id: true, name: true, slug: true },
         },
         variants: true,

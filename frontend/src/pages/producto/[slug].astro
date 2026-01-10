@@ -109,7 +109,13 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
         <div>
           <!-- Marca -->
           {product.brand && (
-            <span class="inline-block bg-gray-800 text-white font-bold text-sm px-3 py-1 rounded mb-3">{product.brand}</span>
+            <div class="mb-3">
+              {product.brand.logoUrl ? (
+                <img src={product.brand.logoUrl} alt={product.brand.name} class="h-6 w-auto object-contain" />
+              ) : (
+                <span class="text-sm font-semibold text-gray-500 uppercase tracking-wide">{product.brand.name}</span>
+              )}
+            </div>
           )}
 
           <!-- Título -->
@@ -297,9 +303,14 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
                 </div>
               )}
               {product.brand && (
-                <div class="flex justify-between border-b border-gray-100 pb-2">
+                <div class="flex justify-between items-center border-b border-gray-100 pb-2">
                   <span>Marca:</span>
-                  <span class="font-medium text-secondary">{product.brand}</span>
+                  <div class="flex items-center gap-2">
+                    {product.brand.logoUrl && (
+                      <img src={product.brand.logoUrl} alt={product.brand.name} class="h-4 w-auto object-contain" />
+                    )}
+                    <span class="font-medium text-secondary">{product.brand.name}</span>
+                  </div>
                 </div>
               )}
               {product.color && (

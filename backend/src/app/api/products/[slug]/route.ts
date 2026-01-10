@@ -16,6 +16,7 @@ export async function GET(
             parent: true,
           },
         },
+        brand: true,
         variants: {
           where: { isActive: true },
           orderBy: [{ size: 'asc' }, { color: 'asc' }],
@@ -40,6 +41,7 @@ export async function GET(
       take: 4,
       include: {
         category: true,
+        brand: true,
       },
     })
 

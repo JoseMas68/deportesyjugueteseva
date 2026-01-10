@@ -8,6 +8,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============ MARCAS ============
+model Brand {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  logoUrl     String?
+  isActive    Boolean   @default(true)
+  displayOrder Int      @default(0)
+
+  products    Product[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([isActive])
+}
+
 // ============ PRODUCTOS Y CATEGORÍAS ============
 model Category {
   id          String     @id @default(cuid())
@@ -105,7 +123,8 @@ model Product {
   collectionType   CollectionType?
 
   // Características adicionales
-  brand            String?
+  brandId          String?
+  brand            Brand?          @relation(fields: [brandId], references: [id])
   color            String?
   size             String?
   weight           String?
@@ -126,6 +145,7 @@ model Product {
 
   // Relaciones
   orderItems       OrderItem[]
+  reviews          Review[]
 
   isActive         Boolean         @default(true)
   publishedAt      DateTime?
@@ -133,6 +153,7 @@ model Product {
   updatedAt        DateTime        @updatedAt
 
   @@index([categoryId])
+  @@index([brandId])
   @@index([slug])
   @@index([isActive])
   @@index([isFeatured])
@@ -251,6 +272,11 @@ model Order {
   customerNotes           String?       @db.Text
   adminNotes              String?       @db.Text
 
+  // Cupón aplicado
+  couponId                String?
+  coupon                  Coupon?       @relation("OrderCoupon", fields: [couponId], references: [id])
+  couponCode              String?       // Snapshot del código usado
+
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 
@@ -259,6 +285,7 @@ model Order {
   @@index([orderNumber])
   @@index([createdAt])
   @@index([paymentMethod])
+  @@index([couponId])
 }
 
 model OrderItem {
@@ -345,6 +372,104 @@ model AdminUser {
   @@index([email])
 }
 
+// ============ CLIENTES ============
+model Customer {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  supabaseId    String?   @unique  // Si se registra con Supabase Auth
+
+  // Datos personales
+  firstName     String
+  lastName      String
+  phone         String?
+
+  // DNI/NIE para facturas
+  taxId         String?
+
+  // Fechas
+  birthDate     DateTime?
+
+  // Estado
+  isActive      Boolean   @default(true)
+  isVip         Boolean   @default(false)
+  vipSince      DateTime?
+
+  // Puntos de fidelidad
+  loyaltyPoints Int       @default(0)
+
+  // Marketing
+  acceptsMarketing Boolean @default(false)
+
+  // Notas internas
+  notes         String?   @db.Text
+
+  // Relaciones
+  addresses     CustomerAddress[]
+  wishlist      WishlistItem[]
+
+  // Estadísticas (desnormalizadas para consultas rápidas)
+  totalOrders   Int       @default(0)
+  totalSpent    Decimal   @default(0) @db.Decimal(10, 2)
+  lastOrderAt   DateTime?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([supabaseId])
+  @@index([isActive])
+  @@index([isVip])
+}
+
+model CustomerAddress {
+  id            String    @id @default(cuid())
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Tipo de dirección
+  type          String    @default("shipping") // 'shipping', 'billing'
+  label         String?   // "Casa", "Trabajo", etc.
+  isDefault     Boolean   @default(false)
+
+  // Datos de la dirección
+  firstName     String
+  lastName      String
+  company       String?
+  address       String
+  addressLine2  String?   // Piso, puerta, etc.
+  city          String
+  province      String?
+  postalCode    String
+  country       String    @default("España")
+  phone         String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([customerId])
+  @@index([type])
+  @@index([isDefault])
+}
+
+model WishlistItem {
+  id          String    @id @default(cuid())
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId   String
+
+  // Snapshot del producto
+  productName String
+  productSlug String
+  productImage String?
+  productPrice Decimal  @db.Decimal(10, 2)
+
+  addedAt     DateTime  @default(now())
+
+  @@unique([customerId, productId])
+  @@index([customerId])
+  @@index([productId])
+}
+
 // ============ CONFIGURACIÓN ============
 model SiteConfig {
   id          String   @id @default(cuid())
@@ -377,6 +502,292 @@ model PaymentMethodConfig {
 
   @@index([method])
   @@index([isEnabled])
+}
+
+// ============ FEATURE FLAGS ============
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?
+  isEnabled   Boolean  @default(false)
+  group       String?  // 'marketing', 'notifications', 'checkout', etc.
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+  @@index([group])
+  @@index([isEnabled])
+}
+
+// ============ CAMPAÑAS DE EMAIL MARKETING ============
+enum CampaignStatus {
+  DRAFT       // Borrador
+  SCHEDULED   // Programada
+  SENDING     // Enviando
+  SENT        // Enviada
+  CANCELLED   // Cancelada
+}
+
+model EmailCampaign {
+  id              String         @id @default(cuid())
+  name            String
+  subject         String
+  previewText     String?        // Texto de vista previa
+  body            String         @db.Text
+
+  // Segmentación
+  targetAudience  String         @default("all") // 'all', 'customers', 'subscribers'
+  targetFilters   Json?          // Filtros adicionales: {minOrders: 1, lastPurchaseDays: 30}
+
+  // Estado y programación
+  status          CampaignStatus @default(DRAFT)
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+
+  // Estadísticas
+  totalRecipients Int            @default(0)
+  totalSent       Int            @default(0)
+  totalOpened     Int            @default(0)
+  totalClicked    Int            @default(0)
+  totalBounced    Int            @default(0)
+  totalUnsubscribed Int          @default(0)
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relación con logs
+  logs            CampaignEmailLog[]
+
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+model CampaignEmailLog {
+  id          String        @id @default(cuid())
+  campaignId  String
+  campaign    EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  recipient   String
+  status      String        // 'sent', 'opened', 'clicked', 'bounced', 'unsubscribed'
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  sentAt      DateTime?
+  errorMessage String?      @db.Text
+
+  createdAt   DateTime      @default(now())
+
+  @@index([campaignId])
+  @@index([recipient])
+  @@index([status])
+}
+
+// Lista de suscriptores para email marketing
+model EmailSubscriber {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+
+  // Origen de la suscripción
+  source        String    @default("website") // 'website', 'checkout', 'import'
+
+  // Estado
+  isActive      Boolean   @default(true)
+  unsubscribedAt DateTime?
+
+  // Datos adicionales
+  metadata      Json?     // {ordersCount, lastOrderAt, etc.}
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([isActive])
+  @@index([source])
+}
+
+// ============ CUPONES Y DESCUENTOS ============
+enum CouponType {
+  PERCENTAGE    // Descuento porcentual
+  FIXED_AMOUNT  // Cantidad fija
+  FREE_SHIPPING // Envío gratis
+}
+
+model Coupon {
+  id              String      @id @default(cuid())
+  code            String      @unique
+  description     String?
+
+  // Tipo y valor del descuento
+  type            CouponType
+  value           Decimal     @db.Decimal(10, 2) // Porcentaje o cantidad fija
+
+  // Restricciones
+  minOrderAmount  Decimal?    @db.Decimal(10, 2) // Mínimo de compra
+  maxDiscount     Decimal?    @db.Decimal(10, 2) // Descuento máximo (para porcentajes)
+  usageLimit      Int?        // Límite total de usos
+  usageLimitPerUser Int?      // Límite por usuario
+  usageCount      Int         @default(0)
+
+  // Validez
+  startsAt        DateTime    @default(now())
+  expiresAt       DateTime?
+  isActive        Boolean     @default(true)
+
+  // Restricciones de productos/categorías (JSON arrays de IDs)
+  applicableProducts   String[]  // IDs de productos aplicables (vacío = todos)
+  applicableCategories String[]  // IDs de categorías aplicables (vacío = todas)
+  excludedProducts     String[]  // IDs de productos excluidos
+
+  // Seguimiento
+  orders          Order[]     @relation("OrderCoupon")
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+// ============ RESEÑAS Y VALORACIONES ============
+model Review {
+  id          String    @id @default(cuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Autor (puede ser cliente registrado o anónimo)
+  customerId  String?
+  authorName  String
+  authorEmail String
+
+  // Contenido
+  rating      Int       // 1-5 estrellas
+  title       String?
+  comment     String    @db.Text
+  pros        String?   @db.Text
+  cons        String?   @db.Text
+
+  // Verificación
+  isVerified  Boolean   @default(false) // Compra verificada
+  orderId     String?   // Pedido asociado
+
+  // Moderación
+  status      String    @default("pending") // pending, approved, rejected
+  adminNotes  String?   @db.Text
+
+  // Utilidad
+  helpfulCount Int      @default(0)
+  notHelpfulCount Int   @default(0)
+
+  // Imágenes del review
+  images      String[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([productId])
+  @@index([customerId])
+  @@index([status])
+  @@index([rating])
+}
+
+// ============ NOTIFICACIONES DE STOCK ============
+model StockNotification {
+  id          String    @id @default(cuid())
+  productId   String
+  variantId   String?   // Si es para una variante específica
+  email       String
+  notified    Boolean   @default(false)
+  notifiedAt  DateTime?
+
+  createdAt   DateTime  @default(now())
+
+  @@unique([productId, variantId, email])
+  @@index([productId])
+  @@index([notified])
+}
+
+// ============ FAQ ============
+model FaqCategory {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  displayOrder Int      @default(0)
+  isActive    Boolean   @default(true)
+
+  questions   FaqQuestion[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model FaqQuestion {
+  id          String      @id @default(cuid())
+  categoryId  String
+  category    FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  question    String
+  answer      String      @db.Text
+  displayOrder Int        @default(0)
+  isActive    Boolean     @default(true)
+
+  // Para analytics
+  viewCount   Int         @default(0)
+  helpfulCount Int        @default(0)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive])
+}
+
+// ============ MENSAJES DE CONTACTO ============
+model ContactMessage {
+  id          String    @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  subject     String
+  message     String    @db.Text
+  orderId     String?   // Si es relacionado con un pedido
+
+  // Estado
+  status      String    @default("new") // new, read, replied, closed
+  repliedAt   DateTime?
+  repliedBy   String?   // Admin que respondió
+
+  // Notas internas
+  adminNotes  String?   @db.Text
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============ PÁGINAS LEGALES/CONTENIDO ============
+model Page {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  content     String    @db.Text
+  metaTitle   String?
+  metaDescription String?
+  isActive    Boolean   @default(true)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([isActive])
 }
 
 // ============ SECCIONES DE HOME ============
