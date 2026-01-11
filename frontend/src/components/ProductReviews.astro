@@ -1,0 +1,511 @@
+---
+interface Props {
+  productId: string;
+}
+
+const { productId } = Astro.props;
+
+// Obtener reseñas desde la API
+let reviews: any[] = [];
+let stats: any = {
+  averageRating: 0,
+  totalReviews: 0,
+  distribution: [],
+};
+
+try {
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001';
+  const response = await fetch(`${API_URL}/api/reviews?productId=${productId}&status=approved`);
+  if (response.ok) {
+    const data = await response.json();
+    reviews = data.reviews || [];
+    stats = data.stats || stats;
+  }
+} catch (error) {
+  console.error('Error loading reviews:', error);
+}
+
+const fullStars = Math.floor(stats.averageRating);
+const hasHalfStar = (stats.averageRating % 1) >= 0.5;
+const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+---
+
+<section class="mt-16 border-t border-gray-200 pt-12">
+  <h2 class="text-3xl font-display font-extrabold uppercase italic text-secondary mb-8 relative inline-block">
+    Reseñas de Clientes
+    <span class="absolute bottom-0 left-0 w-[3ch] h-1 bg-primary"></span>
+  </h2>
+
+  <!-- Resumen de Rating -->
+  <div class="bg-white rounded-xl p-8 shadow-sm mb-8 grid md:grid-cols-2 gap-8">
+    <!-- Rating Promedio -->
+    <div class="flex flex-col items-center justify-center border-r border-gray-200">
+      <div class="text-6xl font-bold text-secondary mb-2">
+        {stats.averageRating.toFixed(1)}
+      </div>
+      <div class="flex items-center gap-1 mb-2">
+        {Array.from({ length: fullStars }).map(() => (
+          <i class="material-icons text-amber-400 text-2xl">star</i>
+        ))}
+        {hasHalfStar && (
+          <i class="material-icons text-amber-400 text-2xl">star_half</i>
+        )}
+        {Array.from({ length: emptyStars }).map(() => (
+          <i class="material-icons text-gray-300 text-2xl">star_border</i>
+        ))}
+      </div>
+      <div class="text-gray-600 text-sm">
+        {stats.totalReviews} {stats.totalReviews === 1 ? 'reseña' : 'reseñas'}
+      </div>
+    </div>
+
+    <!-- Distribución de Ratings -->
+    <div class="space-y-2">
+      {stats.distribution.reverse().map((dist: any) => {
+        const percentage = stats.totalReviews > 0 ? (dist.count / stats.totalReviews) * 100 : 0;
+        return (
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium text-gray-700 w-12">{dist.rating} estrellas</span>
+            <div class="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div
+                class="bg-amber-400 h-full transition-all duration-500"
+                style={`width: ${percentage}%`}
+              ></div>
+            </div>
+            <span class="text-sm text-gray-600 w-8 text-right">{dist.count}</span>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+
+  <!-- Botón para escribir reseña -->
+  <div class="mb-8">
+    <button
+      id="write-review-btn"
+      class="bg-primary hover:bg-yellow-400 text-black font-bold py-3 px-8 rounded-lg uppercase tracking-wider transition-all transform hover:-translate-y-1 shadow-lg"
+    >
+      <i class="material-icons text-lg align-middle mr-2">rate_review</i>
+      Escribir una reseña
+    </button>
+  </div>
+
+  <!-- Formulario de Nueva Reseña (oculto por defecto) -->
+  <div id="review-form-container" class="hidden bg-white rounded-xl p-8 shadow-sm mb-8">
+    <h3 class="text-2xl font-bold text-secondary mb-6">Escribe tu reseña</h3>
+    <form id="review-form" class="space-y-6">
+      <!-- Rating -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Tu valoración <span class="text-red-500">*</span>
+        </label>
+        <div class="flex gap-2" id="rating-input">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <button
+              type="button"
+              class="rating-star text-gray-300 hover:text-amber-400 transition-colors"
+              data-rating={index + 1}
+            >
+              <i class="material-icons text-4xl">star_border</i>
+            </button>
+          ))}
+        </div>
+        <input type="hidden" name="rating" id="rating-value" required />
+      </div>
+
+      <!-- Nombre -->
+      <div>
+        <label for="authorName" class="block text-sm font-medium text-gray-700 mb-2">
+          Nombre <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          id="authorName"
+          name="authorName"
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+        />
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label for="authorEmail" class="block text-sm font-medium text-gray-700 mb-2">
+          Email <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="email"
+          id="authorEmail"
+          name="authorEmail"
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+        />
+        <p class="text-xs text-gray-500 mt-1">No se publicará tu email</p>
+      </div>
+
+      <!-- Título -->
+      <div>
+        <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+          Título de tu reseña (opcional)
+        </label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          placeholder="Ej: ¡Excelente calidad!"
+        />
+      </div>
+
+      <!-- Comentario -->
+      <div>
+        <label for="comment" class="block text-sm font-medium text-gray-700 mb-2">
+          Tu opinión <span class="text-red-500">*</span>
+        </label>
+        <textarea
+          id="comment"
+          name="comment"
+          required
+          rows="5"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+          placeholder="Cuéntanos tu experiencia con este producto..."
+        ></textarea>
+      </div>
+
+      <!-- Pros -->
+      <div>
+        <label for="pros" class="block text-sm font-medium text-gray-700 mb-2">
+          Lo mejor (opcional)
+        </label>
+        <textarea
+          id="pros"
+          name="pros"
+          rows="2"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+          placeholder="¿Qué te gustó más?"
+        ></textarea>
+      </div>
+
+      <!-- Cons -->
+      <div>
+        <label for="cons" class="block text-sm font-medium text-gray-700 mb-2">
+          Puntos a mejorar (opcional)
+        </label>
+        <textarea
+          id="cons"
+          name="cons"
+          rows="2"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+          placeholder="¿Qué se podría mejorar?"
+        ></textarea>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex gap-4">
+        <button
+          type="submit"
+          id="submit-review-btn"
+          class="bg-primary hover:bg-yellow-400 text-black font-bold py-3 px-8 rounded-lg uppercase tracking-wider transition-all"
+        >
+          Enviar Reseña
+        </button>
+        <button
+          type="button"
+          id="cancel-review-btn"
+          class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-8 rounded-lg uppercase tracking-wider transition-all"
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Lista de Reseñas -->
+  {reviews.length === 0 ? (
+    <div class="text-center py-12 bg-gray-50 rounded-xl">
+      <i class="material-icons text-6xl text-gray-300 mb-4">rate_review</i>
+      <p class="text-gray-600 text-lg">Aún no hay reseñas para este producto.</p>
+      <p class="text-gray-500 text-sm mt-2">¡Sé el primero en dejar una!</p>
+    </div>
+  ) : (
+    <div class="space-y-6" id="reviews-list">
+      {reviews.map((review) => {
+        const reviewFullStars = review.rating;
+        const reviewEmptyStars = 5 - review.rating;
+        const reviewDate = new Date(review.createdAt).toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+
+        return (
+          <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <h4 class="font-bold text-secondary">{review.authorName}</h4>
+                  {review.isVerified && (
+                    <span class="flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                      <i class="material-icons text-xs">verified</i>
+                      Compra verificada
+                    </span>
+                  )}
+                </div>
+                <div class="flex items-center gap-2 mb-1">
+                  {Array.from({ length: reviewFullStars }).map(() => (
+                    <i class="material-icons text-amber-400 text-lg">star</i>
+                  ))}
+                  {Array.from({ length: reviewEmptyStars }).map(() => (
+                    <i class="material-icons text-gray-300 text-lg">star_border</i>
+                  ))}
+                </div>
+                <p class="text-xs text-gray-500">{reviewDate}</p>
+              </div>
+            </div>
+
+            {review.title && (
+              <h5 class="font-semibold text-lg text-gray-900 mb-2">{review.title}</h5>
+            )}
+            <p class="text-gray-700 leading-relaxed mb-4">{review.comment}</p>
+
+            {(review.pros || review.cons) && (
+              <div class="grid md:grid-cols-2 gap-4 mb-4">
+                {review.pros && (
+                  <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-xs font-bold text-green-700 uppercase mb-2 flex items-center gap-1">
+                      <i class="material-icons text-sm">thumb_up</i>
+                      Lo mejor
+                    </p>
+                    <p class="text-sm text-gray-700">{review.pros}</p>
+                  </div>
+                )}
+                {review.cons && (
+                  <div class="bg-orange-50 p-4 rounded-lg">
+                    <p class="text-xs font-bold text-orange-700 uppercase mb-2 flex items-center gap-1">
+                      <i class="material-icons text-sm">thumb_down</i>
+                      A mejorar
+                    </p>
+                    <p class="text-sm text-gray-700">{review.cons}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Botones de utilidad */}
+            <div class="flex items-center gap-4 text-sm">
+              <button
+                class="helpful-btn flex items-center gap-1 text-gray-600 hover:text-secondary transition-colors"
+                data-review-id={review.id}
+              >
+                <i class="material-icons text-sm">thumb_up</i>
+                Útil ({review.helpfulCount})
+              </button>
+              <button
+                class="not-helpful-btn flex items-center gap-1 text-gray-600 hover:text-secondary transition-colors"
+                data-review-id={review.id}
+              >
+                <i class="material-icons text-sm">thumb_down</i>
+                No útil ({review.notHelpfulCount})
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  )}
+</section>
+
+<script define:vars={{ productId }}>
+  import { toastSuccess, toastError } from '@/lib/toast';
+
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001';
+
+  // Mostrar/ocultar formulario
+  const writeReviewBtn = document.getElementById('write-review-btn');
+  const reviewFormContainer = document.getElementById('review-form-container');
+  const cancelReviewBtn = document.getElementById('cancel-review-btn');
+
+  writeReviewBtn?.addEventListener('click', () => {
+    reviewFormContainer?.classList.remove('hidden');
+    reviewFormContainer?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  cancelReviewBtn?.addEventListener('click', () => {
+    reviewFormContainer?.classList.add('hidden');
+    document.getElementById('review-form')?.reset();
+    // Reset stars
+    document.querySelectorAll('.rating-star i').forEach(star => {
+      star.textContent = 'star_border';
+      star.parentElement?.classList.remove('text-amber-400');
+      star.parentElement?.classList.add('text-gray-300');
+    });
+    document.getElementById('rating-value').value = '';
+  });
+
+  // Sistema de rating
+  const ratingStars = document.querySelectorAll('.rating-star');
+  const ratingValue = document.getElementById('rating-value');
+  let selectedRating = 0;
+
+  ratingStars.forEach((star, index) => {
+    star.addEventListener('click', () => {
+      selectedRating = index + 1;
+      ratingValue.value = selectedRating.toString();
+
+      // Update visual
+      ratingStars.forEach((s, i) => {
+        const icon = s.querySelector('i');
+        if (i < selectedRating) {
+          icon.textContent = 'star';
+          s.classList.remove('text-gray-300');
+          s.classList.add('text-amber-400');
+        } else {
+          icon.textContent = 'star_border';
+          s.classList.remove('text-amber-400');
+          s.classList.add('text-gray-300');
+        }
+      });
+    });
+
+    // Hover effect
+    star.addEventListener('mouseenter', () => {
+      ratingStars.forEach((s, i) => {
+        const icon = s.querySelector('i');
+        if (i <= index) {
+          icon.textContent = 'star';
+        } else {
+          icon.textContent = 'star_border';
+        }
+      });
+    });
+
+    star.addEventListener('mouseleave', () => {
+      ratingStars.forEach((s, i) => {
+        const icon = s.querySelector('i');
+        if (i < selectedRating) {
+          icon.textContent = 'star';
+        } else {
+          icon.textContent = 'star_border';
+        }
+      });
+    });
+  });
+
+  // Enviar reseña
+  const reviewForm = document.getElementById('review-form');
+  reviewForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(reviewForm);
+    const data = {
+      productId: productId,
+      rating: parseInt(ratingValue.value),
+      authorName: formData.get('authorName'),
+      authorEmail: formData.get('authorEmail'),
+      title: formData.get('title') || null,
+      comment: formData.get('comment'),
+      pros: formData.get('pros') || null,
+      cons: formData.get('cons') || null,
+    };
+
+    if (!data.rating) {
+      toastError('Por favor selecciona una valoración');
+      return;
+    }
+
+    try {
+      const submitBtn = document.getElementById('submit-review-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enviando...';
+
+      const response = await fetch(`${API_URL}/api/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        toastSuccess('¡Reseña enviada! Será publicada tras su revisión.');
+        reviewForm.reset();
+        reviewFormContainer?.classList.add('hidden');
+
+        // Reset stars
+        selectedRating = 0;
+        ratingValue.value = '';
+        ratingStars.forEach(s => {
+          const icon = s.querySelector('i');
+          icon.textContent = 'star_border';
+          s.classList.remove('text-amber-400');
+          s.classList.add('text-gray-300');
+        });
+      } else {
+        const error = await response.json();
+        toastError(error.error || 'Error al enviar la reseña');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toastError('Error al enviar la reseña');
+    } finally {
+      const submitBtn = document.getElementById('submit-review-btn');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enviar Reseña';
+    }
+  });
+
+  // Botones de utilidad
+  const helpfulButtons = document.querySelectorAll('.helpful-btn');
+  const notHelpfulButtons = document.querySelectorAll('.not-helpful-btn');
+
+  helpfulButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const reviewId = btn.dataset.reviewId;
+      try {
+        const response = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'helpful' }),
+        });
+
+        if (response.ok) {
+          toastSuccess('Gracias por tu valoración');
+          // Actualizar contador
+          const countMatch = btn.textContent.match(/\((\d+)\)/);
+          if (countMatch) {
+            const newCount = parseInt(countMatch[1]) + 1;
+            btn.innerHTML = `<i class="material-icons text-sm">thumb_up</i> Útil (${newCount})`;
+          }
+          btn.disabled = true;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    });
+  });
+
+  notHelpfulButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const reviewId = btn.dataset.reviewId;
+      try {
+        const response = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'not-helpful' }),
+        });
+
+        if (response.ok) {
+          toastSuccess('Gracias por tu valoración');
+          // Actualizar contador
+          const countMatch = btn.textContent.match(/\((\d+)\)/);
+          if (countMatch) {
+            const newCount = parseInt(countMatch[1]) + 1;
+            btn.innerHTML = `<i class="material-icons text-sm">thumb_down</i> No útil (${newCount})`;
+          }
+          btn.disabled = true;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    });
+  });
+</script>

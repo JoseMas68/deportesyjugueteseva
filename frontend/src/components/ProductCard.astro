@@ -57,10 +57,23 @@ const totalReviews = 42;
 
   <!-- Info del producto -->
   <div class="p-4 pt-0">
-    <!-- Categoría -->
-    {product.category && (
-      <p class="text-xs text-gray-500 mb-1">{product.category.name}</p>
-    )}
+    <!-- Categoría y botón favoritos -->
+    <div class="flex items-start justify-between mb-1">
+      {product.category && (
+        <p class="text-xs text-gray-500">{product.category.name}</p>
+      )}
+      <button
+        class="wishlist-toggle-btn text-gray-400 hover:text-red-500 transition-colors -mt-1"
+        data-product-id={product.id}
+        data-product-name={product.name}
+        data-product-slug={product.slug}
+        data-product-price={price}
+        data-product-image={image}
+        aria-label="Añadir a favoritos"
+      >
+        <i class="material-icons text-xl">favorite_border</i>
+      </button>
+    </div>
 
     <!-- Nombre -->
     <a href={`/producto/${product.slug}`}>
@@ -115,10 +128,64 @@ const totalReviews = 42;
 
 <script>
   import { addToCart } from '@/lib/cart';
+  import { addToWishlist, removeFromWishlist, isInWishlist } from '@/lib/wishlist';
+  import { toastSuccess } from '@/lib/toast';
 
   // Añadir al carrito desde la tarjeta
   document.addEventListener('DOMContentLoaded', () => {
-    const addToCartButtons = document.querySelectorAll('[data-product-id]');
+    // Inicializar botones de favoritos
+    const wishlistButtons = document.querySelectorAll('.wishlist-toggle-btn');
+    wishlistButtons.forEach(btn => {
+      const productId = (btn as HTMLElement).dataset.productId || '';
+      const icon = btn.querySelector('i');
+
+      // Inicializar estado
+      if (isInWishlist(productId)) {
+        icon!.textContent = 'favorite';
+        btn.classList.add('text-red-500');
+        btn.classList.remove('text-gray-400');
+      }
+
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const button = btn as HTMLElement;
+        const productId = button.dataset.productId || '';
+        const productName = button.dataset.productName || '';
+        const productSlug = button.dataset.productSlug || '';
+        const productPrice = parseFloat(button.dataset.productPrice || '0');
+        const productImage = button.dataset.productImage || '';
+
+        if (isInWishlist(productId)) {
+          removeFromWishlist(productId);
+          icon!.textContent = 'favorite_border';
+          btn.classList.remove('text-red-500');
+          btn.classList.add('text-gray-400');
+          toastSuccess('Eliminado de favoritos');
+        } else {
+          addToWishlist({
+            productId,
+            productName,
+            productSlug,
+            productImage,
+            productPrice,
+          });
+          icon!.textContent = 'favorite';
+          btn.classList.add('text-red-500');
+          btn.classList.remove('text-gray-400');
+          toastSuccess('Añadido a favoritos');
+        }
+
+        // Animación
+        btn.classList.add('scale-125');
+        setTimeout(() => {
+          btn.classList.remove('scale-125');
+        }, 200);
+      });
+    });
+
+    const addToCartButtons = document.querySelectorAll('[data-product-id]:not(.wishlist-toggle-btn)');
 
     addToCartButtons.forEach(button => {
       button.addEventListener('click', (e) => {

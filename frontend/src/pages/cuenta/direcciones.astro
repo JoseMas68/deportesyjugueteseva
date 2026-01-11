@@ -1,0 +1,551 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+
+const menuItems = [
+  { icon: 'dashboard', label: 'Panel de Control', href: '/cuenta', active: false },
+  { icon: 'shopping_bag', label: 'Mis Pedidos', href: '/cuenta/pedidos', active: false },
+  { icon: 'account_circle', label: 'Detalles de Cuenta', href: '/cuenta/detalles', active: false },
+  { icon: 'location_on', label: 'Direcciones', href: '/cuenta/direcciones', active: true },
+  { icon: 'favorite', label: 'Lista de Deseos', href: '/favoritos', active: false }
+];
+---
+
+<Layout title="Mis Direcciones - Deportes y Juguetes Eva" description="Gestiona tus direcciones de envío">
+  <Header />
+
+  <main class="bg-background-light min-h-screen">
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b border-gray-200">
+      <div class="container mx-auto px-4 py-4">
+        <nav class="flex items-center text-sm">
+          <a href="/" class="text-gray-500 hover:text-secondary transition-colors">Inicio</a>
+          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          <a href="/cuenta" class="text-gray-500 hover:text-secondary transition-colors">Mi Cuenta</a>
+          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          <span class="text-secondary font-medium">Direcciones</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 lg:py-12">
+      <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar de Navegación -->
+        <aside class="w-full lg:w-72 shrink-0">
+          <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 sticky top-24">
+            <div class="mb-8">
+              <h1 id="user-name" class="text-xl font-bold text-secondary">Mi Cuenta</h1>
+              <span id="user-status" class="inline-block bg-primary text-black text-xs font-bold px-3 py-1 rounded-full mt-2">Cliente</span>
+            </div>
+
+            <nav class="flex flex-col gap-1">
+              {menuItems.map((item) => (
+                <a
+                  class={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                    item.active
+                      ? 'bg-primary text-black font-bold'
+                      : 'hover:bg-gray-50 text-gray-700'
+                  }`}
+                  href={item.href}
+                >
+                  <i class="material-icons text-xl">{item.icon}</i>
+                  <span>{item.label}</span>
+                </a>
+              ))}
+
+              <!-- Botón logout -->
+              <div class="mt-8 pt-6 border-t border-gray-200">
+                <button id="logout-btn" class="w-full flex items-center justify-center gap-2 bg-secondary text-white py-3 rounded-lg font-bold hover:bg-black transition-all">
+                  <i class="material-icons text-sm">logout</i>
+                  Cerrar Sesión
+                </button>
+              </div>
+            </nav>
+          </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <div class="flex-1">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <div class="mb-8 flex items-center justify-between">
+              <div>
+                <h2 class="text-2xl font-display font-extrabold uppercase italic text-secondary mb-2">
+                  Mis Direcciones
+                </h2>
+                <p class="text-gray-600">Gestiona tus direcciones de envío</p>
+              </div>
+              <button
+                id="add-address-btn"
+                class="flex items-center gap-2 bg-primary hover:bg-yellow-400 text-black font-bold py-3 px-6 rounded-lg transition-all"
+              >
+                <i class="material-icons">add</i>
+                Nueva Dirección
+              </button>
+            </div>
+
+            <!-- Estado de carga -->
+            <div id="loading" class="text-center py-12">
+              <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <p class="text-gray-600 mt-4">Cargando direcciones...</p>
+            </div>
+
+            <!-- Sin direcciones -->
+            <div id="no-addresses" class="hidden text-center py-12">
+              <i class="material-icons text-gray-300 text-7xl mb-4">location_on</i>
+              <h3 class="text-xl font-bold text-gray-700 mb-2">No hay direcciones</h3>
+              <p class="text-gray-600 mb-6">Agrega tu primera dirección de envío</p>
+              <button
+                id="add-first-address-btn"
+                class="inline-flex items-center gap-2 bg-primary hover:bg-yellow-400 text-black font-bold py-3 px-8 rounded-lg transition-all"
+              >
+                <i class="material-icons">add</i>
+                Agregar Dirección
+              </button>
+            </div>
+
+            <!-- Lista de direcciones -->
+            <div id="addresses-list" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Las direcciones se cargarán aquí dinámicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para agregar/editar dirección -->
+    <div id="address-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-8 py-6 flex items-center justify-between">
+          <h3 id="modal-title" class="text-2xl font-bold text-secondary">Nueva Dirección</h3>
+          <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+            <i class="material-icons">close</i>
+          </button>
+        </div>
+
+        <form id="address-form" class="p-8 space-y-6">
+          <input type="hidden" id="address-id" name="id" />
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Nombre completo -->
+            <div class="md:col-span-2">
+              <label for="fullName" class="block text-sm font-medium text-gray-700 mb-2">
+                Nombre Completo <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="fullName"
+                name="fullName"
+                required
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <!-- Teléfono -->
+            <div>
+              <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                Teléfono <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                required
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <!-- Código Postal -->
+            <div>
+              <label for="postalCode" class="block text-sm font-medium text-gray-700 mb-2">
+                Código Postal <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="postalCode"
+                name="postalCode"
+                required
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <!-- Dirección -->
+            <div class="md:col-span-2">
+              <label for="street" class="block text-sm font-medium text-gray-700 mb-2">
+                Dirección <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="street"
+                name="street"
+                required
+                placeholder="Calle, número, piso, puerta..."
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <!-- Ciudad -->
+            <div>
+              <label for="city" class="block text-sm font-medium text-gray-700 mb-2">
+                Ciudad <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="city"
+                name="city"
+                required
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <!-- Provincia -->
+            <div>
+              <label for="state" class="block text-sm font-medium text-gray-700 mb-2">
+                Provincia <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="state"
+                name="state"
+                required
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <!-- País -->
+            <div class="md:col-span-2">
+              <label for="country" class="block text-sm font-medium text-gray-700 mb-2">
+                País <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="country"
+                name="country"
+                value="España"
+                required
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <!-- Dirección predeterminada -->
+            <div class="md:col-span-2">
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="isDefault"
+                  name="isDefault"
+                  class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-2 focus:ring-primary"
+                />
+                <span class="text-sm font-medium text-gray-700">Establecer como dirección predeterminada</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Mensaje de error -->
+          <div id="form-message" class="hidden rounded-lg px-4 py-3 text-sm"></div>
+
+          <!-- Botones -->
+          <div class="flex gap-4 pt-4">
+            <button
+              type="submit"
+              id="save-address-btn"
+              class="flex-1 bg-primary hover:bg-yellow-400 text-black font-bold py-3 px-8 rounded-lg uppercase tracking-wider transition-all"
+            >
+              Guardar Dirección
+            </button>
+            <button
+              type="button"
+              id="cancel-btn"
+              class="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-all"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  import { getCurrentCustomer, logout, getCustomerFullName } from '@/lib/auth';
+  import { toastSuccess, toastError, toastInfo } from '@/lib/toast';
+
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
+
+  interface Address {
+    id: string;
+    customerId: string;
+    fullName: string;
+    phone: string;
+    street: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    isDefault: boolean;
+  }
+
+  let addresses: Address[] = [];
+  let editingAddressId: string | null = null;
+
+  // Verificar autenticación
+  function checkAuth() {
+    const customer = getCurrentCustomer();
+    if (!customer) {
+      window.location.href = '/login';
+      return false;
+    }
+    return true;
+  }
+
+  // Cargar datos del usuario en el sidebar
+  function loadUserData() {
+    const customer = getCurrentCustomer();
+    if (!customer) return;
+
+    const userName = document.getElementById('user-name');
+    const userStatus = document.getElementById('user-status');
+
+    if (userName) userName.textContent = getCustomerFullName(customer);
+    if (userStatus) {
+      const memberSince = new Date(customer.createdAt).getFullYear();
+      userStatus.textContent = customer.isVip
+        ? `Cliente VIP desde ${memberSince}`
+        : `Cliente desde ${memberSince}`;
+    }
+  }
+
+  // Cargar direcciones
+  async function loadAddresses() {
+    const customer = getCurrentCustomer();
+    if (!customer) return;
+
+    const loading = document.getElementById('loading');
+    const noAddresses = document.getElementById('no-addresses');
+    const addressesList = document.getElementById('addresses-list');
+
+    try {
+      const response = await fetch(`${API_URL}/addresses?customerId=${customer.id}`);
+
+      if (!response.ok) throw new Error('Error al cargar direcciones');
+
+      addresses = await response.json();
+
+      loading?.classList.add('hidden');
+
+      if (addresses.length === 0) {
+        noAddresses?.classList.remove('hidden');
+        addressesList?.classList.add('hidden');
+        return;
+      }
+
+      noAddresses?.classList.add('hidden');
+      addressesList?.classList.remove('hidden');
+
+      // Renderizar direcciones
+      addressesList!.innerHTML = addresses.map(address => `
+        <div class="border border-gray-200 rounded-lg p-6 ${address.isDefault ? 'ring-2 ring-primary' : ''}">
+          ${address.isDefault ? `
+            <div class="flex items-center gap-2 text-primary text-sm font-medium mb-3">
+              <i class="material-icons text-base">star</i>
+              Dirección Predeterminada
+            </div>
+          ` : ''}
+
+          <div class="mb-4">
+            <h3 class="font-bold text-secondary text-lg mb-1">${address.fullName}</h3>
+            <p class="text-gray-600 text-sm">${address.phone}</p>
+          </div>
+
+          <div class="text-gray-700 space-y-1 mb-4">
+            <p>${address.street}</p>
+            <p>${address.city}, ${address.state}</p>
+            <p>${address.postalCode}, ${address.country}</p>
+          </div>
+
+          <div class="flex gap-2">
+            <button
+              onclick="editAddress('${address.id}')"
+              class="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"
+            >
+              <i class="material-icons text-sm">edit</i>
+              Editar
+            </button>
+            <button
+              onclick="deleteAddress('${address.id}')"
+              class="px-4 py-2 border border-red-200 rounded-lg text-red-600 hover:bg-red-50 transition-all"
+            >
+              <i class="material-icons text-sm">delete</i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+    } catch (error) {
+      console.error('Error loading addresses:', error);
+      loading?.classList.add('hidden');
+      noAddresses?.classList.remove('hidden');
+      toastError('Error al cargar las direcciones');
+    }
+  }
+
+  // Mostrar modal
+  function showModal() {
+    const modal = document.getElementById('address-modal');
+    modal?.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Ocultar modal
+  function hideModal() {
+    const modal = document.getElementById('address-modal');
+    modal?.classList.add('hidden');
+    document.body.style.overflow = '';
+    editingAddressId = null;
+
+    // Reset form
+    const form = document.getElementById('address-form') as HTMLFormElement;
+    form?.reset();
+    (document.getElementById('address-id') as HTMLInputElement).value = '';
+    (document.getElementById('modal-title') as HTMLElement).textContent = 'Nueva Dirección';
+    document.getElementById('form-message')?.classList.add('hidden');
+  }
+
+  // Editar dirección
+  (window as any).editAddress = function(addressId: string) {
+    const address = addresses.find(a => a.id === addressId);
+    if (!address) return;
+
+    editingAddressId = addressId;
+
+    (document.getElementById('address-id') as HTMLInputElement).value = address.id;
+    (document.getElementById('fullName') as HTMLInputElement).value = address.fullName;
+    (document.getElementById('phone') as HTMLInputElement).value = address.phone;
+    (document.getElementById('street') as HTMLInputElement).value = address.street;
+    (document.getElementById('city') as HTMLInputElement).value = address.city;
+    (document.getElementById('state') as HTMLInputElement).value = address.state;
+    (document.getElementById('postalCode') as HTMLInputElement).value = address.postalCode;
+    (document.getElementById('country') as HTMLInputElement).value = address.country;
+    (document.getElementById('isDefault') as HTMLInputElement).checked = address.isDefault;
+
+    (document.getElementById('modal-title') as HTMLElement).textContent = 'Editar Dirección';
+    showModal();
+  };
+
+  // Eliminar dirección
+  (window as any).deleteAddress = async function(addressId: string) {
+    try {
+      const response = await fetch(`${API_URL}/addresses/${addressId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        toastSuccess('Dirección eliminada');
+        await loadAddresses();
+      } else {
+        const result = await response.json();
+        toastError(result.error || 'Error al eliminar');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      toastError('Error de conexión');
+    }
+  };
+
+  // Al cargar la página
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!checkAuth()) return;
+
+    loadUserData();
+    loadAddresses();
+
+    // Botones para abrir modal
+    document.getElementById('add-address-btn')?.addEventListener('click', showModal);
+    document.getElementById('add-first-address-btn')?.addEventListener('click', showModal);
+
+    // Botones para cerrar modal
+    document.getElementById('close-modal')?.addEventListener('click', hideModal);
+    document.getElementById('cancel-btn')?.addEventListener('click', hideModal);
+
+    // Cerrar modal al hacer click fuera
+    document.getElementById('address-modal')?.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).id === 'address-modal') {
+        hideModal();
+      }
+    });
+
+    // Submit del formulario
+    const addressForm = document.getElementById('address-form') as HTMLFormElement;
+    const saveBtn = document.getElementById('save-address-btn') as HTMLButtonElement;
+    const formMessage = document.getElementById('form-message') as HTMLDivElement;
+
+    addressForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const customer = getCurrentCustomer();
+      if (!customer) return;
+
+      const formData = new FormData(addressForm);
+      const addressData = {
+        customerId: customer.id,
+        fullName: formData.get('fullName'),
+        phone: formData.get('phone'),
+        street: formData.get('street'),
+        city: formData.get('city'),
+        state: formData.get('state'),
+        postalCode: formData.get('postalCode'),
+        country: formData.get('country'),
+        isDefault: formData.get('isDefault') === 'on',
+      };
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardando...';
+      formMessage.classList.add('hidden');
+
+      try {
+        const url = editingAddressId
+          ? `${API_URL}/addresses/${editingAddressId}`
+          : `${API_URL}/addresses`;
+
+        const response = await fetch(url, {
+          method: editingAddressId ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(addressData),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          toastSuccess(editingAddressId ? 'Dirección actualizada' : 'Dirección agregada');
+          hideModal();
+          await loadAddresses();
+        } else {
+          formMessage.textContent = result.error || 'Error al guardar dirección';
+          formMessage.className = 'bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm';
+          toastError(result.error || 'Error al guardar');
+        }
+      } catch (error) {
+        console.error('Save error:', error);
+        formMessage.textContent = 'Error de conexión. Por favor intenta de nuevo.';
+        formMessage.className = 'bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm';
+        toastError('Error de conexión');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Guardar Dirección';
+      }
+    });
+
+    // Logout
+    const logoutBtn = document.getElementById('logout-btn');
+    logoutBtn?.addEventListener('click', () => {
+      logout();
+      toastInfo('Sesión cerrada correctamente');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
+    });
+  });
+</script>

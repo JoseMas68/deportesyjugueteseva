@@ -1,0 +1,307 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+
+const menuItems = [
+  { icon: 'dashboard', label: 'Panel de Control', href: '/cuenta', active: false },
+  { icon: 'shopping_bag', label: 'Mis Pedidos', href: '/cuenta/pedidos', active: true },
+  { icon: 'account_circle', label: 'Detalles de Cuenta', href: '/cuenta/detalles', active: false },
+  { icon: 'location_on', label: 'Direcciones', href: '/cuenta/direcciones', active: false },
+  { icon: 'favorite', label: 'Lista de Deseos', href: '/favoritos', active: false }
+];
+---
+
+<Layout title="Mis Pedidos - Deportes y Juguetes Eva" description="Historial de pedidos">
+  <Header />
+
+  <main class="bg-background-light min-h-screen">
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b border-gray-200">
+      <div class="container mx-auto px-4 py-4">
+        <nav class="flex items-center text-sm">
+          <a href="/" class="text-gray-500 hover:text-secondary transition-colors">Inicio</a>
+          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          <a href="/cuenta" class="text-gray-500 hover:text-secondary transition-colors">Mi Cuenta</a>
+          <i class="material-icons text-gray-400 text-sm mx-2">chevron_right</i>
+          <span class="text-secondary font-medium">Mis Pedidos</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 lg:py-12">
+      <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar de Navegación -->
+        <aside class="w-full lg:w-72 shrink-0">
+          <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 sticky top-24">
+            <div class="mb-8">
+              <h1 id="user-name" class="text-xl font-bold text-secondary">Mi Cuenta</h1>
+              <span id="user-status" class="inline-block bg-primary text-black text-xs font-bold px-3 py-1 rounded-full mt-2">Cliente</span>
+            </div>
+
+            <nav class="flex flex-col gap-1">
+              {menuItems.map((item) => (
+                <a
+                  class={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                    item.active
+                      ? 'bg-primary text-black font-bold'
+                      : 'hover:bg-gray-50 text-gray-700'
+                  }`}
+                  href={item.href}
+                >
+                  <i class="material-icons text-xl">{item.icon}</i>
+                  <span>{item.label}</span>
+                </a>
+              ))}
+
+              <!-- Botón logout -->
+              <div class="mt-8 pt-6 border-t border-gray-200">
+                <button id="logout-btn" class="w-full flex items-center justify-center gap-2 bg-secondary text-white py-3 rounded-lg font-bold hover:bg-black transition-all">
+                  <i class="material-icons text-sm">logout</i>
+                  Cerrar Sesión
+                </button>
+              </div>
+            </nav>
+          </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <div class="flex-1">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <div class="mb-8">
+              <h2 class="text-2xl font-display font-extrabold uppercase italic text-secondary mb-2">
+                Mis Pedidos
+              </h2>
+              <p class="text-gray-600">Historial completo de tus compras</p>
+            </div>
+
+            <!-- Estado de carga -->
+            <div id="loading" class="text-center py-12">
+              <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <p class="text-gray-600 mt-4">Cargando pedidos...</p>
+            </div>
+
+            <!-- Sin pedidos -->
+            <div id="no-orders" class="hidden text-center py-12">
+              <i class="material-icons text-gray-300 text-7xl mb-4">shopping_bag</i>
+              <h3 class="text-xl font-bold text-gray-700 mb-2">No hay pedidos</h3>
+              <p class="text-gray-600 mb-6">Aún no has realizado ningún pedido</p>
+              <a href="/ofertas" class="inline-flex items-center gap-2 bg-primary hover:bg-yellow-400 text-black font-bold py-3 px-8 rounded-lg transition-all">
+                <i class="material-icons">shopping_cart</i>
+                Explorar Productos
+              </a>
+            </div>
+
+            <!-- Lista de pedidos -->
+            <div id="orders-list" class="hidden space-y-6">
+              <!-- Los pedidos se cargarán aquí dinámicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  import { getCurrentCustomer, logout, getCustomerFullName } from '@/lib/auth';
+  import { toastError, toastInfo } from '@/lib/toast';
+
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
+
+  interface OrderItem {
+    id: string;
+    productName: string;
+    productImage: string | null;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    variantSize: string | null;
+    variantColor: string | null;
+  }
+
+  interface Order {
+    id: string;
+    orderNumber: string;
+    status: string;
+    totalAmount: number;
+    createdAt: string;
+    items: OrderItem[];
+    shippingAddress: string | null;
+    userEmail: string;
+    userName: string;
+    userPhone: string;
+  }
+
+  // Verificar autenticación
+  function checkAuth() {
+    const customer = getCurrentCustomer();
+    if (!customer) {
+      window.location.href = '/login';
+      return false;
+    }
+    return true;
+  }
+
+  // Cargar datos del usuario en el sidebar
+  function loadUserData() {
+    const customer = getCurrentCustomer();
+    if (!customer) return;
+
+    const userName = document.getElementById('user-name');
+    const userStatus = document.getElementById('user-status');
+
+    if (userName) userName.textContent = getCustomerFullName(customer);
+    if (userStatus) {
+      const memberSince = new Date(customer.createdAt).getFullYear();
+      userStatus.textContent = customer.isVip
+        ? `Cliente VIP desde ${memberSince}`
+        : `Cliente desde ${memberSince}`;
+    }
+  }
+
+  // Función para formatear fecha
+  function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  }
+
+  // Función para obtener el color del estado
+  function getStatusColor(status: string): string {
+    const colors: Record<string, string> = {
+      'pending': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'processing': 'bg-blue-100 text-blue-800 border-blue-200',
+      'shipped': 'bg-purple-100 text-purple-800 border-purple-200',
+      'delivered': 'bg-green-100 text-green-800 border-green-200',
+      'cancelled': 'bg-red-100 text-red-800 border-red-200',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+
+  // Función para traducir el estado
+  function translateStatus(status: string): string {
+    const translations: Record<string, string> = {
+      'pending': 'Pendiente',
+      'processing': 'En Proceso',
+      'shipped': 'Enviado',
+      'delivered': 'Entregado',
+      'cancelled': 'Cancelado',
+    };
+    return translations[status] || status;
+  }
+
+  // Cargar pedidos
+  async function loadOrders() {
+    const customer = getCurrentCustomer();
+    if (!customer) return;
+
+    const loading = document.getElementById('loading');
+    const noOrders = document.getElementById('no-orders');
+    const ordersList = document.getElementById('orders-list');
+
+    try {
+      const response = await fetch(`${API_URL}/customers/orders?email=${encodeURIComponent(customer.email)}`);
+
+      if (!response.ok) throw new Error('Error al cargar pedidos');
+
+      const orders: Order[] = await response.json();
+
+      loading?.classList.add('hidden');
+
+      if (orders.length === 0) {
+        noOrders?.classList.remove('hidden');
+        return;
+      }
+
+      ordersList?.classList.remove('hidden');
+
+      // Renderizar pedidos
+      ordersList!.innerHTML = orders.map(order => `
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
+          <!-- Cabecera del pedido -->
+          <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h3 class="font-bold text-secondary">${order.orderNumber}</h3>
+                <p class="text-sm text-gray-600">Realizado el ${formatDate(order.createdAt)}</p>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(order.status)}">
+                  ${translateStatus(order.status)}
+                </span>
+                <span class="text-lg font-bold text-secondary">€${order.totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Items del pedido -->
+          <div class="p-6 space-y-4">
+            ${order.items.map(item => `
+              <div class="flex gap-4">
+                <div class="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                  ${item.productImage
+                    ? `<img src="${item.productImage}" alt="${item.productName}" class="w-full h-full object-cover" />`
+                    : `<div class="w-full h-full flex items-center justify-center"><i class="material-icons text-gray-400">image</i></div>`
+                  }
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-medium text-secondary truncate">${item.productName}</h4>
+                  ${item.variantSize || item.variantColor ? `
+                    <p class="text-sm text-gray-600">
+                      ${item.variantSize ? `Talla: ${item.variantSize}` : ''}
+                      ${item.variantSize && item.variantColor ? ' • ' : ''}
+                      ${item.variantColor ? `Color: ${item.variantColor}` : ''}
+                    </p>
+                  ` : ''}
+                  <p class="text-sm text-gray-600">Cantidad: ${item.quantity}</p>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold text-secondary">€${item.totalPrice.toFixed(2)}</p>
+                  <p class="text-sm text-gray-600">€${item.unitPrice.toFixed(2)} c/u</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Información de envío -->
+          ${order.shippingAddress ? `
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+              <p class="text-sm font-medium text-gray-700 mb-1">Dirección de envío:</p>
+              <p class="text-sm text-gray-600">${order.shippingAddress}</p>
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      loading?.classList.add('hidden');
+      noOrders?.classList.remove('hidden');
+      toastError('Error al cargar los pedidos');
+    }
+  }
+
+  // Al cargar la página
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!checkAuth()) return;
+
+    loadUserData();
+    loadOrders();
+
+    // Logout
+    const logoutBtn = document.getElementById('logout-btn');
+    logoutBtn?.addEventListener('click', () => {
+      logout();
+      toastInfo('Sesión cerrada correctamente');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
+    });
+  });
+</script>

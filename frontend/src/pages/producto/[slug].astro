@@ -5,6 +5,7 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import ProductCard from '@/components/ProductCard.astro';
+import ProductReviews from '@/components/ProductReviews.astro';
 import { getProductBySlug } from '@/lib/api';
 
 const slug = Astro.params.slug || '';
@@ -36,9 +37,20 @@ const discountPercent = hasDiscount ? Math.round(((compareAtPrice - price) / com
 const mainImage = product.thumbnailUrl || (product.images && product.images[0]) || '/placeholder.jpg';
 const productImages = product.images && product.images.length > 0 ? product.images : [mainImage];
 
-// Rating (mock por ahora, se puede añadir al modelo después)
-const rating = 4.5;
-const totalReviews = 42;
+// Obtener rating real de las reseñas
+let rating = 0;
+let totalReviews = 0;
+try {
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001';
+  const reviewsResponse = await fetch(`${API_URL}/api/reviews?productId=${product.id}&status=approved`);
+  if (reviewsResponse.ok) {
+    const reviewsData = await reviewsResponse.json();
+    rating = reviewsData.stats?.averageRating || 0;
+    totalReviews = reviewsData.stats?.totalReviews || 0;
+  }
+} catch (error) {
+  console.error('Error loading reviews:', error);
+}
 
 // Badge
 const badge = product.isNew ? 'NUEVO' : (hasDiscount ? `-${discountPercent}%` : null);
@@ -124,17 +136,22 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
           </h1>
 
           <!-- Rating -->
-          <div class="flex items-center gap-2 mb-6">
-            <div class="flex items-center gap-0.5">
-              {Array.from({ length: Math.floor(rating) }).map(() => (
-                <i class="material-icons text-amber-400 text-lg">star</i>
-              ))}
-              {rating % 1 !== 0 && (
-                <i class="material-icons text-amber-400 text-lg">star_half</i>
-              )}
+          {totalReviews > 0 && (
+            <div class="flex items-center gap-2 mb-6">
+              <div class="flex items-center gap-0.5">
+                {Array.from({ length: Math.floor(rating) }).map(() => (
+                  <i class="material-icons text-amber-400 text-lg">star</i>
+                ))}
+                {rating % 1 >= 0.5 && (
+                  <i class="material-icons text-amber-400 text-lg">star_half</i>
+                )}
+                {Array.from({ length: 5 - Math.floor(rating) - (rating % 1 >= 0.5 ? 1 : 0) }).map(() => (
+                  <i class="material-icons text-gray-300 text-lg">star_border</i>
+                ))}
+              </div>
+              <span class="text-sm text-gray-600">{rating.toFixed(1)} ({totalReviews} {totalReviews === 1 ? 'reseña' : 'reseñas'})</span>
             </div>
-            <span class="text-sm text-gray-600">({totalReviews} reseñas)</span>
-          </div>
+          )}
 
           <!-- Precio -->
           <div class="flex items-center gap-4 mb-6">
@@ -268,8 +285,17 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
                   : (product.stock === 0 ? 'Agotado' : 'Añadir al Carrito')
               }</span>
             </button>
-            <button class="border-2 border-gray-300 py-3 px-6 rounded-lg hover:border-red-500 hover:text-red-500 transition-colors" aria-label="Añadir a favoritos">
-              <i class="material-icons">favorite_border</i>
+            <button
+              id="wishlist-btn"
+              class="border-2 border-gray-300 py-3 px-6 rounded-lg hover:border-red-500 hover:text-red-500 transition-colors"
+              aria-label="Añadir a favoritos"
+              data-product-id={product.id}
+              data-product-name={product.name}
+              data-product-slug={product.slug}
+              data-product-price={price}
+              data-product-image={mainImage}
+            >
+              <i class="material-icons" id="wishlist-icon">favorite_border</i>
             </button>
           </div>
 
@@ -358,6 +384,9 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
           </div>
         </div>
       </div>
+
+      <!-- Reseñas de Clientes -->
+      <ProductReviews productId={product.id} />
 
       <!-- Productos Relacionados -->
       {relatedProducts.length > 0 && (
@@ -465,8 +494,9 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
     });
   });
 
-  // Añadir al carrito
+  // Añadir al carrito y favoritos
   import { addToCart } from '@/lib/cart';
+  import { addToWishlist, removeFromWishlist, isInWishlist } from '@/lib/wishlist';
   import { toastSuccess, toastError } from '@/lib/toast';
 
   const addToCartBtn = document.getElementById('add-to-cart-btn') as HTMLButtonElement;
@@ -608,6 +638,54 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
   // Inicializar UI si hay variantes que requieren selección
   if (needsVariantSelection) {
     updateVariantUI();
+  }
+
+  // Botón de favoritos
+  const wishlistBtn = document.getElementById('wishlist-btn') as HTMLButtonElement;
+  const wishlistIcon = document.getElementById('wishlist-icon');
+
+  if (wishlistBtn) {
+    const productId = wishlistBtn.dataset.productId || '';
+
+    // Inicializar estado del botón
+    if (isInWishlist(productId)) {
+      wishlistIcon!.textContent = 'favorite';
+      wishlistBtn.classList.add('text-red-500', 'border-red-500');
+    }
+
+    wishlistBtn.addEventListener('click', () => {
+      const productId = wishlistBtn.dataset.productId || '';
+      const productName = wishlistBtn.dataset.productName || '';
+      const productSlug = wishlistBtn.dataset.productSlug || '';
+      const productPrice = parseFloat(wishlistBtn.dataset.productPrice || '0');
+      const productImage = wishlistBtn.dataset.productImage || '';
+
+      if (isInWishlist(productId)) {
+        // Quitar de favoritos
+        removeFromWishlist(productId);
+        wishlistIcon!.textContent = 'favorite_border';
+        wishlistBtn.classList.remove('text-red-500', 'border-red-500');
+        toastSuccess('Eliminado de favoritos');
+      } else {
+        // Añadir a favoritos
+        addToWishlist({
+          productId,
+          productName,
+          productSlug,
+          productImage,
+          productPrice,
+        });
+        wishlistIcon!.textContent = 'favorite';
+        wishlistBtn.classList.add('text-red-500', 'border-red-500');
+        toastSuccess('Añadido a favoritos');
+      }
+
+      // Animación
+      wishlistBtn.classList.add('scale-110');
+      setTimeout(() => {
+        wishlistBtn.classList.remove('scale-110');
+      }, 200);
+    });
   }
 
   addToCartBtn?.addEventListener('click', () => {

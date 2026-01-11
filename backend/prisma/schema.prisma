@@ -382,6 +382,7 @@ model Customer {
   firstName     String
   lastName      String
   phone         String?
+  gender        String?   // 'male', 'female', 'other', 'prefer_not_to_say'
 
   // DNI/NIE para facturas
   taxId         String?

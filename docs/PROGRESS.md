@@ -97,10 +97,26 @@
 - [x] Filtros de productos (precio, marca, subcategoría) - COMPLETADO con multiselección
 - [x] Paginación funcional en listados de productos - COMPLETADO
 - [x] Transiciones suaves entre vista lista/cuadrícula - COMPLETADO
+- [x] Sistema de favoritos funcional - COMPLETADO
 - [ ] Conectar checkout con API backend
 - [ ] Gestión de estados de carga y errores mejorada
 - [ ] Implementar búsqueda en tiempo real con debounce
-- [ ] Sistema de favoritos funcional
+
+### Panel de Cliente (Frontend) - ✅ COMPLETADO
+- [x] Sistema de autenticación de clientes (login/registro)
+- [x] Página de cuenta principal (/cuenta) con dashboard
+- [x] Gestión de perfil (/cuenta/detalles) - editar datos personales
+- [x] Campos de perfil completos: nombre, email, teléfono, DNI/NIE, fecha de nacimiento, género
+- [x] Cambio de contraseña funcional
+- [x] Gestión de direcciones (/cuenta/direcciones) - CRUD completo
+- [x] Página de pedidos (/cuenta/pedidos) - lista de pedidos (mock data)
+- [x] Página de favoritos (/favoritos) - gestión de wishlist
+- [x] Sidebar de navegación consistente en todas las páginas
+- [x] Sistema de toasts para notificaciones (sin alerts nativos)
+- [x] Protección de rutas - redirección a login si no autenticado
+- [x] Badge de estado VIP y año de registro
+- [x] API backend para actualizar datos de cliente (PATCH /api/customers/[id])
+- [x] Documentación de sistema de toasts (TOAST_GUIDELINES.md)
 
 ### Panel Admin (Next.js) - ✅ COMPLETADO
 - [x] Middleware de autenticación con Supabase
@@ -369,7 +385,10 @@ npm run dev
 6. **Stock**: Se reduce automáticamente al crear pedido
 7. **Envío gratis**: A partir de 50€ (configurable)
 8. **Panel Admin**: Accesible en /admin (requiere usuario en tabla AdminUser)
-9. **Turbopack**: Habilitado para desarrollo más rápido (--turbopack)
+9. **Panel Cliente**: Sistema completo de gestión de cuenta, perfil y direcciones
+10. **Cliente de prueba**: test@test.com / test123 (creado con seed)
+11. **Toasts**: Sistema de notificaciones no intrusivo (sin alerts/confirm nativos)
+12. **Turbopack**: Habilitado para desarrollo más rápido (--turbopack)
 
 ## ⚠️ Prioridad Alta - Faltan Implementar
 
@@ -379,7 +398,9 @@ npm run dev
 3. ✅ ~~**Panel Admin**~~ - COMPLETADO (gestión de productos, pedidos, categorías, configuración)
 4. ✅ ~~**Autenticación Admin**~~ - COMPLETADO (Supabase Auth + middleware)
 5. ✅ ~~**Filtros de Productos**~~ - COMPLETADO (multiselección con checkboxes, transiciones suaves)
-6. ❌ **Checkout Real**: Integrar con Stripe y API de pedidos
+6. ✅ ~~**Panel de Cliente**~~ - COMPLETADO (cuenta, perfil, direcciones, favoritos)
+7. ❌ **Checkout Real**: Integrar con Stripe y API de pedidos
+8. ❌ **Pedidos Reales**: Conectar panel de cliente con API de pedidos del backend
 
 ### Integraciones Pendientes
 - Stripe Payment Intent real (actualmente simulado en API)

@@ -12,7 +12,9 @@
       "Bash(powershell:*)",
       "Bash(curl:*)",
       "Bash(npm run build:*)",
-      "Bash(npx prisma generate:*)"
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npx prisma db push)"
     ]
   }
 }

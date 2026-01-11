@@ -3,21 +3,7 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 
-// Mock user data
-const user = {
-  name: 'Juan Pérez',
-  email: 'juan.perez@ejemplo.com',
-  phone: '+34 600 123 456',
-  memberSince: '2023',
-  vip: true
-};
-
-// Mock stats
-const stats = {
-  totalOrders: 12,
-  inTransit: 1,
-  points: 450
-};
+// Los datos del usuario se cargarán dinámicamente en el cliente
 
 // Mock recent orders
 const recentOrders = [
@@ -51,44 +37,27 @@ const mainAddress = {
   city: '28001 Madrid, España'
 };
 
-// Mock wishlist
-const wishlist = [
-  {
-    id: 1,
-    name: 'Figura de Acción Legend',
-    brand: 'HASBRO',
-    price: 24.99,
-    image: '/products/figura.jpg'
-  },
-  {
-    id: 2,
-    name: 'Set de Construcción Space',
-    brand: 'LEGO',
-    price: 79.99,
-    image: '/products/lego-space.jpg'
-  },
-  {
-    id: 3,
-    name: 'Muñeca Fashion Nova',
-    brand: 'MATTEL',
-    price: 34.99,
-    image: '/products/muneca.jpg'
-  },
-  {
-    id: 4,
-    name: 'Coche RC Turbo',
-    brand: 'HOT WHEELS',
-    price: 59.99,
-    image: '/products/coche-rc.jpg'
-  }
-];
+// Wishlist se cargará desde localStorage en el cliente
+
+// Mock stats (se actualizarán dinámicamente)
+const stats = {
+  totalOrders: 0,
+  inTransit: 0
+};
+
+// Mock user (se actualizará dinámicamente)
+const user = {
+  name: 'Cargando...',
+  email: 'cargando@...',
+  phone: '---'
+};
 
 const menuItems = [
   { icon: 'dashboard', label: 'Panel de Control', href: '/cuenta', active: true },
-  { icon: 'package', label: 'Mis Pedidos', href: '/cuenta/pedidos', active: false },
+  { icon: 'shopping_bag', label: 'Mis Pedidos', href: '/cuenta/pedidos', active: false },
   { icon: 'account_circle', label: 'Detalles de Cuenta', href: '/cuenta/detalles', active: false },
-  { icon: 'home_pin', label: 'Direcciones', href: '/cuenta/direcciones', active: false },
-  { icon: 'favorite', label: 'Lista de Deseos', href: '/cuenta/favoritos', active: false }
+  { icon: 'location_on', label: 'Direcciones', href: '/cuenta/direcciones', active: false },
+  { icon: 'favorite', label: 'Lista de Deseos', href: '/favoritos', active: false }
 ];
 ---
 
@@ -113,8 +82,8 @@ const menuItems = [
         <aside class="w-full lg:w-72 shrink-0">
           <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 sticky top-24">
             <div class="mb-8">
-              <h1 class="text-xl font-bold text-secondary">{user.name}</h1>
-              <p class="text-primary text-sm">Cliente VIP desde {user.memberSince}</p>
+              <h1 id="user-name" class="text-xl font-bold text-secondary">Mi Cuenta</h1>
+              <span id="user-status" class="inline-block bg-primary text-black text-xs font-bold px-3 py-1 rounded-full mt-2">Cliente</span>
             </div>
 
             <nav class="flex flex-col gap-1">
@@ -151,35 +120,31 @@ const menuItems = [
               <h2 class="text-4xl font-black text-secondary mb-2">Panel de Control</h2>
               <p class="text-gray-600">Gestiona tu cuenta y pedidos</p>
             </div>
-            <button class="bg-primary/20 border border-primary/30 text-secondary font-bold px-6 py-3 rounded-lg hover:bg-primary/30 transition-colors">
+            <a href="/cuenta/detalles" class="bg-primary/20 border border-primary/30 text-secondary font-bold px-6 py-3 rounded-lg hover:bg-primary/30 transition-colors">
               Editar Perfil
-            </button>
+            </a>
           </div>
 
           <!-- Stats Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-xl border border-gray-200 flex flex-col gap-2">
-              <div class="flex items-center justify-between">
-                <p class="text-sm font-medium text-gray-600">Pedidos Totales</p>
-                <i class="material-icons text-primary">shopping_bag</i>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600 mb-1">Total</p>
+                <p class="text-3xl font-bold text-secondary">{stats.totalOrders}</p>
               </div>
-              <p class="text-3xl font-bold text-secondary">{stats.totalOrders}</p>
+              <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <i class="material-icons text-secondary text-3xl">shopping_bag</i>
+              </div>
             </div>
 
-            <div class="bg-white p-6 rounded-xl border border-gray-200 flex flex-col gap-2">
-              <div class="flex items-center justify-between">
-                <p class="text-sm font-medium text-gray-600">En Camino</p>
-                <i class="material-icons text-primary">local_shipping</i>
+            <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600 mb-1">En Camino</p>
+                <p class="text-3xl font-bold text-green-600">{stats.inTransit}</p>
               </div>
-              <p class="text-3xl font-bold text-green-600">0{stats.inTransit}</p>
-            </div>
-
-            <div class="bg-white p-6 rounded-xl border border-gray-200 flex flex-col gap-2">
-              <div class="flex items-center justify-between">
-                <p class="text-sm font-medium text-gray-600">Puntos Eva</p>
-                <i class="material-icons text-primary">star</i>
+              <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                <i class="material-icons text-green-600 text-3xl">local_shipping</i>
               </div>
-              <p class="text-3xl font-bold text-secondary">{stats.points}</p>
             </div>
           </div>
 
@@ -187,7 +152,7 @@ const menuItems = [
           <section class="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div class="p-6 border-b border-gray-200 flex justify-between items-center">
               <h3 class="font-bold text-lg text-secondary">Pedidos Recientes</h3>
-              <a class="text-sm font-bold text-primary hover:underline" href="/cuenta/pedidos">Ver todos</a>
+              <a class="text-sm font-bold text-secondary hover:text-accent underline hover:no-underline transition-colors" href="/cuenta/pedidos">Ver todos</a>
             </div>
 
             <div class="overflow-x-auto">
@@ -217,8 +182,8 @@ const menuItems = [
                       </td>
                       <td class="px-6 py-4 text-sm font-bold text-secondary text-right">{order.total.toFixed(2)}€</td>
                       <td class="px-6 py-4">
-                        <button class="text-primary hover:text-secondary font-bold text-sm transition-colors">
-                          Detalles
+                        <button class="text-secondary hover:text-accent font-bold text-sm transition-colors underline hover:no-underline">
+                          Ver detalles
                         </button>
                       </td>
                     </tr>
@@ -234,20 +199,20 @@ const menuItems = [
             <div class="bg-white p-6 rounded-xl border border-gray-200 relative">
               <h3 class="font-bold mb-6 flex items-center gap-2 text-secondary">
                 <i class="material-icons">account_circle</i>
-                Información de Perfil
+                Perfil
               </h3>
               <div class="space-y-4">
                 <div class="flex flex-col">
-                  <span class="text-xs text-gray-600 uppercase">Nombre Completo</span>
-                  <span class="font-medium text-secondary">{user.name}</span>
+                  <span class="text-xs text-gray-600 uppercase">Nombre</span>
+                  <span id="profile-name" class="font-medium text-secondary">Cargando...</span>
                 </div>
                 <div class="flex flex-col">
-                  <span class="text-xs text-gray-600 uppercase">Correo Electrónico</span>
-                  <span class="font-medium text-secondary">{user.email}</span>
+                  <span class="text-xs text-gray-600 uppercase">Email</span>
+                  <span id="profile-email" class="font-medium text-secondary">Cargando...</span>
                 </div>
                 <div class="flex flex-col">
                   <span class="text-xs text-gray-600 uppercase">Teléfono</span>
-                  <span class="font-medium text-secondary">{user.phone}</span>
+                  <span id="profile-phone" class="font-medium text-secondary">---</span>
                 </div>
               </div>
             </div>
@@ -255,17 +220,17 @@ const menuItems = [
             <!-- Dirección de Envío -->
             <div class="bg-white p-6 rounded-xl border border-gray-200">
               <h3 class="font-bold mb-6 flex items-center gap-2 text-secondary">
-                <i class="material-icons">home_pin</i>
-                Dirección de Envío Principal
+                <i class="material-icons">location_on</i>
+                Dirección Principal
               </h3>
               <div class="space-y-2 mb-6">
                 <p class="font-bold text-secondary">{mainAddress.name}</p>
                 <p class="text-sm text-gray-600">{mainAddress.street}</p>
                 <p class="text-sm text-gray-600">{mainAddress.city}</p>
               </div>
-              <button class="w-full py-2 bg-gray-50 hover:bg-primary/20 hover:text-primary transition-all rounded-lg text-sm font-bold border border-gray-200">
-                Cambiar Dirección
-              </button>
+              <a href="/cuenta/direcciones" class="block w-full py-2 bg-gray-50 hover:bg-primary/20 hover:text-primary transition-all rounded-lg text-sm font-bold border border-gray-200 text-center">
+                Ver Direcciones
+              </a>
             </div>
           </div>
 
@@ -273,28 +238,19 @@ const menuItems = [
           <section>
             <div class="flex justify-between items-center mb-6">
               <h3 class="text-2xl font-black text-secondary">Tu Lista de Deseos</h3>
-              <a href="/cuenta/favoritos" class="text-primary font-bold hover:underline">Ver todos</a>
+              <a href="/favoritos" class="text-sm font-bold text-secondary hover:text-accent underline hover:no-underline transition-colors">Ver todos</a>
             </div>
 
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {wishlist.map((product) => (
-                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden group hover:shadow-lg transition-all">
-                  <div class="aspect-square bg-gray-50 relative">
-                    <img class="w-full h-full object-cover" src={product.image} alt={product.name} />
-                    <button class="absolute top-2 right-2 p-1.5 bg-white rounded-full text-red-500 shadow-sm hover:scale-110 transition-transform">
-                      <i class="material-icons text-sm">favorite</i>
-                    </button>
-                  </div>
-                  <div class="p-4">
-                    <p class="text-xs text-primary font-bold">{product.brand}</p>
-                    <h4 class="font-bold text-sm mb-2 line-clamp-1 text-secondary">{product.name}</h4>
-                    <p class="font-black text-primary">{product.price.toFixed(2)}€</p>
-                    <button class="mt-3 w-full bg-secondary text-white hover:bg-primary hover:text-black py-2 rounded-lg font-bold text-xs uppercase transition-colors">
-                      Añadir al Carrito
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div id="wishlist-preview" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- Se cargará dinámicamente con JavaScript -->
+            </div>
+
+            <div id="empty-wishlist-preview" class="hidden text-center py-12 bg-gray-50 rounded-lg">
+              <i class="material-icons text-gray-300 text-5xl mb-3">favorite_border</i>
+              <p class="text-gray-500 mb-4">No tienes productos en tu lista de deseos</p>
+              <a href="/" class="inline-block bg-primary hover:bg-yellow-400 text-black font-bold py-2 px-6 rounded-lg uppercase text-sm tracking-wider transition-all">
+                Explorar Productos
+              </a>
             </div>
           </section>
         </div>
@@ -306,34 +262,178 @@ const menuItems = [
 </Layout>
 
 <script>
-  // Cerrar sesión
-  const logoutBtn = document.querySelector('button:has(.material-icons[textContent="logout"])');
-  logoutBtn?.addEventListener('click', () => {
-    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-      // En producción, aquí se llamaría al API para cerrar sesión
-      window.location.href = '/';
+  import { getWishlist, removeFromWishlist } from '@/lib/wishlist';
+  import { addToCart } from '@/lib/cart';
+  import { toastSuccess, toastInfo } from '@/lib/toast';
+  import { getCurrentCustomer, getCustomerFullName, logout } from '@/lib/auth';
+
+  // Verificar autenticación
+  function checkAuth() {
+    const customer = getCurrentCustomer();
+
+    if (!customer) {
+      // Redirigir a login si no está autenticado
+      window.location.href = '/login';
+      return false;
     }
+
+    return true;
+  }
+
+  // Cargar datos del usuario
+  function loadUserData() {
+    const customer = getCurrentCustomer();
+
+    if (!customer) return;
+
+    // Actualizar nombre en sidebar
+    const userName = document.getElementById('user-name');
+    if (userName) {
+      userName.textContent = getCustomerFullName(customer);
+    }
+
+    // Actualizar estado VIP en sidebar
+    const userStatus = document.getElementById('user-status');
+    if (userStatus) {
+      const memberSince = new Date(customer.createdAt).getFullYear();
+      userStatus.textContent = customer.isVip
+        ? `Cliente VIP desde ${memberSince}`
+        : `Cliente desde ${memberSince}`;
+    }
+
+    // Actualizar información de perfil
+    const profileName = document.getElementById('profile-name');
+    if (profileName) {
+      profileName.textContent = getCustomerFullName(customer);
+    }
+
+    const profileEmail = document.getElementById('profile-email');
+    if (profileEmail) {
+      profileEmail.textContent = customer.email;
+    }
+
+    const profilePhone = document.getElementById('profile-phone');
+    if (profilePhone) {
+      profilePhone.textContent = customer.phone || 'No especificado';
+    }
+  }
+
+  // Cargar wishlist preview
+  function loadWishlistPreview() {
+    const wishlist = getWishlist();
+    const preview = wishlist.slice(0, 4); // Mostrar máximo 4
+    const wishlistPreview = document.getElementById('wishlist-preview');
+    const emptyWishlistPreview = document.getElementById('empty-wishlist-preview');
+
+    if (preview.length === 0) {
+      wishlistPreview!.classList.add('hidden');
+      emptyWishlistPreview!.classList.remove('hidden');
+      return;
+    }
+
+    wishlistPreview!.classList.remove('hidden');
+    emptyWishlistPreview!.classList.add('hidden');
+
+    wishlistPreview!.innerHTML = preview.map(product => `
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden group hover:shadow-lg transition-all">
+        <div class="aspect-square bg-gray-50 relative">
+          <a href="/producto/${product.productSlug}">
+            <img class="w-full h-full object-cover" src="${product.productImage || '/placeholder.jpg'}" alt="${product.productName}" />
+          </a>
+          <button
+            class="remove-wishlist-btn absolute top-2 right-2 p-1.5 bg-white rounded-full text-red-500 shadow-sm hover:scale-110 transition-transform"
+            data-product-id="${product.productId}"
+          >
+            <i class="material-icons text-sm">favorite</i>
+          </button>
+        </div>
+        <div class="p-4">
+          <a href="/producto/${product.productSlug}">
+            <h4 class="font-bold text-sm mb-2 line-clamp-1 text-secondary">${product.productName}</h4>
+          </a>
+          <p class="font-black text-primary">${parseFloat(product.productPrice.toString()).toFixed(2)}€</p>
+          <button
+            class="add-to-cart-from-wishlist mt-3 w-full bg-secondary text-white hover:bg-primary hover:text-black py-2 rounded-lg font-bold text-xs uppercase transition-colors"
+            data-product-id="${product.productId}"
+            data-product-name="${product.productName}"
+            data-product-slug="${product.productSlug}"
+            data-product-price="${product.productPrice}"
+            data-product-image="${product.productImage}"
+          >
+            Añadir al Carrito
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    // Event listeners para botones de eliminar
+    document.querySelectorAll('.remove-wishlist-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const productId = (btn as HTMLElement).dataset.productId || '';
+        removeFromWishlist(productId);
+        loadWishlistPreview();
+        toastSuccess('Eliminado de favoritos');
+      });
+    });
+
+    // Event listeners para botones de añadir al carrito
+    document.querySelectorAll('.add-to-cart-from-wishlist').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const button = btn as HTMLElement;
+        addToCart({
+          productId: button.dataset.productId || '',
+          productName: button.dataset.productName || '',
+          productSlug: button.dataset.productSlug || '',
+          productImage: button.dataset.productImage || '',
+          quantity: 1,
+          unitPrice: parseFloat(button.dataset.productPrice || '0'),
+        });
+        button.textContent = '¡Añadido!';
+        button.classList.add('bg-green-600');
+        setTimeout(() => {
+          button.textContent = 'Añadir al Carrito';
+          button.classList.remove('bg-green-600');
+        }, 1500);
+        toastSuccess('Añadido al carrito');
+      });
+    });
+  }
+
+  // Cargar al iniciar
+  document.addEventListener('DOMContentLoaded', () => {
+    // Verificar autenticación primero
+    if (!checkAuth()) return;
+
+    // Cargar datos del usuario
+    loadUserData();
+
+    // Cargar wishlist
+    loadWishlistPreview();
   });
 
-  // Eliminar de favoritos
-  const favoriteButtons = document.querySelectorAll('button:has(.material-icons[textContent="favorite"])');
-  favoriteButtons.forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (confirm('¿Eliminar de la lista de deseos?')) {
-        // En producción, aquí se llamaría al API
-        const card = btn.closest('.group');
-        card?.remove();
-      }
-    });
+  // Actualizar cuando cambie la wishlist
+  window.addEventListener('wishlist-updated', () => {
+    loadWishlistPreview();
+  });
+
+  // Cerrar sesión
+  document.querySelector('aside button')?.addEventListener('click', () => {
+    logout();
+    toastInfo('Sesión cerrada correctamente');
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 500);
   });
 
   // Ver detalles del pedido
-  const detailButtons = document.querySelectorAll('button:contains("Detalles")');
-  detailButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const orderId = btn.closest('tr')?.querySelector('td:first-child')?.textContent;
-      window.location.href = `/cuenta/pedido/${orderId}`;
-    });
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'BUTTON' && target.textContent?.trim() === 'Ver detalles') {
+      const orderId = target.closest('tr')?.querySelector('td:first-child')?.textContent;
+      if (orderId) {
+        window.location.href = `/cuenta/pedido/${orderId}`;
+      }
+    }
   });
 </script>
