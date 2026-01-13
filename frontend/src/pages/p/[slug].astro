@@ -1,0 +1,50 @@
+---
+export const prerender = false;
+
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import BlockRenderer from '@/components/blocks/BlockRenderer.astro';
+import { getDynamicPage } from '@/lib/api';
+
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/404');
+}
+
+const { page } = await getDynamicPage(slug);
+
+if (!page) {
+  return Astro.redirect('/404');
+}
+
+const metaTitle = page.metaTitle || page.title;
+const metaDescription = page.metaDescription || page.description || '';
+---
+
+<Layout title={`${metaTitle} - Deportes y Juguetes Eva`} description={metaDescription}>
+  <Header />
+
+  <main class="bg-background-light min-h-screen">
+    {page.blocks
+      .filter(block => block.isActive)
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .map(block => (
+        <BlockRenderer block={block} />
+      ))
+    }
+
+    {page.blocks.length === 0 && (
+      <div class="container mx-auto px-4 py-24 text-center">
+        <svg class="w-24 h-24 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+        <h2 class="text-2xl font-bold text-gray-700 mb-4">Esta pagina esta vacia</h2>
+        <p class="text-gray-500">El contenido de esta pagina se esta construyendo.</p>
+      </div>
+    )}
+  </main>
+
+  <Footer />
+</Layout>

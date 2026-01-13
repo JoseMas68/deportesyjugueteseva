@@ -407,6 +407,7 @@ npm run dev
 - Webhook de Stripe para confirmar pagos automáticamente
 - ✅ ~~Subida de imágenes a Supabase Storage~~ - COMPLETADO (en panel admin)
 - ✅ ~~Sistema de emails funcional~~ - COMPLETADO (al cambiar estado de pedidos)
+- [ ] Gestión de envíos (transportistas, tracking, integración con APIs de envío)
 
 ### Mejoras Futuras
 - Tests unitarios y de integración

@@ -1,0 +1,86 @@
+---
+interface HeroConfig {
+  title?: string;
+  subtitle?: string;
+  backgroundImage?: string;
+  backgroundColor?: string;
+  textColor: 'light' | 'dark';
+  ctaText?: string;
+  ctaUrl?: string;
+  ctaStyle: 'primary' | 'secondary' | 'outline';
+  alignment: 'left' | 'center' | 'right';
+  height: 'small' | 'medium' | 'large' | 'full';
+}
+
+interface Props {
+  config: HeroConfig;
+}
+
+const { config } = Astro.props;
+
+const heightClasses = {
+  small: 'min-h-[300px]',
+  medium: 'min-h-[400px] md:min-h-[500px]',
+  large: 'min-h-[500px] md:min-h-[600px]',
+  full: 'min-h-screen',
+};
+
+const alignmentClasses = {
+  left: 'text-left items-start',
+  center: 'text-center items-center',
+  right: 'text-right items-end',
+};
+
+const textColorClasses = {
+  light: 'text-white',
+  dark: 'text-secondary',
+};
+
+const ctaStyleClasses = {
+  primary: 'bg-primary text-secondary hover:bg-yellow-400',
+  secondary: 'bg-secondary text-white hover:bg-black',
+  outline: 'bg-transparent border-2 border-current hover:bg-white/10',
+};
+
+const bgStyle = config.backgroundImage
+  ? `background-image: url('${config.backgroundImage}'); background-size: cover; background-position: center;`
+  : `background-color: ${config.backgroundColor || '#FFD700'};`;
+---
+
+<section
+  class={`relative flex flex-col justify-center ${heightClasses[config.height]} ${alignmentClasses[config.alignment]} ${textColorClasses[config.textColor]} overflow-hidden`}
+  style={bgStyle}
+>
+  {/* Overlay si hay imagen de fondo */}
+  {config.backgroundImage && (
+    <div class={`absolute inset-0 ${config.textColor === 'light' ? 'bg-black/40' : 'bg-white/30'}`}></div>
+  )}
+
+  <div class="container mx-auto px-4 relative z-10">
+    <div class={`max-w-3xl ${config.alignment === 'center' ? 'mx-auto' : config.alignment === 'right' ? 'ml-auto' : ''}`}>
+      {config.title && (
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-display font-extrabold mb-4 leading-tight">
+          {config.title}
+        </h1>
+      )}
+
+      {config.subtitle && (
+        <p class="text-lg md:text-xl lg:text-2xl mb-8 opacity-90">
+          {config.subtitle}
+        </p>
+      )}
+
+      {config.ctaText && config.ctaUrl && (
+        <a
+          href={config.ctaUrl}
+          class={`inline-flex items-center gap-2 px-8 py-4 rounded-lg font-bold text-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${ctaStyleClasses[config.ctaStyle]}`}
+        >
+          {config.ctaText}
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </a>
+      )}
+    </div>
+  </div>
+</section>

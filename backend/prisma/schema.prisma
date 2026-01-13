@@ -10,17 +10,17 @@ datasource db {
 
 // ============ MARCAS ============
 model Brand {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  slug        String    @unique
-  logoUrl     String?
-  isActive    Boolean   @default(true)
-  displayOrder Int      @default(0)
+  id           String  @id @default(cuid())
+  name         String  @unique
+  slug         String  @unique
+  logoUrl      String?
+  isActive     Boolean @default(true)
+  displayOrder Int     @default(0)
 
-  products    Product[]
+  products Product[]
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([isActive])
@@ -28,30 +28,30 @@ model Brand {
 
 // ============ PRODUCTOS Y CATEGORÍAS ============
 model Category {
-  id          String     @id @default(cuid())
-  name        String     @unique
-  slug        String     @unique
-  description String?    @db.Text
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String? @db.Text
   imageUrl    String?
 
   // Jerarquía: Deportes > Running, Juguetes > Infantiles, etc.
-  parentId    String?
-  parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
-  children    Category[] @relation("CategoryToCategory")
+  parentId String?
+  parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryToCategory")
 
-  products    Product[]
+  products Product[]
 
   // Para megamenu: 'deportes', 'juguetes', 'hobbies'
   menuSection String?
 
   // Destacada en home
-  isFeatured  Boolean   @default(false)
+  isFeatured Boolean @default(false)
 
-  displayOrder Int      @default(0)
-  isActive    Boolean   @default(true)
+  displayOrder Int     @default(0)
+  isActive     Boolean @default(true)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([parentId])
   @@index([slug])
@@ -100,57 +100,57 @@ enum ProductType {
 }
 
 model Product {
-  id               String          @id @default(cuid())
+  id               String   @id @default(cuid())
   name             String
-  slug             String          @unique
-  description      String          @db.Text
-  shortDescription String?         // Para cards de producto
-  price            Decimal         @db.Decimal(10, 2)
-  compareAtPrice   Decimal?        @db.Decimal(10, 2) // Precio antes de descuento
-  stock            Int             @default(0)
-  sku              String?         @unique
+  slug             String   @unique
+  description      String   @db.Text
+  shortDescription String? // Para cards de producto
+  price            Decimal  @db.Decimal(10, 2)
+  compareAtPrice   Decimal? @db.Decimal(10, 2) // Precio antes de descuento
+  stock            Int      @default(0)
+  sku              String?  @unique
 
   // Imágenes (URLs de Supabase Storage)
-  images           String[]
-  thumbnailUrl     String?
+  images       String[]
+  thumbnailUrl String?
 
   // Categorización
-  categoryId       String
-  category         Category        @relation(fields: [categoryId], references: [id])
-  sportType        SportType?
-  productType      ProductType?
-  isCollectible    Boolean         @default(false)
-  collectionType   CollectionType?
+  categoryId     String
+  category       Category        @relation(fields: [categoryId], references: [id])
+  sportType      SportType?
+  productType    ProductType?
+  isCollectible  Boolean         @default(false)
+  collectionType CollectionType?
 
   // Características adicionales
-  brandId          String?
-  brand            Brand?          @relation(fields: [brandId], references: [id])
-  color            String?
-  size             String?
-  weight           String?
-  specifications   Json?           // Objeto flexible para specs técnicas
+  brandId        String?
+  brand          Brand?  @relation(fields: [brandId], references: [id])
+  color          String?
+  size           String?
+  weight         String?
+  specifications Json? // Objeto flexible para specs técnicas
 
   // Variantes (si el producto tiene variantes)
-  hasVariants      Boolean         @default(false)
-  variants         ProductVariant[]
+  hasVariants Boolean          @default(false)
+  variants    ProductVariant[]
 
   // SEO
-  metaTitle        String?
-  metaDescription  String?
+  metaTitle       String?
+  metaDescription String?
 
   // Destacados
-  isFeatured       Boolean         @default(false)
-  isNew            Boolean         @default(false)
-  isBestSeller     Boolean         @default(false)
+  isFeatured   Boolean @default(false)
+  isNew        Boolean @default(false)
+  isBestSeller Boolean @default(false)
 
   // Relaciones
-  orderItems       OrderItem[]
-  reviews          Review[]
+  orderItems OrderItem[]
+  reviews    Review[]
 
-  isActive         Boolean         @default(true)
-  publishedAt      DateTime?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  isActive    Boolean   @default(true)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([categoryId])
   @@index([brandId])
@@ -164,27 +164,27 @@ model Product {
 
 // Variantes de producto (talla, color, etc.)
 model ProductVariant {
-  id          String   @id @default(cuid())
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   // Atributos de la variante
-  size        String?     // Talla: XS, S, M, L, XL, 38, 39, 40, etc.
-  color       String?     // Color: Rojo, Azul, Negro, etc.
-  colorHex    String?     // Código hex del color para mostrar en UI
-  material    String?     // Material: Algodón, Poliéster, etc.
+  size     String? // Talla: XS, S, M, L, XL, 38, 39, 40, etc.
+  color    String? // Color: Rojo, Azul, Negro, etc.
+  colorHex String? // Código hex del color para mostrar en UI
+  material String? // Material: Algodón, Poliéster, etc.
 
   // Precio y stock de la variante
-  price       Decimal?    @db.Decimal(10, 2) // Si null, usa el precio del producto
-  stock       Int         @default(0)
-  sku         String?     @unique
+  price Decimal? @db.Decimal(10, 2) // Si null, usa el precio del producto
+  stock Int      @default(0)
+  sku   String?  @unique
 
   // Imagen específica de esta variante
-  imageUrl    String?
+  imageUrl String?
 
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([productId])
   @@index([size])
@@ -193,12 +193,12 @@ model ProductVariant {
 
 // ============ PEDIDOS ============
 enum OrderStatus {
-  PENDING     // Creado, esperando pago
-  PAID        // Pagado
-  PROCESSING  // En preparación
-  SHIPPED     // Enviado
-  DELIVERED   // Entregado
-  CANCELLED   // Cancelado
+  PENDING // Creado, esperando pago
+  PAID // Pagado
+  PROCESSING // En preparación
+  SHIPPED // Enviado
+  DELIVERED // Entregado
+  CANCELLED // Cancelado
 }
 
 enum PaymentMethod {
@@ -208,77 +208,77 @@ enum PaymentMethod {
 }
 
 model Order {
-  id                      String        @id @default(cuid())
-  orderNumber             String        @unique // EVA-20260109-0001
+  id          String @id @default(cuid())
+  orderNumber String @unique // EVA-20260109-0001
 
   // Cliente
-  userEmail               String
-  userName                String
-  userPhone               String
+  userEmail String
+  userName  String
+  userPhone String
 
   // Dirección de envío
-  shippingAddress         String
-  shippingCity            String
-  shippingPostalCode      String
-  shippingProvince        String?
-  shippingCountry         String        @default("España")
+  shippingAddress    String
+  shippingCity       String
+  shippingPostalCode String
+  shippingProvince   String?
+  shippingCountry    String  @default("España")
 
   // Dirección de facturación (opcional, si diferente)
-  billingAddress          String?
-  billingCity             String?
-  billingPostalCode       String?
-  billingProvince         String?
-  billingCountry          String?
+  billingAddress    String?
+  billingCity       String?
+  billingPostalCode String?
+  billingProvince   String?
+  billingCountry    String?
 
   // DNI/NIE (para factura)
-  taxId                   String?
+  taxId String?
 
   // Pedido
-  items                   OrderItem[]
-  subtotal                Decimal       @db.Decimal(10, 2)
-  shippingCost            Decimal       @db.Decimal(10, 2) @default(0)
-  discount                Decimal       @db.Decimal(10, 2) @default(0)
-  total                   Decimal       @db.Decimal(10, 2)
-  status                  OrderStatus   @default(PENDING)
+  items        OrderItem[]
+  subtotal     Decimal     @db.Decimal(10, 2)
+  shippingCost Decimal     @default(0) @db.Decimal(10, 2)
+  discount     Decimal     @default(0) @db.Decimal(10, 2)
+  total        Decimal     @db.Decimal(10, 2)
+  status       OrderStatus @default(PENDING)
 
   // Método de pago
-  paymentMethod           PaymentMethod
-  paymentStatus           String        @default("pending")
+  paymentMethod PaymentMethod
+  paymentStatus String        @default("pending")
 
   // Control de emails enviados
-  emailSentConfirmed      Boolean       @default(false)
-  emailSentPaid           Boolean       @default(false)
-  emailSentShipped        Boolean       @default(false)
-  emailSentDelivered      Boolean       @default(false)
-  emailSentCancelled      Boolean       @default(false)
+  emailSentConfirmed Boolean @default(false)
+  emailSentPaid      Boolean @default(false)
+  emailSentShipped   Boolean @default(false)
+  emailSentDelivered Boolean @default(false)
+  emailSentCancelled Boolean @default(false)
 
   // Pago Stripe
-  stripePaymentIntentId   String?       @unique
-  stripeSessionId         String?       @unique
-  paidAt                  DateTime?
+  stripePaymentIntentId String?   @unique
+  stripeSessionId       String?   @unique
+  paidAt                DateTime?
 
   // Envío
-  trackingNumber          String?
-  shippingCarrier         String?
-  shippedAt               DateTime?
-  deliveredAt             DateTime?
+  trackingNumber  String?
+  shippingCarrier String?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
 
   // Cancelación
-  cancellationReason      String?       @db.Text
-  cancelledAt             DateTime?
-  refundedAt              DateTime?
+  cancellationReason String?   @db.Text
+  cancelledAt        DateTime?
+  refundedAt         DateTime?
 
   // Notas
-  customerNotes           String?       @db.Text
-  adminNotes              String?       @db.Text
+  customerNotes String? @db.Text
+  adminNotes    String? @db.Text
 
   // Cupón aplicado
-  couponId                String?
-  coupon                  Coupon?       @relation("OrderCoupon", fields: [couponId], references: [id])
-  couponCode              String?       // Snapshot del código usado
+  couponId   String?
+  coupon     Coupon? @relation("OrderCoupon", fields: [couponId], references: [id])
+  couponCode String? // Snapshot del código usado
 
-  createdAt               DateTime      @default(now())
-  updatedAt               DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userEmail])
   @@index([status])
@@ -289,16 +289,16 @@ model Order {
 }
 
 model OrderItem {
-  id           String   @id @default(cuid())
-  orderId      String
-  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  productId    String
-  product      Product  @relation(fields: [productId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
 
-  quantity     Int
-  unitPrice    Decimal  @db.Decimal(10, 2)
-  totalPrice   Decimal  @db.Decimal(10, 2)
+  quantity   Int
+  unitPrice  Decimal @db.Decimal(10, 2)
+  totalPrice Decimal @db.Decimal(10, 2)
 
   // Snapshot de datos (por si el producto cambia/se elimina)
   productName  String
@@ -316,40 +316,40 @@ model OrderItem {
 
 // ============ SISTEMA DE EMAILS ============
 enum EmailType {
-  CONFIRMATION          // Cliente: Pedido creado
-  PAID                  // Cliente: Pedido pagado
-  PROCESSING            // Cliente: Pedido en preparación
-  SHIPPED               // Cliente: Pedido enviado
-  DELIVERED             // Cliente: Pedido entregado
-  CANCELLED             // Cliente: Pedido cancelado
-  WELCOME               // Cliente: Cuenta creada (futuro)
-  ADMIN_NEW_ORDER       // Admin: Nuevo pedido
-  ADMIN_PAID            // Admin: Pedido pagado
-  ADMIN_CANCELLED       // Admin: Pedido cancelado
+  CONFIRMATION // Cliente: Pedido creado
+  PAID // Cliente: Pedido pagado
+  PROCESSING // Cliente: Pedido en preparación
+  SHIPPED // Cliente: Pedido enviado
+  DELIVERED // Cliente: Pedido entregado
+  CANCELLED // Cliente: Pedido cancelado
+  WELCOME // Cliente: Cuenta creada (futuro)
+  ADMIN_NEW_ORDER // Admin: Nuevo pedido
+  ADMIN_PAID // Admin: Pedido pagado
+  ADMIN_CANCELLED // Admin: Pedido cancelado
 }
 
 model EmailTemplate {
-  id          String    @id @default(cuid())
-  type        EmailType @unique
-  subject     String
-  body        String    @db.Text
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id        String    @id @default(cuid())
+  type      EmailType @unique
+  subject   String
+  body      String    @db.Text
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@index([type])
 }
 
 model EmailLog {
-  id          String   @id @default(cuid())
-  type        EmailType
-  recipient   String
-  subject     String
-  orderId     String?
-  status      String   // 'sent', 'failed', 'pending'
-  errorMessage String?  @db.Text
-  sentAt      DateTime?
-  createdAt   DateTime @default(now())
+  id           String    @id @default(cuid())
+  type         EmailType
+  recipient    String
+  subject      String
+  orderId      String?
+  status       String // 'sent', 'failed', 'pending'
+  errorMessage String?   @db.Text
+  sentAt       DateTime?
+  createdAt    DateTime  @default(now())
 
   @@index([orderId])
   @@index([recipient])
@@ -358,15 +358,15 @@ model EmailLog {
 
 // ============ USUARIOS ADMIN ============
 model AdminUser {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  supabaseId  String   @unique
+  id          String    @id @default(cuid())
+  email       String    @unique
+  supabaseId  String    @unique
   name        String?
-  role        String   @default("admin") // 'admin', 'super_admin'
-  isActive    Boolean  @default(true)
+  role        String    @default("admin") // 'admin', 'super_admin'
+  isActive    Boolean   @default(true)
   lastLoginAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([supabaseId])
   @@index([email])
@@ -374,47 +374,48 @@ model AdminUser {
 
 // ============ CLIENTES ============
 model Customer {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  supabaseId    String?   @unique  // Si se registra con Supabase Auth
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String? // Hash bcrypt de la contraseña
+  supabaseId   String? @unique // Si se registra con Supabase Auth
 
   // Datos personales
-  firstName     String
-  lastName      String
-  phone         String?
-  gender        String?   // 'male', 'female', 'other', 'prefer_not_to_say'
+  firstName String
+  lastName  String
+  phone     String?
+  gender    String? // 'male', 'female', 'other', 'prefer_not_to_say'
 
   // DNI/NIE para facturas
-  taxId         String?
+  taxId String?
 
   // Fechas
-  birthDate     DateTime?
+  birthDate DateTime?
 
   // Estado
-  isActive      Boolean   @default(true)
-  isVip         Boolean   @default(false)
-  vipSince      DateTime?
+  isActive Boolean   @default(true)
+  isVip    Boolean   @default(false)
+  vipSince DateTime?
 
   // Puntos de fidelidad
-  loyaltyPoints Int       @default(0)
+  loyaltyPoints Int @default(0)
 
   // Marketing
   acceptsMarketing Boolean @default(false)
 
   // Notas internas
-  notes         String?   @db.Text
+  notes String? @db.Text
 
   // Relaciones
-  addresses     CustomerAddress[]
-  wishlist      WishlistItem[]
+  addresses CustomerAddress[]
+  wishlist  WishlistItem[]
 
   // Estadísticas (desnormalizadas para consultas rápidas)
-  totalOrders   Int       @default(0)
-  totalSpent    Decimal   @default(0) @db.Decimal(10, 2)
-  lastOrderAt   DateTime?
+  totalOrders Int       @default(0)
+  totalSpent  Decimal   @default(0) @db.Decimal(10, 2)
+  lastOrderAt DateTime?
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([email])
   @@index([supabaseId])
@@ -423,29 +424,29 @@ model Customer {
 }
 
 model CustomerAddress {
-  id            String    @id @default(cuid())
-  customerId    String
-  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   // Tipo de dirección
-  type          String    @default("shipping") // 'shipping', 'billing'
-  label         String?   // "Casa", "Trabajo", etc.
-  isDefault     Boolean   @default(false)
+  type      String  @default("shipping") // 'shipping', 'billing'
+  label     String? // "Casa", "Trabajo", etc.
+  isDefault Boolean @default(false)
 
   // Datos de la dirección
-  firstName     String
-  lastName      String
-  company       String?
-  address       String
-  addressLine2  String?   // Piso, puerta, etc.
-  city          String
-  province      String?
-  postalCode    String
-  country       String    @default("España")
-  phone         String?
+  firstName    String
+  lastName     String
+  company      String?
+  address      String
+  addressLine2 String? // Piso, puerta, etc.
+  city         String
+  province     String?
+  postalCode   String
+  country      String  @default("España")
+  phone        String?
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([customerId])
   @@index([type])
@@ -453,18 +454,18 @@ model CustomerAddress {
 }
 
 model WishlistItem {
-  id          String    @id @default(cuid())
-  customerId  String
-  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  productId   String
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String
 
   // Snapshot del producto
-  productName String
-  productSlug String
+  productName  String
+  productSlug  String
   productImage String?
-  productPrice Decimal  @db.Decimal(10, 2)
+  productPrice Decimal @db.Decimal(10, 2)
 
-  addedAt     DateTime  @default(now())
+  addedAt DateTime @default(now())
 
   @@unique([customerId, productId])
   @@index([customerId])
@@ -477,7 +478,7 @@ model SiteConfig {
   key         String   @unique
   value       String   @db.Text
   description String?
-  group       String?  // 'general', 'payment', 'shipping', 'email'
+  group       String? // 'general', 'payment', 'shipping', 'email'
   type        String   @default("text") // 'text', 'number', 'boolean', 'json'
   updatedAt   DateTime @updatedAt
 
@@ -487,19 +488,19 @@ model SiteConfig {
 
 // Configuración específica para métodos de pago
 model PaymentMethodConfig {
-  id            String        @id @default(cuid())
-  method        PaymentMethod @unique
-  isEnabled     Boolean       @default(false)
-  displayName   String
-  description   String?       @db.Text
-  instructions  String?       @db.Text // Instrucciones para el cliente
-  displayOrder  Int           @default(0)
+  id           String        @id @default(cuid())
+  method       PaymentMethod @unique
+  isEnabled    Boolean       @default(false)
+  displayName  String
+  description  String?       @db.Text
+  instructions String?       @db.Text // Instrucciones para el cliente
+  displayOrder Int           @default(0)
 
   // Configuración específica por método
-  config        Json?         // Ej: {accountNumber, bankName} para transfer
+  config Json? // Ej: {accountNumber, bankName} para transfer
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([method])
   @@index([isEnabled])
@@ -512,7 +513,7 @@ model FeatureFlag {
   name        String
   description String?
   isEnabled   Boolean  @default(false)
-  group       String?  // 'marketing', 'notifications', 'checkout', etc.
+  group       String? // 'marketing', 'notifications', 'checkout', etc.
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -523,60 +524,60 @@ model FeatureFlag {
 
 // ============ CAMPAÑAS DE EMAIL MARKETING ============
 enum CampaignStatus {
-  DRAFT       // Borrador
-  SCHEDULED   // Programada
-  SENDING     // Enviando
-  SENT        // Enviada
-  CANCELLED   // Cancelada
+  DRAFT // Borrador
+  SCHEDULED // Programada
+  SENDING // Enviando
+  SENT // Enviada
+  CANCELLED // Cancelada
 }
 
 model EmailCampaign {
-  id              String         @id @default(cuid())
-  name            String
-  subject         String
-  previewText     String?        // Texto de vista previa
-  body            String         @db.Text
+  id          String  @id @default(cuid())
+  name        String
+  subject     String
+  previewText String? // Texto de vista previa
+  body        String  @db.Text
 
   // Segmentación
-  targetAudience  String         @default("all") // 'all', 'customers', 'subscribers'
-  targetFilters   Json?          // Filtros adicionales: {minOrders: 1, lastPurchaseDays: 30}
+  targetAudience String @default("all") // 'all', 'customers', 'subscribers'
+  targetFilters  Json? // Filtros adicionales: {minOrders: 1, lastPurchaseDays: 30}
 
   // Estado y programación
-  status          CampaignStatus @default(DRAFT)
-  scheduledAt     DateTime?
-  sentAt          DateTime?
+  status      CampaignStatus @default(DRAFT)
+  scheduledAt DateTime?
+  sentAt      DateTime?
 
   // Estadísticas
-  totalRecipients Int            @default(0)
-  totalSent       Int            @default(0)
-  totalOpened     Int            @default(0)
-  totalClicked    Int            @default(0)
-  totalBounced    Int            @default(0)
-  totalUnsubscribed Int          @default(0)
+  totalRecipients   Int @default(0)
+  totalSent         Int @default(0)
+  totalOpened       Int @default(0)
+  totalClicked      Int @default(0)
+  totalBounced      Int @default(0)
+  totalUnsubscribed Int @default(0)
 
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relación con logs
-  logs            CampaignEmailLog[]
+  logs CampaignEmailLog[]
 
   @@index([status])
   @@index([scheduledAt])
 }
 
 model CampaignEmailLog {
-  id          String        @id @default(cuid())
-  campaignId  String
-  campaign    EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  id         String        @id @default(cuid())
+  campaignId String
+  campaign   EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
-  recipient   String
-  status      String        // 'sent', 'opened', 'clicked', 'bounced', 'unsubscribed'
-  openedAt    DateTime?
-  clickedAt   DateTime?
-  sentAt      DateTime?
-  errorMessage String?      @db.Text
+  recipient    String
+  status       String // 'sent', 'opened', 'clicked', 'bounced', 'unsubscribed'
+  openedAt     DateTime?
+  clickedAt    DateTime?
+  sentAt       DateTime?
+  errorMessage String?   @db.Text
 
-  createdAt   DateTime      @default(now())
+  createdAt DateTime @default(now())
 
   @@index([campaignId])
   @@index([recipient])
@@ -585,22 +586,22 @@ model CampaignEmailLog {
 
 // Lista de suscriptores para email marketing
 model EmailSubscriber {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
+  id    String  @id @default(cuid())
+  email String  @unique
+  name  String?
 
   // Origen de la suscripción
-  source        String    @default("website") // 'website', 'checkout', 'import'
+  source String @default("website") // 'website', 'checkout', 'import'
 
   // Estado
-  isActive      Boolean   @default(true)
+  isActive       Boolean   @default(true)
   unsubscribedAt DateTime?
 
   // Datos adicionales
-  metadata      Json?     // {ordersCount, lastOrderAt, etc.}
+  metadata Json? // {ordersCount, lastOrderAt, etc.}
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([email])
   @@index([isActive])
@@ -609,42 +610,42 @@ model EmailSubscriber {
 
 // ============ CUPONES Y DESCUENTOS ============
 enum CouponType {
-  PERCENTAGE    // Descuento porcentual
-  FIXED_AMOUNT  // Cantidad fija
+  PERCENTAGE // Descuento porcentual
+  FIXED_AMOUNT // Cantidad fija
   FREE_SHIPPING // Envío gratis
 }
 
 model Coupon {
-  id              String      @id @default(cuid())
-  code            String      @unique
-  description     String?
+  id          String  @id @default(cuid())
+  code        String  @unique
+  description String?
 
   // Tipo y valor del descuento
-  type            CouponType
-  value           Decimal     @db.Decimal(10, 2) // Porcentaje o cantidad fija
+  type  CouponType
+  value Decimal    @db.Decimal(10, 2) // Porcentaje o cantidad fija
 
   // Restricciones
-  minOrderAmount  Decimal?    @db.Decimal(10, 2) // Mínimo de compra
-  maxDiscount     Decimal?    @db.Decimal(10, 2) // Descuento máximo (para porcentajes)
-  usageLimit      Int?        // Límite total de usos
-  usageLimitPerUser Int?      // Límite por usuario
-  usageCount      Int         @default(0)
+  minOrderAmount    Decimal? @db.Decimal(10, 2) // Mínimo de compra
+  maxDiscount       Decimal? @db.Decimal(10, 2) // Descuento máximo (para porcentajes)
+  usageLimit        Int? // Límite total de usos
+  usageLimitPerUser Int? // Límite por usuario
+  usageCount        Int      @default(0)
 
   // Validez
-  startsAt        DateTime    @default(now())
-  expiresAt       DateTime?
-  isActive        Boolean     @default(true)
+  startsAt  DateTime  @default(now())
+  expiresAt DateTime?
+  isActive  Boolean   @default(true)
 
   // Restricciones de productos/categorías (JSON arrays de IDs)
-  applicableProducts   String[]  // IDs de productos aplicables (vacío = todos)
-  applicableCategories String[]  // IDs de categorías aplicables (vacío = todas)
-  excludedProducts     String[]  // IDs de productos excluidos
+  applicableProducts   String[] // IDs de productos aplicables (vacío = todos)
+  applicableCategories String[] // IDs de categorías aplicables (vacío = todas)
+  excludedProducts     String[] // IDs de productos excluidos
 
   // Seguimiento
-  orders          Order[]     @relation("OrderCoupon")
+  orders Order[] @relation("OrderCoupon")
 
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([code])
   @@index([isActive])
@@ -653,9 +654,9 @@ model Coupon {
 
 // ============ RESEÑAS Y VALORACIONES ============
 model Review {
-  id          String    @id @default(cuid())
-  productId   String
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   // Autor (puede ser cliente registrado o anónimo)
   customerId  String?
@@ -663,29 +664,29 @@ model Review {
   authorEmail String
 
   // Contenido
-  rating      Int       // 1-5 estrellas
-  title       String?
-  comment     String    @db.Text
-  pros        String?   @db.Text
-  cons        String?   @db.Text
+  rating  Int // 1-5 estrellas
+  title   String?
+  comment String  @db.Text
+  pros    String? @db.Text
+  cons    String? @db.Text
 
   // Verificación
-  isVerified  Boolean   @default(false) // Compra verificada
-  orderId     String?   // Pedido asociado
+  isVerified Boolean @default(false) // Compra verificada
+  orderId    String? // Pedido asociado
 
   // Moderación
-  status      String    @default("pending") // pending, approved, rejected
-  adminNotes  String?   @db.Text
+  status     String  @default("pending") // pending, approved, rejected
+  adminNotes String? @db.Text
 
   // Utilidad
-  helpfulCount Int      @default(0)
-  notHelpfulCount Int   @default(0)
+  helpfulCount    Int @default(0)
+  notHelpfulCount Int @default(0)
 
   // Imágenes del review
-  images      String[]
+  images String[]
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([productId])
   @@index([customerId])
@@ -695,14 +696,14 @@ model Review {
 
 // ============ NOTIFICACIONES DE STOCK ============
 model StockNotification {
-  id          String    @id @default(cuid())
-  productId   String
-  variantId   String?   // Si es para una variante específica
-  email       String
-  notified    Boolean   @default(false)
-  notifiedAt  DateTime?
+  id         String    @id @default(cuid())
+  productId  String
+  variantId  String? // Si es para una variante específica
+  email      String
+  notified   Boolean   @default(false)
+  notifiedAt DateTime?
 
-  createdAt   DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([productId, variantId, email])
   @@index([productId])
@@ -711,38 +712,38 @@ model StockNotification {
 
 // ============ FAQ ============
 model FaqCategory {
-  id          String    @id @default(cuid())
-  name        String
-  slug        String    @unique
-  description String?
-  displayOrder Int      @default(0)
-  isActive    Boolean   @default(true)
+  id           String  @id @default(cuid())
+  name         String
+  slug         String  @unique
+  description  String?
+  displayOrder Int     @default(0)
+  isActive     Boolean @default(true)
 
-  questions   FaqQuestion[]
+  questions FaqQuestion[]
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([isActive])
 }
 
 model FaqQuestion {
-  id          String      @id @default(cuid())
-  categoryId  String
-  category    FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  id         String      @id @default(cuid())
+  categoryId String
+  category   FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  question    String
-  answer      String      @db.Text
-  displayOrder Int        @default(0)
-  isActive    Boolean     @default(true)
+  question     String
+  answer       String  @db.Text
+  displayOrder Int     @default(0)
+  isActive     Boolean @default(true)
 
   // Para analytics
-  viewCount   Int         @default(0)
-  helpfulCount Int        @default(0)
+  viewCount    Int @default(0)
+  helpfulCount Int @default(0)
 
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([categoryId])
   @@index([isActive])
@@ -750,24 +751,24 @@ model FaqQuestion {
 
 // ============ MENSAJES DE CONTACTO ============
 model ContactMessage {
-  id          String    @id @default(cuid())
-  name        String
-  email       String
-  phone       String?
-  subject     String
-  message     String    @db.Text
-  orderId     String?   // Si es relacionado con un pedido
+  id      String  @id @default(cuid())
+  name    String
+  email   String
+  phone   String?
+  subject String
+  message String  @db.Text
+  orderId String? // Si es relacionado con un pedido
 
   // Estado
-  status      String    @default("new") // new, read, replied, closed
-  repliedAt   DateTime?
-  repliedBy   String?   // Admin que respondió
+  status    String    @default("new") // new, read, replied, closed
+  repliedAt DateTime?
+  repliedBy String? // Admin que respondió
 
   // Notas internas
-  adminNotes  String?   @db.Text
+  adminNotes String? @db.Text
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([email])
   @@index([status])
@@ -776,16 +777,16 @@ model ContactMessage {
 
 // ============ PÁGINAS LEGALES/CONTENIDO ============
 model Page {
-  id          String    @id @default(cuid())
-  slug        String    @unique
-  title       String
-  content     String    @db.Text
-  metaTitle   String?
+  id              String  @id @default(cuid())
+  slug            String  @unique
+  title           String
+  content         String  @db.Text
+  metaTitle       String?
   metaDescription String?
-  isActive    Boolean   @default(true)
+  isActive        Boolean @default(true)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([isActive])
@@ -793,37 +794,89 @@ model Page {
 
 // ============ SECCIONES DE HOME ============
 enum HomeSectionType {
-  PRODUCTS_SLIDER     // Slider de productos
-  CATEGORIES_GRID     // Grid de categorías
-  BANNER              // Banner promocional
-  TEXT_BLOCK          // Bloque de texto
+  PRODUCTS_SLIDER // Slider de productos
+  CATEGORIES_GRID // Grid de categorías
+  BANNER // Banner promocional
+  TEXT_BLOCK // Bloque de texto
 }
 
 model HomeSection {
-  id           String          @id @default(cuid())
-  title        String          // "Los Más Vendidos", "Novedades", etc.
-  subtitle     String?
-  type         HomeSectionType
+  id       String          @id @default(cuid())
+  title    String // "Los Más Vendidos", "Novedades", etc.
+  subtitle String?
+  type     HomeSectionType
 
   // Configuración del contenido
   // Para PRODUCTS_SLIDER: filtro de productos (featured, new, bestseller, category)
   // Para CATEGORIES_GRID: array de categorías a mostrar
   // Para BANNER: imagen, link, texto
-  config       Json?
+  config Json?
 
   // Orden de visualización
-  displayOrder Int             @default(0)
+  displayOrder Int @default(0)
 
   // Visibilidad
-  isActive     Boolean         @default(true)
+  isActive Boolean @default(true)
 
   // Link "Ver todo"
-  linkUrl      String?
-  linkText     String?         @default("Ver todo")
+  linkUrl  String?
+  linkText String? @default("Ver todo")
 
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([isActive])
+  @@index([displayOrder])
+}
+
+// ============ PAGE BUILDER ============
+model DynamicPage {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  title       String
+  description String? @db.Text
+
+  // Bloques de contenido
+  blocks PageBlock[]
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  metaImage       String?
+
+  // Estado
+  isActive   Boolean   @default(false)
+  isHomePage Boolean   @default(false) // Para marcar como página de inicio
+  publishedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([isHomePage])
+}
+
+model PageBlock {
+  id     String      @id @default(cuid())
+  pageId String
+  page   DynamicPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  // Tipo: 'hero', 'product-slider', 'bento-grid'
+  type  String
+  title String? // Título interno para identificar el bloque
+
+  // Configuración flexible según el tipo
+  config Json
+
+  // Orden y visibilidad
+  displayOrder Int     @default(0)
+  isActive     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pageId])
+  @@index([type])
   @@index([displayOrder])
 }

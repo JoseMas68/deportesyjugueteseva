@@ -2,30 +2,8 @@
 import Layout from '@/layouts/Layout.astro';
 import Footer from '@/components/Footer.astro';
 
-// Mock order data
-const orderItems = [
-  {
-    id: 1,
-    name: 'Balón de Baloncesto Pro',
-    variant: 'Talla 7 - Naranja',
-    price: 29.99,
-    quantity: 1,
-    image: '/products/balon-basket.jpg'
-  },
-  {
-    id: 2,
-    name: 'Zapatillas Running X1',
-    variant: 'Talla 42 - Negro',
-    price: 89.99,
-    quantity: 1,
-    image: '/products/zapatillas.jpg'
-  }
-];
-
-const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-const shipping = 5.90;
-const tax = subtotal * 0.21;
-const total = subtotal + shipping + tax;
+// Los datos del carrito se cargan desde localStorage en el cliente
+// El servidor solo renderiza la estructura
 
 const shippingMethods = [
   {
@@ -38,7 +16,7 @@ const shippingMethods = [
   {
     id: 'standard',
     name: 'Envío Estándar (3-5 días)',
-    description: 'Entrega estimada: Lunes, 24 Oct',
+    description: 'Entrega en 3-5 días laborables',
     price: 0,
     recommended: false
   }
@@ -53,7 +31,7 @@ const shippingMethods = [
         <a href="/" class="flex items-center gap-3">
           <img src="/logo.png" alt="EVA" class="h-12" />
         </a>
-        <a href="/" class="text-sm text-gray-600 hover:text-primary transition-colors flex items-center gap-1">
+        <a href="/" class="text-sm text-gray-600 hover:text-secondary transition-colors flex items-center gap-1">
           <i class="material-icons text-sm">arrow_back</i>
           Volver a la tienda
         </a>
@@ -67,9 +45,9 @@ const shippingMethods = [
       <nav aria-label="Progress" class="mb-12">
         <ol class="flex items-center justify-center space-x-2 sm:space-x-8 lg:space-x-12" role="list">
           <!-- Paso 1 - Activo -->
-          <li class="flex items-center text-primary">
-            <span class="flex items-center justify-center w-8 h-8 border-2 border-primary rounded-full bg-primary text-black font-bold">1</span>
-            <span class="ml-3 font-display font-bold text-black hidden sm:block">Envío</span>
+          <li class="flex items-center text-green-600">
+            <span class="flex items-center justify-center w-8 h-8 border-2 border-green-600 rounded-full bg-green-600 text-white font-bold">1</span>
+            <span class="ml-3 font-display font-bold text-secondary hidden sm:block">Envío</span>
           </li>
 
           <li class="flex items-center text-gray-400">
@@ -78,8 +56,8 @@ const shippingMethods = [
 
           <!-- Paso 2 -->
           <li class="flex items-center text-gray-400 group">
-            <span class="flex items-center justify-center w-8 h-8 border-2 border-gray-200 rounded-full group-hover:border-primary transition-colors font-medium">2</span>
-            <span class="ml-3 font-display font-medium group-hover:text-primary transition-colors hidden sm:block">Pago</span>
+            <span class="flex items-center justify-center w-8 h-8 border-2 border-gray-200 rounded-full group-hover:border-secondary transition-colors font-medium">2</span>
+            <span class="ml-3 font-display font-medium group-hover:text-secondary transition-colors hidden sm:block">Pago</span>
           </li>
 
           <li class="flex items-center text-gray-400">
@@ -88,8 +66,8 @@ const shippingMethods = [
 
           <!-- Paso 3 -->
           <li class="flex items-center text-gray-400 group">
-            <span class="flex items-center justify-center w-8 h-8 border-2 border-gray-200 rounded-full group-hover:border-primary transition-colors font-medium">3</span>
-            <span class="ml-3 font-display font-medium group-hover:text-primary transition-colors hidden sm:block">Confirmación</span>
+            <span class="flex items-center justify-center w-8 h-8 border-2 border-gray-200 rounded-full group-hover:border-secondary transition-colors font-medium">3</span>
+            <span class="ml-3 font-display font-medium group-hover:text-secondary transition-colors hidden sm:block">Confirmación</span>
           </li>
         </ol>
       </nav>
@@ -97,19 +75,19 @@ const shippingMethods = [
       <div class="grid lg:grid-cols-12 gap-8">
         <!-- Formulario -->
         <div class="lg:col-span-7">
-          <form class="space-y-8">
+          <form id="checkout-form" class="space-y-8">
             <!-- Información de Contacto -->
             <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div class="flex items-center justify-between mb-6">
                 <h2 class="text-xl font-display font-bold text-secondary">Información de Contacto</h2>
-                <a href="/login" class="text-sm text-primary hover:underline">Inicia Sesión</a>
+                <a href="/login" class="text-sm text-secondary font-semibold hover:underline">Inicia Sesión</a>
               </div>
 
               <div class="space-y-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1" for="email">Correo electrónico</label>
                   <input
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-3"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-3"
                     id="email"
                     type="email"
                     placeholder="tu@email.com"
@@ -118,7 +96,7 @@ const shippingMethods = [
                 </div>
 
                 <div class="flex items-start">
-                  <input class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary mt-0.5" id="newsletter" type="checkbox" />
+                  <input class="h-4 w-4 rounded border-gray-300 text-secondary focus:ring-secondary mt-0.5" id="newsletter" type="checkbox" />
                   <label class="ml-2 text-sm text-gray-600" for="newsletter">
                     Quiero recibir ofertas exclusivas y novedades por email
                   </label>
@@ -134,7 +112,7 @@ const shippingMethods = [
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1" for="first-name">Nombre</label>
                   <input
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-3"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-3"
                     id="first-name"
                     type="text"
                     required
@@ -144,7 +122,7 @@ const shippingMethods = [
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1" for="last-name">Apellidos</label>
                   <input
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-3"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-3"
                     id="last-name"
                     type="text"
                     required
@@ -154,7 +132,7 @@ const shippingMethods = [
                 <div class="sm:col-span-2">
                   <label class="block text-sm font-medium text-gray-700 mb-1" for="address">Dirección</label>
                   <input
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-3"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-3"
                     id="address"
                     placeholder="Calle, número, piso..."
                     type="text"
@@ -165,7 +143,7 @@ const shippingMethods = [
                 <div class="sm:col-span-2">
                   <label class="block text-sm font-medium text-gray-700 mb-1" for="apartment">Apartamento, suite, etc. (opcional)</label>
                   <input
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-3"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-3"
                     id="apartment"
                     type="text"
                   />
@@ -174,7 +152,7 @@ const shippingMethods = [
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1" for="city">Ciudad</label>
                   <input
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-3"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-3"
                     id="city"
                     type="text"
                     required
@@ -184,17 +162,27 @@ const shippingMethods = [
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1" for="postal-code">Código Postal</label>
                   <input
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-3"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-3"
                     id="postal-code"
                     type="text"
                     required
                   />
                 </div>
 
-                <div class="sm:col-span-2">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1" for="province">Provincia</label>
+                  <input
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-3"
+                    id="province"
+                    type="text"
+                    required
+                  />
+                </div>
+
+                <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1" for="phone">Teléfono</label>
                   <input
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-3"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-3"
                     id="phone"
                     type="tel"
                     placeholder="+34 600 000 000"
@@ -209,8 +197,8 @@ const shippingMethods = [
               <h2 class="text-xl font-display font-bold text-secondary mb-6">Método de Envío</h2>
 
               <div class="space-y-4">
-                {shippingMethods.map((method, index) => (
-                  <label class={`shipping-option relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-all ${method.recommended ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-gray-200 hover:border-gray-300'}`}>
+                {shippingMethods.map((method) => (
+                  <label class={`shipping-option relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-all ${method.recommended ? 'border-green-600 bg-green-50 ring-1 ring-green-600' : 'border-gray-200 hover:border-gray-300'}`} data-price={method.price}>
                     <input
                       checked={method.recommended}
                       class="sr-only"
@@ -231,9 +219,9 @@ const shippingMethods = [
 
                     {method.recommended && (
                       <>
-                        <span aria-hidden="true" class="pointer-events-none absolute -inset-px rounded-lg border-2 border-primary"></span>
-                        <span class="absolute top-4 right-4 h-4 w-4 rounded-full border border-primary bg-primary">
-                          <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-black"></span>
+                        <span aria-hidden="true" class="pointer-events-none absolute -inset-px rounded-lg border-2 border-green-600"></span>
+                        <span class="absolute top-4 right-4 h-4 w-4 rounded-full border border-green-600 bg-green-600">
+                          <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white"></span>
                         </span>
                       </>
                     )}
@@ -249,7 +237,7 @@ const shippingMethods = [
             <!-- Botón Continuar -->
             <button
               type="submit"
-              class="w-full bg-primary hover:bg-yellow-400 text-black font-black py-4 px-6 rounded shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 uppercase tracking-wide"
+              class="w-full bg-secondary hover:bg-black text-white font-black py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 uppercase tracking-wide"
             >
               Continuar al Pago
             </button>
@@ -261,78 +249,73 @@ const shippingMethods = [
           <div class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden sticky top-24">
             <!-- Header -->
             <div class="p-6 bg-gray-50 border-b border-gray-200">
-              <h2 class="text-lg font-display font-bold text-black">Resumen del Pedido</h2>
-              <p class="text-sm text-gray-600 mt-1">{orderItems.length} artículos en tu carrito</p>
+              <h2 class="text-lg font-display font-bold text-secondary">Resumen del Pedido</h2>
+              <p class="text-sm text-gray-600 mt-1" id="cart-count">Cargando carrito...</p>
             </div>
 
             <!-- Lista de productos -->
-            <div class="p-6 space-y-6 max-h-96 overflow-y-auto">
-              {orderItems.map((item) => (
-                <div class="flex items-start space-x-4">
-                  <div class="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-white">
-                    <img class="h-full w-full object-cover object-center" src={item.image} alt={item.name} />
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <h3 class="text-sm font-medium text-black font-display">{item.name}</h3>
-                    <p class="text-sm text-gray-600 mt-1">{item.variant}</p>
-                    <div class="mt-2 flex items-center justify-between">
-                      <p class="text-sm font-medium text-black">{item.price.toFixed(2)} €</p>
-                      <div class="flex items-center text-gray-600 text-xs">Cant: {item.quantity}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div class="p-6 space-y-6 max-h-96 overflow-y-auto" id="cart-items">
+              <div class="text-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary mx-auto"></div>
+                <p class="text-gray-500 mt-2 text-sm">Cargando productos...</p>
+              </div>
             </div>
 
             <!-- Cupón de descuento -->
             <div class="px-6 py-4 bg-gray-50 border-t border-b border-gray-200">
-              <form class="flex space-x-2">
+              <form id="coupon-form" class="flex space-x-2">
                 <input
-                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-2 px-3"
+                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-2 px-3"
                   placeholder="Código de descuento"
                   type="text"
+                  id="coupon-code"
                 />
                 <button
-                  class="bg-black text-white font-medium text-sm px-4 py-2 rounded hover:opacity-90 transition-opacity whitespace-nowrap"
+                  class="bg-secondary text-white font-medium text-sm px-4 py-2 rounded hover:bg-black transition-colors whitespace-nowrap"
                   type="submit"
                 >
                   Aplicar
                 </button>
               </form>
+              <p id="coupon-message" class="text-sm mt-2 hidden"></p>
             </div>
 
             <!-- Totales -->
             <div class="p-6 bg-white space-y-4">
               <div class="flex items-center justify-between text-sm text-gray-600">
                 <p>Subtotal</p>
-                <p class="font-medium text-black">{subtotal.toFixed(2)} €</p>
+                <p class="font-medium text-secondary" id="subtotal">0.00 €</p>
               </div>
               <div class="flex items-center justify-between text-sm text-gray-600">
                 <p>Envío</p>
-                <p class="font-medium text-black">{shipping.toFixed(2)} €</p>
+                <p class="font-medium text-secondary" id="shipping">5.90 €</p>
+              </div>
+              <div class="flex items-center justify-between text-sm text-gray-600" id="discount-row" style="display: none;">
+                <p>Descuento</p>
+                <p class="font-medium text-green-600" id="discount">-0.00 €</p>
               </div>
               <div class="flex items-center justify-between text-sm text-gray-600">
-                <p>Impuestos (21% IVA)</p>
-                <p class="font-medium text-black">{tax.toFixed(2)} €</p>
+                <p>IVA incluido (21%)</p>
+                <p class="font-medium text-secondary" id="tax">0.00 €</p>
               </div>
               <div class="border-t border-gray-200 pt-4 flex items-center justify-between">
-                <p class="text-base font-bold text-black font-display uppercase">Total</p>
-                <p class="text-2xl font-black text-primary font-display">{total.toFixed(2)} €</p>
+                <p class="text-base font-bold text-secondary font-display uppercase">Total</p>
+                <p class="text-2xl font-black text-secondary font-display" id="total">0.00 €</p>
               </div>
             </div>
 
             <!-- Footer con iconos -->
             <div class="bg-gray-50 p-4 border-t border-gray-200 grid grid-cols-3 gap-2 text-center text-xs text-gray-600">
               <div class="flex flex-col items-center gap-1">
-                <i class="material-icons text-lg">lock</i>
+                <i class="material-icons text-lg text-secondary">lock</i>
                 <span>Pago Seguro</span>
               </div>
               <div class="flex flex-col items-center gap-1">
-                <i class="material-icons text-lg">local_shipping</i>
+                <i class="material-icons text-lg text-secondary">local_shipping</i>
                 <span>Envío Rápido</span>
               </div>
               <div class="flex flex-col items-center gap-1">
-                <i class="material-icons text-lg">verified</i>
+                <i class="material-icons text-lg text-secondary">verified</i>
                 <span>Garantía Oficial</span>
               </div>
             </div>
@@ -346,65 +329,277 @@ const shippingMethods = [
 </Layout>
 
 <script>
-  // Manejo de selección de método de envío
-  const shippingOptions = document.querySelectorAll('.shipping-option');
+  interface CartItem {
+    productId: string;
+    productName: string;
+    productSlug: string;
+    productImage: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+  }
 
-  shippingOptions.forEach((option) => {
-    option.addEventListener('click', () => {
-      // Remover clases de todos
-      shippingOptions.forEach((opt) => {
-        opt.classList.remove('border-primary', 'bg-primary/5', 'ring-1', 'ring-primary');
-        opt.classList.add('border-gray-200');
+  // Cargar carrito desde localStorage (key: eva_cart)
+  const loadCart = (): CartItem[] => {
+    try {
+      const cart = localStorage.getItem('eva_cart');
+      return cart ? JSON.parse(cart) : [];
+    } catch {
+      return [];
+    }
+  };
 
-        const radioCircle = opt.querySelector('.h-4.w-4.rounded-full');
-        radioCircle?.classList.remove('border-primary', 'bg-primary');
-        radioCircle?.classList.add('border-gray-300');
+  // Calcular totales
+  // NOTA: Los precios de los productos YA INCLUYEN IVA (21%)
+  // En el checkout desglosamos: precioConIVA = base + IVA => base = precioConIVA / 1.21
+  const calculateTotals = (items: CartItem[], shippingCost: number, discountPercent: number = 0) => {
+    const totalConIVA = items.reduce((sum, item) => {
+      // Usar totalPrice si existe, si no calcular desde unitPrice * quantity
+      const itemTotal = item.totalPrice || (item.unitPrice || 0) * (item.quantity || 1);
+      return sum + (isNaN(itemTotal) ? 0 : itemTotal);
+    }, 0);
 
-        const innerDot = opt.querySelector('.w-2.h-2.rounded-full');
-        innerDot?.remove();
+    // Aplicar descuento al total con IVA
+    const discountAmount = totalConIVA * (discountPercent / 100);
+    const totalConIVADescontado = totalConIVA - discountAmount;
+
+    // Extraer base imponible e IVA del precio (que ya incluye IVA)
+    const subtotal = totalConIVADescontado / 1.21;  // Base imponible sin IVA
+    const tax = totalConIVADescontado - subtotal;    // IVA incluido
+
+    // Total = productos (con IVA ya incluido) + envío
+    const total = totalConIVADescontado + shippingCost;
+
+    return { subtotal, discountAmount, tax, total };
+  };
+
+  // Renderizar items del carrito
+  const renderCartItems = (items: CartItem[]) => {
+    const container = document.getElementById('cart-items');
+    const countEl = document.getElementById('cart-count');
+
+    if (!container) return;
+
+    if (items.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-8">
+          <i class="material-icons text-4xl text-gray-300 mb-2">shopping_cart</i>
+          <p class="text-gray-500">Tu carrito está vacío</p>
+          <a href="/" class="text-secondary font-semibold hover:underline text-sm mt-2 inline-block">Volver a la tienda</a>
+        </div>
+      `;
+      if (countEl) countEl.textContent = '0 artículos en tu carrito';
+      return;
+    }
+
+    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+    if (countEl) countEl.textContent = `${totalItems} artículo${totalItems !== 1 ? 's' : ''} en tu carrito`;
+
+    container.innerHTML = items.map(item => {
+      const unitPrice = item.unitPrice || 0;
+      const displayPrice = typeof unitPrice === 'number' && !isNaN(unitPrice) ? unitPrice.toFixed(2) : '0.00';
+      return `
+      <div class="flex items-start space-x-4">
+        <div class="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-white">
+          <img class="h-full w-full object-cover object-center" src="${item.productImage || '/placeholder.jpg'}" alt="${item.productName}" />
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-sm font-medium text-secondary font-display">${item.productName}</h3>
+          <div class="mt-2 flex items-center justify-between">
+            <p class="text-sm font-medium text-secondary">${displayPrice} €</p>
+            <div class="flex items-center text-gray-600 text-xs">Cant: ${item.quantity}</div>
+          </div>
+        </div>
+      </div>
+    `;
+    }).join('');
+  };
+
+  // Actualizar totales en la UI
+  const updateTotals = (items: CartItem[], shippingCost: number, discountPercent: number = 0) => {
+    const { subtotal, discountAmount, tax, total } = calculateTotals(items, shippingCost, discountPercent);
+
+    const subtotalEl = document.getElementById('subtotal');
+    const shippingEl = document.getElementById('shipping');
+    const taxEl = document.getElementById('tax');
+    const totalEl = document.getElementById('total');
+    const discountRow = document.getElementById('discount-row');
+    const discountEl = document.getElementById('discount');
+
+    if (subtotalEl) subtotalEl.textContent = `${subtotal.toFixed(2)} €`;
+    if (shippingEl) shippingEl.textContent = shippingCost === 0 ? 'Gratis' : `${shippingCost.toFixed(2)} €`;
+    if (taxEl) taxEl.textContent = `${tax.toFixed(2)} €`;
+    if (totalEl) totalEl.textContent = `${total.toFixed(2)} €`;
+
+    if (discountRow && discountEl) {
+      if (discountPercent > 0) {
+        discountRow.style.display = 'flex';
+        discountEl.textContent = `-${discountAmount.toFixed(2)} €`;
+      } else {
+        discountRow.style.display = 'none';
+      }
+    }
+  };
+
+  // Variables globales
+  let currentShippingCost = 5.90;
+  let currentDiscountPercent = 0;
+  let cartItems: CartItem[] = [];
+
+  // Inicializar
+  document.addEventListener('DOMContentLoaded', () => {
+    cartItems = loadCart();
+    renderCartItems(cartItems);
+    updateTotals(cartItems, currentShippingCost, currentDiscountPercent);
+
+    // Manejo de selección de método de envío
+    const shippingOptions = document.querySelectorAll('.shipping-option');
+
+    shippingOptions.forEach((option) => {
+      option.addEventListener('click', () => {
+        const price = parseFloat((option as HTMLElement).dataset.price || '0');
+        currentShippingCost = price;
+
+        // Actualizar estilos
+        shippingOptions.forEach((opt) => {
+          opt.classList.remove('border-green-600', 'bg-green-50', 'ring-1', 'ring-green-600');
+          opt.classList.add('border-gray-200');
+
+          const radioCircle = opt.querySelector('.h-4.w-4.rounded-full');
+          if (radioCircle) {
+            radioCircle.classList.remove('border-green-600', 'bg-green-600');
+            radioCircle.classList.add('border-gray-300');
+            const innerDot = radioCircle.querySelector('.w-2.h-2');
+            innerDot?.remove();
+          }
+        });
+
+        // Añadir estilos al seleccionado
+        option.classList.remove('border-gray-200');
+        option.classList.add('border-green-600', 'bg-green-50', 'ring-1', 'ring-green-600');
+
+        const radioCircle = option.querySelector('.h-4.w-4.rounded-full');
+        if (radioCircle) {
+          radioCircle.classList.remove('border-gray-300');
+          radioCircle.classList.add('border-green-600', 'bg-green-600');
+
+          if (!radioCircle.querySelector('.w-2.h-2')) {
+            const dot = document.createElement('span');
+            dot.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white';
+            radioCircle.appendChild(dot);
+          }
+        }
+
+        // Actualizar totales
+        updateTotals(cartItems, currentShippingCost, currentDiscountPercent);
+      });
+    });
+
+    // Manejo de cupones
+    const couponForm = document.getElementById('coupon-form');
+    const couponMessage = document.getElementById('coupon-message');
+
+    couponForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const codeInput = document.getElementById('coupon-code') as HTMLInputElement;
+      const code = codeInput?.value.trim();
+
+      if (!code) return;
+
+      try {
+        const response = await fetch(`${import.meta.env.PUBLIC_API_URL || 'http://localhost:3000'}/api/coupons/validate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code })
+        });
+
+        const data = await response.json();
+
+        if (couponMessage) {
+          if (data.valid) {
+            currentDiscountPercent = data.discount;
+            couponMessage.textContent = `¡Cupón aplicado! ${data.discount}% de descuento`;
+            couponMessage.className = 'text-sm mt-2 text-green-600';
+            couponMessage.classList.remove('hidden');
+            updateTotals(cartItems, currentShippingCost, currentDiscountPercent);
+          } else {
+            couponMessage.textContent = data.message || 'Cupón no válido';
+            couponMessage.className = 'text-sm mt-2 text-red-600';
+            couponMessage.classList.remove('hidden');
+          }
+        }
+      } catch {
+        if (couponMessage) {
+          couponMessage.textContent = 'Error al validar el cupón';
+          couponMessage.className = 'text-sm mt-2 text-red-600';
+          couponMessage.classList.remove('hidden');
+        }
+      }
+    });
+
+    // Validación y envío del formulario
+    const form = document.getElementById('checkout-form');
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (cartItems.length === 0) {
+        alert('Tu carrito está vacío');
+        return;
+      }
+
+      // Recoger datos del formulario
+      const formData = {
+        email: (document.getElementById('email') as HTMLInputElement)?.value,
+        firstName: (document.getElementById('first-name') as HTMLInputElement)?.value,
+        lastName: (document.getElementById('last-name') as HTMLInputElement)?.value,
+        address: (document.getElementById('address') as HTMLInputElement)?.value,
+        apartment: (document.getElementById('apartment') as HTMLInputElement)?.value,
+        city: (document.getElementById('city') as HTMLInputElement)?.value,
+        postalCode: (document.getElementById('postal-code') as HTMLInputElement)?.value,
+        province: (document.getElementById('province') as HTMLInputElement)?.value,
+        phone: (document.getElementById('phone') as HTMLInputElement)?.value,
+        newsletter: (document.getElementById('newsletter') as HTMLInputElement)?.checked,
+        shippingMethod: (document.querySelector('input[name="shipping-method"]:checked') as HTMLInputElement)?.value
+      };
+
+      // Validar campos requeridos
+      const requiredFields = form.querySelectorAll('[required]');
+      let isValid = true;
+
+      requiredFields.forEach((field) => {
+        const input = field as HTMLInputElement;
+        if (!input.value.trim()) {
+          isValid = false;
+          input.classList.add('border-red-500');
+        } else {
+          input.classList.remove('border-red-500');
+        }
       });
 
-      // Añadir clases al seleccionado
-      option.classList.remove('border-gray-200');
-      option.classList.add('border-primary', 'bg-primary/5', 'ring-1', 'ring-primary');
-
-      const radioCircle = option.querySelector('.h-4.w-4.rounded-full');
-      radioCircle?.classList.remove('border-gray-300');
-      radioCircle?.classList.add('border-primary', 'bg-primary');
-
-      // Añadir dot interior
-      if (!option.querySelector('.w-2.h-2.rounded-full')) {
-        const dot = document.createElement('span');
-        dot.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-black';
-        radioCircle?.appendChild(dot);
+      if (!isValid) {
+        alert('Por favor, completa todos los campos requeridos');
+        return;
       }
-    });
-  });
 
-  // Validación del formulario
-  const form = document.querySelector('form');
-  form?.addEventListener('submit', (e) => {
-    e.preventDefault();
+      // Guardar datos de envío en sessionStorage para la página de pago
+      const { subtotal, discountAmount, tax, total } = calculateTotals(cartItems, currentShippingCost, currentDiscountPercent);
 
-    // Validar campos requeridos
-    const requiredFields = form.querySelectorAll('[required]');
-    let isValid = true;
+      const checkoutData = {
+        ...formData,
+        items: cartItems,
+        subtotal,
+        discount: discountAmount,
+        discountPercent: currentDiscountPercent,
+        shipping: currentShippingCost,
+        tax,
+        total
+      };
 
-    requiredFields.forEach((field) => {
-      const input = field as HTMLInputElement;
-      if (!input.value.trim()) {
-        isValid = false;
-        input.classList.add('border-red-500');
-      } else {
-        input.classList.remove('border-red-500');
-      }
-    });
+      sessionStorage.setItem('checkoutData', JSON.stringify(checkoutData));
 
-    if (isValid) {
-      // En producción, aquí se enviaría al backend
+      // En producción, aquí se enviaría al backend para crear la orden
+      // Por ahora, redirigir a confirmación (en el futuro sería a una página de pago)
       window.location.href = '/confirmacion';
-    } else {
-      alert('Por favor, completa todos los campos requeridos');
-    }
+    });
   });
 </script>

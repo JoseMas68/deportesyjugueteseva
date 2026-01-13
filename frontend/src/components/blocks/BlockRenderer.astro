@@ -1,0 +1,35 @@
+---
+import HeroBlock from './HeroBlock.astro';
+import ProductSliderBlock from './ProductSliderBlock.astro';
+import BentoGridBlock from './BentoGridBlock.astro';
+
+interface PageBlock {
+  id: string;
+  type: 'hero' | 'product-slider' | 'bento-grid';
+  config: Record<string, unknown>;
+  isActive: boolean;
+}
+
+interface Props {
+  block: PageBlock;
+}
+
+const { block } = Astro.props;
+
+// Solo renderizar bloques activos
+if (!block.isActive) {
+  return null;
+}
+---
+
+{block.type === 'hero' && (
+  <HeroBlock config={block.config as any} />
+)}
+
+{block.type === 'product-slider' && (
+  <ProductSliderBlock config={block.config as any} blockId={block.id} />
+)}
+
+{block.type === 'bento-grid' && (
+  <BentoGridBlock config={block.config as any} />
+)}

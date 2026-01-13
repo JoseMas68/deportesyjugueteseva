@@ -34,11 +34,18 @@ export async function GET(request: NextRequest) {
     }
 
     if (category) {
-      where.category = { slug: category }
+      // Soportar tanto ID como slug de categoria
+      // Los IDs de cuid empiezan con 'c' y tienen 25 caracteres
+      const isCuid = category.length === 25 && category.startsWith('c')
+      if (isCuid) {
+        where.categoryId = category
+      } else {
+        where.category = { slug: category }
+      }
     }
 
     if (sportType) {
-      // Soportar múltiples tipos de deporte separados por coma
+      // Soportar multiples tipos de deporte separados por coma
       const sportTypes = sportType.split(',').map(s => s.trim()).filter(Boolean)
       if (sportTypes.length === 1) {
         where.sportType = sportTypes[0]
@@ -48,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (productType) {
-      // Soportar múltiples tipos de producto separados por coma
+      // Soportar multiples tipos de producto separados por coma
       const productTypes = productType.split(',').map(p => p.trim()).filter(Boolean)
       if (productTypes.length === 1) {
         where.productType = productTypes[0]
@@ -58,7 +65,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (collectionType) {
-      // Soportar múltiples tipos de colección separados por coma
+      // Soportar multiples tipos de coleccion separados por coma
       const collectionTypes = collectionType.split(',').map(c => c.trim()).filter(Boolean)
       if (collectionTypes.length === 1) {
         where.collectionType = collectionTypes[0]
@@ -96,7 +103,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (brand) {
-      // Soportar múltiples marcas separadas por coma (usando slug de la marca)
+      // Soportar multiples marcas separadas por coma (usando slug de la marca)
       const brandSlugs = brand.split(',').map(b => b.trim()).filter(Boolean)
       if (brandSlugs.length === 1) {
         where.brand = { slug: brandSlugs[0] }
@@ -106,7 +113,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (color) {
-      // Soportar múltiples colores separados por coma
+      // Soportar multiples colores separados por coma
       const colors = color.split(',').map(c => c.trim()).filter(Boolean)
       if (colors.length === 1) {
         where.color = { equals: colors[0], mode: 'insensitive' }
@@ -121,7 +128,7 @@ export async function GET(request: NextRequest) {
       where.stock = { gt: 0 }
     }
 
-    // Determinar ordenación
+    // Determinar ordenacion
     let orderBy: any = [{ isFeatured: 'desc' }, { createdAt: 'desc' }]
     if (sortBy === 'price_asc') {
       orderBy = [{ price: 'asc' }]

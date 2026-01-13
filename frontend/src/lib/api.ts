@@ -32,8 +32,11 @@ export interface Category {
   description?: string;
   imageUrl?: string;
   parentId?: string;
+  parent?: Category;
   children?: Category[];
   menuSection?: string;
+  isFeatured?: boolean;
+  isActive?: boolean;
 }
 
 export interface Brand {
@@ -218,4 +221,63 @@ export async function getBrands(category?: string): Promise<Brand[]> {
   if (!response.ok) throw new Error('Error fetching brands');
 
   return response.json();
+}
+
+// ============ DYNAMIC PAGES ============
+
+export interface PageBlock {
+  id: string;
+  type: 'hero' | 'product-slider' | 'bento-grid';
+  title?: string;
+  config: Record<string, unknown>;
+  displayOrder: number;
+  isActive: boolean;
+}
+
+export interface DynamicPage {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaImage?: string;
+  isActive: boolean;
+  isHomePage: boolean;
+  blocks: PageBlock[];
+}
+
+/**
+ * Obtiene una página dinámica por slug
+ */
+export async function getDynamicPage(slug: string): Promise<{ page: DynamicPage | null }> {
+  try {
+    const response = await fetch(`${API_URL}/pages/${slug}`);
+    if (!response.ok) {
+      if (response.status === 404) {
+        return { page: null };
+      }
+      throw new Error('Error fetching page');
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching dynamic page:', error);
+    return { page: null };
+  }
+}
+
+/**
+ * Obtiene la página marcada como home (si existe)
+ */
+export async function getHomePage(): Promise<{ page: DynamicPage | null }> {
+  try {
+    const response = await fetch(`${API_URL}/pages/home`);
+    if (!response.ok) {
+      return { page: null };
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching home page:', error);
+    return { page: null };
+  }
 }

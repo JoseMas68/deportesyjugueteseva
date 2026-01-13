@@ -7,7 +7,7 @@ interface Props {
 
 const { product } = Astro.props;
 
-const image = product.image || product.thumbnailUrl || (product.images && product.images[0]) || '/placeholder.jpg';
+const image = product.thumbnailUrl || (product.images && product.images[0]) || '/placeholder.jpg';
 
 // Convertir precios a números (Prisma Decimal se serializa como string)
 const price = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
@@ -25,25 +25,38 @@ const hasHalfStar = rating % 1 >= 0.5;
 const totalReviews = 42;
 ---
 
-<div class="bg-surface-light rounded-xl shadow-sm border border-gray-100 hover:shadow-xl transition group">
-  <!-- Imagen con Badge -->
+<div class="bg-surface-light rounded-xl shadow-sm border border-gray-100 hover:shadow-xl group">
+  <!-- Imagen con Badge y Favoritos -->
   <div class="relative">
     {hasDiscount && (
-      <span class="absolute top-3 left-3 bg-accent text-white text-xs font-bold px-2 py-1 rounded z-10">
+      <span class="absolute top-2 left-2 bg-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded z-10">
         -{discountPercent}%
       </span>
     )}
     {product.isNew && !hasDiscount && (
-      <span class="absolute top-3 left-3 bg-primary text-secondary text-xs font-bold px-2 py-1 rounded z-10">
+      <span class="absolute top-2 left-2 bg-primary text-secondary text-[10px] font-bold px-1.5 py-0.5 rounded z-10">
         NUEVO
       </span>
     )}
+
+    <!-- Botón favoritos: visible siempre en móvil, solo hover en desktop -->
+    <button
+      class="wishlist-toggle-btn absolute top-2 right-2 z-10 bg-white/90 hover:bg-white p-1 rounded-full shadow-md text-gray-400 hover:text-red-500 transition-all md:opacity-0 md:group-hover:opacity-100"
+      data-product-id={product.id}
+      data-product-name={product.name}
+      data-product-slug={product.slug}
+      data-product-price={price}
+      data-product-image={image}
+      aria-label="Añadir a favoritos"
+    >
+      <i class="material-icons text-lg">favorite_border</i>
+    </button>
 
     <div class="aspect-square bg-gray-50 rounded-t-xl overflow-hidden">
       <img
         src={image}
         alt={product.name}
-        class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+        class="w-full h-full object-cover"
         loading="lazy"
       />
     </div>
@@ -56,42 +69,24 @@ const totalReviews = 42;
   </div>
 
   <!-- Info del producto -->
-  <div class="p-4 pt-0">
-    <!-- Categoría y botón favoritos -->
-    <div class="flex items-start justify-between mb-1">
-      {product.category && (
-        <p class="text-xs text-gray-500">{product.category.name}</p>
-      )}
-      <button
-        class="wishlist-toggle-btn text-gray-400 hover:text-red-500 transition-colors -mt-1"
-        data-product-id={product.id}
-        data-product-name={product.name}
-        data-product-slug={product.slug}
-        data-product-price={price}
-        data-product-image={image}
-        aria-label="Añadir a favoritos"
-      >
-        <i class="material-icons text-xl">favorite_border</i>
-      </button>
-    </div>
-
+  <div class="p-3">
     <!-- Nombre -->
     <a href={`/producto/${product.slug}`}>
-      <h3 class="font-bold text-secondary text-lg leading-tight mb-2 group-hover:text-gray-600 transition-colors line-clamp-2">
+      <h3 class="font-bold text-secondary text-sm leading-tight mb-1.5 group-hover:text-gray-600 transition-colors line-clamp-2">
         {product.name}
       </h3>
     </a>
 
     <!-- Estrellas de rating -->
-    <div class="flex items-center gap-1 mb-3">
+    <div class="flex items-center gap-0.5 mb-2">
       {Array.from({ length: fullStars }).map(() => (
-        <i class="material-icons text-amber-400 text-sm">star</i>
+        <i class="material-icons text-amber-400 text-xs">star</i>
       ))}
       {hasHalfStar && (
-        <i class="material-icons text-amber-400 text-sm">star_half</i>
+        <i class="material-icons text-amber-400 text-xs">star_half</i>
       )}
       {Array.from({ length: 5 - fullStars - (hasHalfStar ? 1 : 0) }).map(() => (
-        <i class="material-icons text-gray-300 text-sm">star</i>
+        <i class="material-icons text-gray-300 text-xs">star</i>
       ))}
       <span class="text-xs text-gray-400 ml-1">({totalReviews})</span>
     </div>
@@ -104,22 +99,22 @@ const totalReviews = 42;
             {compareAtPrice!.toFixed(2)}€
           </div>
         )}
-        <div class="text-xl font-bold text-secondary">
+        <div class="text-base font-bold text-secondary">
           {price.toFixed(2)}€
         </div>
       </div>
       <button
-        class="bg-secondary text-primary hover:bg-black p-2 rounded-lg transition shadow-md"
+        class="bg-secondary text-primary hover:bg-black p-1.5 rounded-lg transition shadow-md"
         aria-label="Añadir al carrito"
         data-product-id={product.id}
       >
-        <i class="material-icons text-lg">add_shopping_cart</i>
+        <i class="material-icons text-base">add_shopping_cart</i>
       </button>
     </div>
 
     <!-- Aviso de stock bajo -->
     {product.stock > 0 && product.stock <= 5 && (
-      <p class="text-xs text-orange-600 mt-2">
+      <p class="text-xs text-orange-600 mt-1.5">
         ¡Solo quedan {product.stock} unidades!
       </p>
     )}
@@ -199,7 +194,7 @@ const totalReviews = 42;
         if (!card) return;
 
         const productName = card.querySelector('h3')?.textContent?.trim() || '';
-        const priceText = card.querySelector('.text-xl.font-bold')?.textContent?.replace('€', '').trim();
+        const priceText = card.querySelector('.text-base.font-bold.text-secondary')?.textContent?.replace('€', '').trim();
         const price = priceText ? parseFloat(priceText) : 0;
         const imageUrl = card.querySelector('img')?.getAttribute('src') || '';
         const productSlug = card.querySelector('a')?.getAttribute('href')?.split('/').pop() || '';

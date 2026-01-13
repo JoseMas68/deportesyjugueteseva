@@ -1,0 +1,81 @@
+---
+import ProductSlider from '../ProductSlider.astro';
+import { getProducts, type Product } from '@/lib/api';
+
+interface ProductSliderConfig {
+  title?: string;
+  subtitle?: string;
+  source: 'category' | 'manual' | 'featured' | 'new' | 'bestseller' | 'offers';
+  categoryId?: string;
+  productIds?: string[];
+  limit: number;
+  accentColor: 'primary' | 'accent';
+  linkUrl?: string;
+  linkText?: string;
+}
+
+interface Props {
+  config: ProductSliderConfig;
+  blockId: string;
+}
+
+const { config, blockId } = Astro.props;
+
+// Obtener productos según la fuente configurada
+let products: Product[] = [];
+
+try {
+  const filters: Record<string, unknown> = {
+    limit: config.limit,
+  };
+
+  switch (config.source) {
+    case 'featured':
+      filters.featured = true;
+      break;
+    case 'new':
+      filters.new = true;
+      break;
+    case 'bestseller':
+      filters.bestseller = true;
+      break;
+    case 'offers':
+      // Los productos con descuento se filtran después
+      break;
+    case 'category':
+      if (config.categoryId) {
+        filters.category = config.categoryId;
+      }
+      break;
+    case 'manual':
+      // TODO: Implementar selección manual de productos
+      break;
+  }
+
+  const result = await getProducts(filters);
+  products = result.products;
+
+  // Filtrar ofertas si es necesario
+  if (config.source === 'offers') {
+    products = products.filter(p => p.compareAtPrice && p.compareAtPrice > p.price);
+  }
+} catch (error) {
+  console.error('Error loading products for slider:', error);
+}
+
+// Generar URL del enlace
+const linkUrl = config.linkUrl || (config.source === 'category' && config.categoryId
+  ? `/categoria/${config.categoryId}`
+  : '/');
+---
+
+{products.length > 0 && (
+  <ProductSlider
+    title={config.title || ''}
+    products={products}
+    linkUrl={linkUrl}
+    linkText={config.linkText || ''}
+    sliderId={`block-${blockId}`}
+    accentColor={config.accentColor}
+  />
+)}
