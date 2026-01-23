@@ -325,7 +325,7 @@ const hobbies = [
 <script>
   import { getCartCount } from '@/lib/cart';
   import { getWishlistCount } from '@/lib/wishlist';
-  import { getCurrentCustomer, logoutCustomer } from '@/lib/auth';
+  import { getCurrentCustomer, logout } from '@/lib/auth';
 
   // Toggle mobile menu
   const btn = document.getElementById('mobile-menu-btn');
@@ -438,7 +438,7 @@ const hobbies = [
   function setupMobileLogout() {
     const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
     mobileLogoutBtn?.addEventListener('click', async () => {
-      await logoutCustomer();
+      await logout();
       window.location.href = '/';
     });
   }
