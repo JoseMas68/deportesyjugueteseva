@@ -13,6 +13,7 @@
     "@astrojs/check": "^0.9.4",
     "@astrojs/node": "^9.1.0",
     "@astrojs/tailwind": "^6.0.0",
+    "@astrojs/vercel": "^9.0.4",
     "astro": "^5.16.12",
     "swiper": "^12.0.3",
     "tailwindcss": "^3.4.17",

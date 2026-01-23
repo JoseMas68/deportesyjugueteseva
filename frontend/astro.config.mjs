@@ -1,6 +1,10 @@
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import node from '@astrojs/node';
+import vercel from '@astrojs/vercel';
+
+// Detectar si estamos en Vercel
+const isVercel = process.env.VERCEL === '1';
 
 export default defineConfig({
   integrations: [tailwind()],
@@ -9,7 +13,6 @@ export default defineConfig({
     host: true
   },
   output: 'server',
-  adapter: node({
-    mode: 'standalone'
-  }),
+  // Usar adaptador de Vercel en producción, Node en desarrollo local
+  adapter: isVercel ? vercel() : node({ mode: 'standalone' }),
 });
