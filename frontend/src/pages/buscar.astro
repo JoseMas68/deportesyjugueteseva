@@ -5,7 +5,7 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import ProductCard from '@/components/ProductCard.astro';
-import { getProducts, getBrands } from '@/lib/api';
+import { getProducts, getBrands, type Product } from '@/lib/api';
 
 // Get query parameters
 const url = new URL(Astro.request.url);
@@ -16,7 +16,7 @@ const limit = 12;
 const offset = (page - 1) * limit;
 
 // Obtener productos iniciales desde la API
-let products = [];
+let products: Product[] = [];
 let total = 0;
 
 try {

@@ -36,6 +36,7 @@ interface Product {
   compareAtPrice?: number | null
   stock: number
   sku?: string
+  barcode?: string // Código de barras EAN-13
   categoryId: string
   images: string[]
   thumbnailUrl?: string | null
@@ -66,6 +67,7 @@ export default function ProductForm({ product, categories, brands }: ProductForm
     compareAtPrice: product?.compareAtPrice || null,
     stock: product?.stock || 0,
     sku: product?.sku || '',
+    barcode: product?.barcode || '',
     categoryId: product?.categoryId || '',
     images: product?.images || [],
     thumbnailUrl: product?.thumbnailUrl || null,
@@ -544,6 +546,20 @@ export default function ProductForm({ product, categories, brands }: ProductForm
                   className="input font-mono"
                   placeholder="Se genera automaticamente"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Codigo de barras (EAN)
+                </label>
+                <input
+                  type="text"
+                  value={formData.barcode}
+                  onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                  className="input font-mono"
+                  placeholder="8421234567890"
+                  maxLength={13}
+                />
+                <p className="text-xs text-gray-500 mt-1">Codigo del fabricante para TPV</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

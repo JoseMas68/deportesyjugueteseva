@@ -3,54 +3,7 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 
-// Los datos del usuario se cargarán dinámicamente en el cliente
-
-// Mock recent orders
-const recentOrders = [
-  {
-    id: '#EVA-9834',
-    date: '12 Oct, 2023',
-    status: 'Enviado',
-    statusColor: 'green',
-    total: 45.00
-  },
-  {
-    id: '#EVA-9721',
-    date: '05 Oct, 2023',
-    status: 'Completado',
-    statusColor: 'gray',
-    total: 89.99
-  },
-  {
-    id: '#EVA-9512',
-    date: '28 Sep, 2023',
-    status: 'Cancelado',
-    statusColor: 'red',
-    total: 120.50
-  }
-];
-
-// Mock address
-const mainAddress = {
-  name: 'Juan Pérez',
-  street: 'Calle de los Juguetes 123, 2ºB',
-  city: '28001 Madrid, España'
-};
-
-// Wishlist se cargará desde localStorage en el cliente
-
-// Mock stats (se actualizarán dinámicamente)
-const stats = {
-  totalOrders: 0,
-  inTransit: 0
-};
-
-// Mock user (se actualizará dinámicamente)
-const user = {
-  name: 'Cargando...',
-  email: 'cargando@...',
-  phone: '---'
-};
+// Los datos se cargarán dinámicamente en el cliente
 
 const menuItems = [
   { icon: 'dashboard', label: 'Panel de Control', href: '/cuenta', active: true },
@@ -129,8 +82,8 @@ const menuItems = [
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-gray-600 mb-1">Total</p>
-                <p class="text-3xl font-bold text-secondary">{stats.totalOrders}</p>
+                <p class="text-sm font-medium text-gray-600 mb-1">Total Pedidos</p>
+                <p id="stat-total" class="text-3xl font-bold text-secondary">-</p>
               </div>
               <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <i class="material-icons text-secondary text-3xl">shopping_bag</i>
@@ -140,7 +93,7 @@ const menuItems = [
             <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-gray-600 mb-1">En Camino</p>
-                <p class="text-3xl font-bold text-green-600">{stats.inTransit}</p>
+                <p id="stat-transit" class="text-3xl font-bold text-green-600">-</p>
               </div>
               <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                 <i class="material-icons text-green-600 text-3xl">local_shipping</i>
@@ -155,7 +108,21 @@ const menuItems = [
               <a class="text-sm font-bold text-secondary hover:text-accent underline hover:no-underline transition-colors" href="/cuenta/pedidos">Ver todos</a>
             </div>
 
-            <div class="overflow-x-auto">
+            <!-- Estado de carga -->
+            <div id="orders-loading" class="p-8 text-center">
+              <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p class="text-gray-600 mt-2 text-sm">Cargando pedidos...</p>
+            </div>
+
+            <!-- Sin pedidos -->
+            <div id="orders-empty" class="hidden p-8 text-center">
+              <i class="material-icons text-gray-300 text-5xl mb-2">shopping_bag</i>
+              <p class="text-gray-500">No tienes pedidos aún</p>
+              <a href="/ofertas" class="inline-block mt-4 text-secondary hover:text-accent font-bold text-sm underline">Explorar productos</a>
+            </div>
+
+            <!-- Tabla de pedidos -->
+            <div id="orders-table" class="hidden overflow-x-auto">
               <table class="w-full text-left">
                 <thead>
                   <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
@@ -166,28 +133,8 @@ const menuItems = [
                     <th class="px-6 py-4">Acciones</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
-                  {recentOrders.map((order) => (
-                    <tr class="hover:bg-gray-50 transition-colors">
-                      <td class="px-6 py-4 font-bold text-sm text-secondary">{order.id}</td>
-                      <td class="px-6 py-4 text-sm text-gray-600">{order.date}</td>
-                      <td class="px-6 py-4">
-                        <span class={`px-2 py-1 text-xs font-bold rounded ${
-                          order.statusColor === 'green' ? 'bg-green-100 text-green-700' :
-                          order.statusColor === 'red' ? 'bg-red-100 text-red-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td class="px-6 py-4 text-sm font-bold text-secondary text-right">{order.total.toFixed(2)}€</td>
-                      <td class="px-6 py-4">
-                        <button class="text-secondary hover:text-accent font-bold text-sm transition-colors underline hover:no-underline">
-                          Ver detalles
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                <tbody id="orders-tbody" class="divide-y divide-gray-200">
+                  <!-- Se carga dinámicamente -->
                 </tbody>
               </table>
             </div>
@@ -223,10 +170,17 @@ const menuItems = [
                 <i class="material-icons">location_on</i>
                 Dirección Principal
               </h3>
-              <div class="space-y-2 mb-6">
-                <p class="font-bold text-secondary">{mainAddress.name}</p>
-                <p class="text-sm text-gray-600">{mainAddress.street}</p>
-                <p class="text-sm text-gray-600">{mainAddress.city}</p>
+              <div id="address-loading" class="py-4 text-center">
+                <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              </div>
+              <div id="address-empty" class="hidden text-center py-4">
+                <i class="material-icons text-gray-300 text-4xl mb-2">location_off</i>
+                <p class="text-gray-500 text-sm">Sin dirección guardada</p>
+              </div>
+              <div id="address-content" class="hidden space-y-2 mb-6">
+                <p id="address-name" class="font-bold text-secondary">-</p>
+                <p id="address-street" class="text-sm text-gray-600">-</p>
+                <p id="address-city" class="text-sm text-gray-600">-</p>
               </div>
               <a href="/cuenta/direcciones" class="block w-full py-2 bg-gray-50 hover:bg-primary/20 hover:text-primary transition-all rounded-lg text-sm font-bold border border-gray-200 text-center">
                 Ver Direcciones
@@ -264,12 +218,34 @@ const menuItems = [
 <script>
   import { getWishlist, removeFromWishlist } from '@/lib/wishlist';
   import { addToCart } from '@/lib/cart';
-  import { toastSuccess, toastInfo } from '@/lib/toast';
+  import { toastSuccess, toastInfo, toastError } from '@/lib/toast';
   import { getCurrentCustomer, getCustomerFullName, logout } from '@/lib/auth';
 
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
+
+  interface Order {
+    id: string;
+    orderNumber: string;
+    status: string;
+    total: string;
+    createdAt: string;
+  }
+
+  interface Address {
+    id: string;
+    label: string;
+    fullName: string;
+    street: string;
+    city: string;
+    postalCode: string;
+    province: string | null;
+    country: string;
+    isDefault: boolean;
+  }
+
   // Verificar autenticación
-  function checkAuth() {
-    const customer = getCurrentCustomer();
+  async function checkAuth() {
+    const customer = await getCurrentCustomer();
 
     if (!customer) {
       // Redirigir a login si no está autenticado
@@ -281,8 +257,8 @@ const menuItems = [
   }
 
   // Cargar datos del usuario
-  function loadUserData() {
-    const customer = getCurrentCustomer();
+  async function loadUserData() {
+    const customer = await getCurrentCustomer();
 
     if (!customer) return;
 
@@ -315,6 +291,150 @@ const menuItems = [
     const profilePhone = document.getElementById('profile-phone');
     if (profilePhone) {
       profilePhone.textContent = customer.phone || 'No especificado';
+    }
+  }
+
+  // Función para formatear fecha
+  function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  }
+
+  // Función para obtener el color del estado
+  function getStatusColor(status: string): string {
+    const colors: Record<string, string> = {
+      'PENDING': 'bg-yellow-100 text-yellow-700',
+      'CONFIRMED': 'bg-blue-100 text-blue-700',
+      'PROCESSING': 'bg-indigo-100 text-indigo-700',
+      'SHIPPED': 'bg-purple-100 text-purple-700',
+      'DELIVERED': 'bg-green-100 text-green-700',
+      'CANCELLED': 'bg-red-100 text-red-700',
+      'REFUNDED': 'bg-gray-100 text-gray-700',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-700';
+  }
+
+  // Función para traducir el estado
+  function translateStatus(status: string): string {
+    const translations: Record<string, string> = {
+      'PENDING': 'Pendiente',
+      'CONFIRMED': 'Confirmado',
+      'PROCESSING': 'En Preparación',
+      'SHIPPED': 'Enviado',
+      'DELIVERED': 'Entregado',
+      'CANCELLED': 'Cancelado',
+      'REFUNDED': 'Reembolsado',
+    };
+    return translations[status] || status;
+  }
+
+  // Cargar pedidos recientes
+  async function loadRecentOrders() {
+    const customer = await getCurrentCustomer();
+    if (!customer) return;
+
+    const ordersLoading = document.getElementById('orders-loading');
+    const ordersEmpty = document.getElementById('orders-empty');
+    const ordersTable = document.getElementById('orders-table');
+    const ordersTbody = document.getElementById('orders-tbody');
+    const statTotal = document.getElementById('stat-total');
+    const statTransit = document.getElementById('stat-transit');
+
+    try {
+      const response = await fetch(`${API_URL}/customers/orders?email=${encodeURIComponent(customer.email)}`);
+
+      if (!response.ok) throw new Error('Error al cargar pedidos');
+
+      const orders: Order[] = await response.json();
+
+      // Actualizar estadísticas
+      if (statTotal) statTotal.textContent = orders.length.toString();
+      const inTransit = orders.filter(o => ['SHIPPED', 'PROCESSING'].includes(o.status)).length;
+      if (statTransit) statTransit.textContent = inTransit.toString();
+
+      ordersLoading?.classList.add('hidden');
+
+      if (orders.length === 0) {
+        ordersEmpty?.classList.remove('hidden');
+        return;
+      }
+
+      ordersTable?.classList.remove('hidden');
+
+      // Mostrar solo los 5 pedidos más recientes
+      const recentOrders = orders.slice(0, 5);
+
+      ordersTbody!.innerHTML = recentOrders.map(order => `
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-6 py-4 font-bold text-sm text-secondary">${order.orderNumber}</td>
+          <td class="px-6 py-4 text-sm text-gray-600">${formatDate(order.createdAt)}</td>
+          <td class="px-6 py-4">
+            <span class="px-2 py-1 text-xs font-bold rounded ${getStatusColor(order.status)}">
+              ${translateStatus(order.status)}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-sm font-bold text-secondary text-right">${parseFloat(order.total).toFixed(2)}€</td>
+          <td class="px-6 py-4">
+            <a href="/cuenta/pedidos" class="text-secondary hover:text-accent font-bold text-sm transition-colors underline hover:no-underline">
+              Ver detalles
+            </a>
+          </td>
+        </tr>
+      `).join('');
+
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      ordersLoading?.classList.add('hidden');
+      ordersEmpty?.classList.remove('hidden');
+      if (statTotal) statTotal.textContent = '0';
+      if (statTransit) statTransit.textContent = '0';
+    }
+  }
+
+  // Cargar dirección principal
+  async function loadMainAddress() {
+    const customer = await getCurrentCustomer();
+    if (!customer) return;
+
+    const addressLoading = document.getElementById('address-loading');
+    const addressEmpty = document.getElementById('address-empty');
+    const addressContent = document.getElementById('address-content');
+
+    try {
+      const response = await fetch(`${API_URL}/addresses?customerId=${customer.id}`);
+
+      if (!response.ok) throw new Error('Error al cargar direcciones');
+
+      const addresses: Address[] = await response.json();
+
+      addressLoading?.classList.add('hidden');
+
+      if (addresses.length === 0) {
+        addressEmpty?.classList.remove('hidden');
+        return;
+      }
+
+      // Buscar la dirección por defecto o usar la primera
+      const mainAddress = addresses.find(a => a.isDefault) || addresses[0];
+
+      addressContent?.classList.remove('hidden');
+
+      const addressName = document.getElementById('address-name');
+      const addressStreet = document.getElementById('address-street');
+      const addressCity = document.getElementById('address-city');
+
+      if (addressName) addressName.textContent = mainAddress.fullName;
+      if (addressStreet) addressStreet.textContent = mainAddress.street;
+      if (addressCity) addressCity.textContent = `${mainAddress.postalCode} ${mainAddress.city}${mainAddress.province ? `, ${mainAddress.province}` : ''}`;
+
+    } catch (error) {
+      console.error('Error loading address:', error);
+      addressLoading?.classList.add('hidden');
+      addressEmpty?.classList.remove('hidden');
     }
   }
 
@@ -408,6 +528,12 @@ const menuItems = [
     // Cargar datos del usuario
     loadUserData();
 
+    // Cargar pedidos recientes
+    loadRecentOrders();
+
+    // Cargar dirección principal
+    loadMainAddress();
+
     // Cargar wishlist
     loadWishlistPreview();
   });
@@ -424,16 +550,5 @@ const menuItems = [
     setTimeout(() => {
       window.location.href = '/';
     }, 500);
-  });
-
-  // Ver detalles del pedido
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName === 'BUTTON' && target.textContent?.trim() === 'Ver detalles') {
-      const orderId = target.closest('tr')?.querySelector('td:first-child')?.textContent;
-      if (orderId) {
-        window.location.href = `/cuenta/pedido/${orderId}`;
-      }
-    }
   });
 </script>

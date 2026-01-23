@@ -4,11 +4,13 @@ import { prisma } from '@/lib/prisma';
 // DELETE /api/wishlist/[id] - Eliminar producto de wishlist
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     await prisma.wishlistItem.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: 'Item removed from wishlist' });

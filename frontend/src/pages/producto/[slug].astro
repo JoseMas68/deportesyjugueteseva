@@ -4,7 +4,6 @@ export const prerender = false;
 import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
-import ProductCard from '@/components/ProductCard.astro';
 import ProductReviews from '@/components/ProductReviews.astro';
 import { getProductBySlug } from '@/lib/api';
 
@@ -35,7 +34,7 @@ const discountPercent = hasDiscount ? Math.round(((compareAtPrice - price) / com
 
 // Imagen principal
 const mainImage = product.thumbnailUrl || (product.images && product.images[0]) || '/placeholder.jpg';
-const productImages = product.images && product.images.length > 0 ? product.images : [mainImage];
+const productImages: string[] = product.images && product.images.length > 0 ? product.images : [mainImage];
 
 // Obtener rating real de las reseñas
 let rating = 0;
@@ -184,7 +183,7 @@ const stockStatus = product.stock > 0 ? (product.stock <= 5 ? `¡Solo ${product.
                 <div>
                   <h3 class="text-sm font-medium text-secondary mb-3">Talla</h3>
                   <div class="flex flex-wrap gap-2" id="size-options">
-                    {[...new Set(product.variants.filter((v: any) => v.size).map((v: any) => v.size))].map((size: string) => {
+                    {([...new Set(product.variants.filter((v: any) => v.size).map((v: any) => v.size))] as string[]).map((size) => {
                       const variantsWithSize = product.variants.filter((v: any) => v.size === size);
                       const totalStock = variantsWithSize.reduce((sum: number, v: any) => sum + v.stock, 0);
                       const isOutOfStock = totalStock === 0;

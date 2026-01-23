@@ -2,6 +2,49 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createMiddlewareClient } from '@/lib/supabase-middleware'
 
+// ============ RATE LIMITING ============
+// Rate limiter simple en memoria (para producción usar Redis)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
+
+// Configuración de rate limiting por ruta
+const RATE_LIMITS: Record<string, { requests: number; windowMs: number }> = {
+  '/api/customers/auth/login': { requests: 5, windowMs: 60000 }, // 5 intentos por minuto
+  '/api/customers/auth/register': { requests: 3, windowMs: 60000 }, // 3 registros por minuto
+  '/api/customers/auth/change-password': { requests: 3, windowMs: 60000 }, // 3 cambios por minuto
+  '/api/reviews': { requests: 10, windowMs: 60000 }, // 10 reviews por minuto
+}
+
+function getClientIP(request: NextRequest): string {
+  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+         request.headers.get('x-real-ip') ||
+         'unknown'
+}
+
+function checkRateLimit(key: string, limit: number, windowMs: number): boolean {
+  const now = Date.now()
+  const record = rateLimitMap.get(key)
+
+  // Limpiar entradas expiradas periódicamente
+  if (rateLimitMap.size > 10000) {
+    for (const [k, v] of rateLimitMap.entries()) {
+      if (now > v.resetTime) rateLimitMap.delete(k)
+    }
+  }
+
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(key, { count: 1, resetTime: now + windowMs })
+    return true
+  }
+
+  if (record.count >= limit) {
+    return false
+  }
+
+  record.count++
+  return true
+}
+
+// ============ RUTAS ============
 // Rutas publicas que no requieren autenticacion
 const publicRoutes = [
   '/api/products',
@@ -19,6 +62,28 @@ const adminRoutes = ['/admin', '/api/admin']
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // ============ RATE LIMITING ============
+  // Aplicar rate limiting a rutas sensibles
+  for (const [route, config] of Object.entries(RATE_LIMITS)) {
+    if (pathname.startsWith(route) && request.method === 'POST') {
+      const clientIP = getClientIP(request)
+      const key = `${clientIP}:${route}`
+
+      if (!checkRateLimit(key, config.requests, config.windowMs)) {
+        return NextResponse.json(
+          { error: 'Demasiadas solicitudes. Intenta de nuevo más tarde.' },
+          {
+            status: 429,
+            headers: {
+              'Retry-After': '60',
+            }
+          }
+        )
+      }
+    }
+  }
+
+  // ============ AUTENTICACIÓN ============
   // Permitir acceso a rutas publicas
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
   if (isPublicRoute) {

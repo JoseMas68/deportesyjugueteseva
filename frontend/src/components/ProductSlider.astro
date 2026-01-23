@@ -8,6 +8,7 @@ interface Props {
   linkUrl?: string;
   linkText?: string;
   sliderId?: string; // ID único para múltiples sliders en la misma página
+  accentColor?: 'primary' | 'accent'; // Color de acento (amarillo o rojo)
 }
 
 const {
@@ -15,16 +16,20 @@ const {
   products,
   linkUrl = '/deportes',
   linkText = 'Ver todo',
-  sliderId = 'slider-' + Math.random().toString(36).substr(2, 9)
+  sliderId = 'slider-' + Math.random().toString(36).substr(2, 9),
+  accentColor = 'primary'
 } = Astro.props;
+
+const lineColor = accentColor === 'accent' ? 'bg-accent' : 'bg-primary';
+const bulletActiveColor = accentColor === 'accent' ? 'accent-bullets' : '';
 ---
 
-<section class="py-16 bg-background-light">
+<section class="py-10 bg-background-light">
   <div class="container mx-auto px-4">
     <div class="flex justify-between items-end mb-8">
       <div>
         <h2 class="text-3xl font-display font-bold text-secondary">{title}</h2>
-        <div class="h-1 w-20 bg-primary mt-2"></div>
+        <div class={`h-1 w-20 ${lineColor} mt-2`}></div>
       </div>
       <div class="flex items-center gap-4">
         <a href={linkUrl} class="text-sm font-bold text-gray-500 hover:text-secondary transition flex items-center">
@@ -47,7 +52,7 @@ const {
     </div>
 
     {products.length > 0 ? (
-      <div class={`swiper productos-slider ${sliderId}`} data-slider-id={sliderId}>
+      <div class={`swiper productos-slider ${sliderId} ${bulletActiveColor}`} data-slider-id={sliderId}>
         <div class="swiper-wrapper">
           {products.map((producto) => (
             <div class="swiper-slide">
@@ -80,15 +85,18 @@ const {
       const sliderId = sliderEl.getAttribute('data-slider-id');
       if (!sliderId) return;
 
+      const slideCount = sliderEl.querySelectorAll('.swiper-slide').length;
+      const enableLoop = slideCount >= 6; // Solo loop si hay suficientes slides
+
       new Swiper(`.${sliderId}`, {
         modules: [Navigation, Pagination, Autoplay],
         slidesPerView: 1,
         spaceBetween: 20,
-        loop: true,
-        autoplay: {
+        loop: enableLoop,
+        autoplay: enableLoop ? {
           delay: 4000,
           disableOnInteraction: false,
-        },
+        } : false,
         pagination: {
           el: `.${sliderId}-pagination`,
           clickable: true,
@@ -98,17 +106,21 @@ const {
           prevEl: `.${sliderId}-prev`,
         },
         breakpoints: {
-          640: {
+          480: {
             slidesPerView: 2,
-            spaceBetween: 20,
+            spaceBetween: 12,
           },
-          768: {
+          640: {
             slidesPerView: 3,
-            spaceBetween: 24,
+            spaceBetween: 14,
           },
-          1024: {
+          900: {
             slidesPerView: 4,
-            spaceBetween: 24,
+            spaceBetween: 16,
+          },
+          1200: {
+            slidesPerView: 5,
+            spaceBetween: 16,
           },
         },
       });
@@ -133,17 +145,19 @@ const {
 
   /* Hover en las tarjetas */
   .productos-slider .swiper-slide > div {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
   }
 
   .productos-slider .swiper-slide:hover > div {
     transform: translateY(-8px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
   /* Paginación */
   .productos-slider .swiper-pagination {
-    bottom: -5px !important;
+    bottom: 0 !important;
+    position: relative;
+    margin-top: 24px;
   }
 
   .productos-slider .swiper-pagination-bullet {
@@ -159,5 +173,10 @@ const {
     opacity: 1;
     width: 24px;
     border-radius: 5px;
+  }
+
+  /* Variante con color accent (rojo) */
+  .productos-slider.accent-bullets .swiper-pagination-bullet-active {
+    background: #DC2626;
   }
 </style>

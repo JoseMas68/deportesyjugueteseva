@@ -5,7 +5,7 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import ProductCard from '@/components/ProductCard.astro';
-import { getProducts, getBrands } from '@/lib/api';
+import { getProducts, getBrands, type Product } from '@/lib/api';
 
 const categorySlug = Astro.params.category || 'deportes';
 
@@ -38,7 +38,7 @@ const limit = 12;
 const offset = (page - 1) * limit;
 
 // Obtener productos iniciales desde la API
-let products = [];
+let products: Product[] = [];
 let total = 0;
 
 try {
@@ -164,10 +164,46 @@ const productTypeList = isDeportes ? productTypeDeportes : isJuguetes ? productT
         <p class="text-gray-600 text-lg">Descubre nuestra selección de productos de {categoryName.toLowerCase()}</p>
       </div>
 
+      <!-- Botón de filtros móvil -->
+      <div class="lg:hidden mb-4">
+        <button
+          id="mobile-filters-btn"
+          class="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-3 text-secondary font-bold shadow-sm hover:shadow-md transition-shadow"
+        >
+          <i class="material-icons">filter_list</i>
+          Filtros
+          <span id="mobile-filter-count" class="hidden bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full ml-1">0</span>
+        </button>
+      </div>
+
+      <!-- Overlay móvil -->
+      <div id="mobile-filters-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden"></div>
+
+      <!-- Panel de filtros móvil (slide-in) -->
+      <div id="mobile-filters-panel" class="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-white z-50 transform -translate-x-full transition-transform duration-300 lg:hidden overflow-y-auto">
+        <div class="p-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
+          <h2 class="font-display font-bold text-lg">Filtros</h2>
+          <button id="close-mobile-filters" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <i class="material-icons">close</i>
+          </button>
+        </div>
+        <div class="p-4" id="mobile-filters-content">
+          <!-- Los filtros se clonan aquí via JS -->
+        </div>
+        <div class="p-4 border-t border-gray-200 sticky bottom-0 bg-white flex gap-3">
+          <button id="mobile-clear-filters" class="flex-1 py-3 border border-gray-300 rounded-lg font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+            Limpiar
+          </button>
+          <button id="mobile-apply-filters" class="flex-1 py-3 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
+            Ver resultados
+          </button>
+        </div>
+      </div>
+
       <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Sidebar de Filtros -->
-        <aside class="lg:w-64 flex-shrink-0">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
+        <!-- Sidebar de Filtros (solo desktop) -->
+        <aside class="hidden lg:block lg:w-64 flex-shrink-0">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24" id="desktop-filters">
             <div class="flex items-center justify-between mb-6">
               <h2 class="font-display font-bold text-lg">Filtros</h2>
               <button id="clear-filters" class="text-sm text-red-500 hover:text-red-700 hover:underline font-medium">Limpiar</button>
@@ -392,7 +428,7 @@ const productTypeList = isDeportes ? productTypeDeportes : isJuguetes ? productT
           <!-- Grid de Productos -->
           <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((product) => (
-              <div class="product-card-wrapper">
+              <div class="product-card-wrapper transition-all duration-300 hover:-translate-y-2 hover:shadow-lg rounded-xl">
                 <ProductCard product={product} />
               </div>
             ))}
@@ -1031,6 +1067,107 @@ const productTypeList = isDeportes ? productTypeDeportes : isJuguetes ? productT
 
     // Attach cart listeners a los productos ya renderizados por SSR
     attachCartListeners();
+
+    // Mobile filters panel
+    const mobileFiltersBtn = document.getElementById('mobile-filters-btn');
+    const mobileFiltersPanel = document.getElementById('mobile-filters-panel');
+    const mobileFiltersOverlay = document.getElementById('mobile-filters-overlay');
+    const closeMobileFilters = document.getElementById('close-mobile-filters');
+    const mobileApplyFilters = document.getElementById('mobile-apply-filters');
+    const mobileClearFilters = document.getElementById('mobile-clear-filters');
+    const mobileFiltersContent = document.getElementById('mobile-filters-content');
+    const mobileFilterCount = document.getElementById('mobile-filter-count');
+    const desktopFilters = document.getElementById('desktop-filters');
+
+    function openMobileFilters() {
+      mobileFiltersPanel?.classList.remove('-translate-x-full');
+      mobileFiltersOverlay?.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileFiltersPanel() {
+      mobileFiltersPanel?.classList.add('-translate-x-full');
+      mobileFiltersOverlay?.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function updateMobileFilterCount() {
+      const count = state.prices.length + state.brands.length + state.colors.length +
+                    state.sportTypes.length + state.productTypes.length +
+                    state.collectionTypes.length + (state.inStock ? 1 : 0);
+      if (mobileFilterCount) {
+        if (count > 0) {
+          mobileFilterCount.textContent = String(count);
+          mobileFilterCount.classList.remove('hidden');
+        } else {
+          mobileFilterCount.classList.add('hidden');
+        }
+      }
+    }
+
+    // Clone desktop filters to mobile panel
+    if (desktopFilters && mobileFiltersContent) {
+      // Clone all filter accordions
+      const filterAccordions = desktopFilters.querySelectorAll('.border.border-gray-200.rounded-lg');
+      filterAccordions.forEach(accordion => {
+        const clone = accordion.cloneNode(true) as HTMLElement;
+        // Update IDs to avoid conflicts
+        clone.querySelectorAll('[id]').forEach(el => {
+          el.id = 'mobile-' + el.id;
+        });
+        // Re-add accordion functionality
+        const btn = clone.querySelector('.filter-accordion-button');
+        btn?.addEventListener('click', () => {
+          btn.classList.toggle('collapsed');
+        });
+        // Sync checkboxes with desktop
+        clone.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+          const cb = checkbox as HTMLInputElement;
+          const filter = cb.dataset.filter;
+          const value = cb.dataset.value;
+          const min = cb.dataset.min;
+          const max = cb.dataset.max;
+
+          // Sync initial state
+          const desktopCb = desktopFilters.querySelector(
+            filter === 'price'
+              ? `[data-filter="price"][data-min="${min}"][data-max="${max}"]`
+              : `[data-filter="${filter}"][data-value="${value}"]`
+          ) as HTMLInputElement;
+          if (desktopCb) {
+            cb.checked = desktopCb.checked;
+          }
+
+          // Sync on change
+          cb.addEventListener('change', () => {
+            if (desktopCb) {
+              desktopCb.checked = cb.checked;
+              desktopCb.dispatchEvent(new Event('change'));
+            }
+            updateMobileFilterCount();
+          });
+        });
+        mobileFiltersContent.appendChild(clone);
+      });
+    }
+
+    mobileFiltersBtn?.addEventListener('click', openMobileFilters);
+    closeMobileFilters?.addEventListener('click', closeMobileFiltersPanel);
+    mobileFiltersOverlay?.addEventListener('click', closeMobileFiltersPanel);
+    mobileApplyFilters?.addEventListener('click', () => {
+      closeMobileFiltersPanel();
+      fetchProducts();
+      updateMobileFilterCount();
+    });
+    mobileClearFilters?.addEventListener('click', () => {
+      clearAllFilters();
+      // Also clear mobile checkboxes
+      mobileFiltersContent?.querySelectorAll('.filter-checkbox').forEach(cb => {
+        (cb as HTMLInputElement).checked = false;
+      });
+      updateMobileFilterCount();
+    });
+
   });
 </script>
 

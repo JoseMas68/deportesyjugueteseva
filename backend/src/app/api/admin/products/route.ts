@@ -27,6 +27,7 @@ const createProductSchema = z.object({
   compareAtPrice: z.number().positive().optional().nullable(),
   stock: z.number().int().min(0, 'El stock no puede ser negativo'),
   sku: z.string().optional(),
+  barcode: z.string().optional(), // Código de barras EAN-13
   categoryId: z.string().min(1, 'La categoria es obligatoria'),
   images: z.array(z.string()).default([]),
   thumbnailUrl: z.string().optional().nullable(),
@@ -178,6 +179,7 @@ export async function POST(request: NextRequest) {
         price: validated.price,
         compareAtPrice: validated.compareAtPrice,
         sku,
+        barcode: validated.barcode && validated.barcode.trim() ? validated.barcode.trim() : null,
         categoryId: validated.categoryId,
         images: validated.images,
         thumbnailUrl: validated.thumbnailUrl || validated.images[0] || null,

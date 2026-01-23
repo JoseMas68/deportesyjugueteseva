@@ -44,6 +44,7 @@ export default async function EditarProductoPage({ params }: PageProps) {
     compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
     stock: product.stock,
     sku: product.sku || '',
+    barcode: product.barcode || '',
     categoryId: product.categoryId,
     images: product.images,
     thumbnailUrl: product.thumbnailUrl,

@@ -109,8 +109,8 @@ const menuItems = [
   const emptyWishlist = document.getElementById('empty-wishlist');
 
   // Verificar autenticación
-  function checkAuth() {
-    const customer = getCurrentCustomer();
+  async function checkAuth() {
+    const customer = await getCurrentCustomer();
     if (!customer) {
       window.location.href = '/login';
       return false;
@@ -119,8 +119,8 @@ const menuItems = [
   }
 
   // Cargar datos del usuario en el sidebar
-  function loadUserData() {
-    const customer = getCurrentCustomer();
+  async function loadUserData() {
+    const customer = await getCurrentCustomer();
     if (!customer) return;
 
     const userName = document.getElementById('user-name');
@@ -254,10 +254,10 @@ const menuItems = [
   }
 
   // Al cargar la página
-  document.addEventListener('DOMContentLoaded', () => {
-    if (!checkAuth()) return;
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!(await checkAuth())) return;
 
-    loadUserData();
+    await loadUserData();
     renderWishlist();
 
     // Logout

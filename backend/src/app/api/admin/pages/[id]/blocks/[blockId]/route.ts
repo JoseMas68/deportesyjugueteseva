@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma, Prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { z } from 'zod';
+import type { InputJsonValue } from '@prisma/client/runtime/library';
 
 // Esquemas de configuración por tipo de bloque
 const heroConfigSchema = z.object({
@@ -119,7 +120,7 @@ export async function PUT(
       where: { id: blockId },
       data: {
         ...(validated.title !== undefined && { title: validated.title }),
-        ...(validated.config && { config: validatedConfig }),
+        ...(validated.config && { config: validatedConfig as InputJsonValue }),
         ...(validated.isActive !== undefined && { isActive: validated.isActive }),
       },
     });

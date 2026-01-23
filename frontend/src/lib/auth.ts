@@ -1,4 +1,4 @@
-// Gestión de autenticación de clientes
+// Gestión de autenticación de clientes con cookies httpOnly
 
 export interface Customer {
   id: string;
@@ -15,48 +15,93 @@ export interface Customer {
   createdAt: string;
 }
 
-const CUSTOMER_KEY = 'eva_customer';
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
+
+// Cache local de la sesión (solo para evitar llamadas repetidas en la misma carga de página)
+let cachedCustomer: Customer | null = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 60000; // 1 minuto
 
 /**
- * Obtiene el cliente actual del localStorage
+ * Obtiene el cliente actual desde el servidor (verifica la cookie de sesión)
  */
-export function getCurrentCustomer(): Customer | null {
+export async function getCurrentCustomer(): Promise<Customer | null> {
   if (typeof window === 'undefined') return null;
 
-  const customerData = localStorage.getItem(CUSTOMER_KEY);
-  return customerData ? JSON.parse(customerData) : null;
+  // Usar cache si es reciente
+  const now = Date.now();
+  if (cachedCustomer && (now - cacheTimestamp) < CACHE_DURATION) {
+    return cachedCustomer;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/customers/auth/session`, {
+      method: 'GET',
+      credentials: 'include', // Incluir cookies
+    });
+
+    if (!response.ok) {
+      cachedCustomer = null;
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.authenticated && data.customer) {
+      cachedCustomer = data.customer;
+      cacheTimestamp = now;
+      return data.customer;
+    }
+
+    cachedCustomer = null;
+    return null;
+  } catch (error) {
+    console.error('Error getting session:', error);
+    cachedCustomer = null;
+    return null;
+  }
 }
 
 /**
- * Guarda el cliente en localStorage
+ * Actualiza el cache local del cliente (llamar después de login/registro exitoso)
  */
-export function setCurrentCustomer(customer: Customer): void {
-  if (typeof window === 'undefined') return;
-
-  localStorage.setItem(CUSTOMER_KEY, JSON.stringify(customer));
+export function updateCustomerCache(customer: Customer): void {
+  cachedCustomer = customer;
+  cacheTimestamp = Date.now();
 
   // Disparar evento personalizado
-  window.dispatchEvent(new CustomEvent('customer-updated', { detail: customer }));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('customer-updated', { detail: customer }));
+  }
 }
 
 /**
- * Elimina el cliente del localStorage (logout)
+ * Limpia el cache local
  */
-export function clearCurrentCustomer(): void {
-  if (typeof window === 'undefined') return;
-
-  localStorage.removeItem(CUSTOMER_KEY);
+export function clearCustomerCache(): void {
+  cachedCustomer = null;
+  cacheTimestamp = 0;
 
   // Disparar evento
-  window.dispatchEvent(new CustomEvent('customer-logout'));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('customer-logout'));
+  }
 }
 
 /**
  * Verifica si hay un cliente autenticado
  */
-export function isAuthenticated(): boolean {
-  return getCurrentCustomer() !== null;
+export async function isAuthenticated(): Promise<boolean> {
+  const customer = await getCurrentCustomer();
+  return customer !== null;
+}
+
+/**
+ * Verifica autenticación de forma síncrona usando el cache
+ * (útil para renderizado inicial, pero puede estar desactualizado)
+ */
+export function isAuthenticatedSync(): boolean {
+  return cachedCustomer !== null;
 }
 
 /**
@@ -69,21 +114,26 @@ export async function register(data: {
   lastName: string;
   phone?: string;
   acceptsMarketing?: boolean;
-}): Promise<{ success: boolean; message?: string; customer?: Customer }> {
+}): Promise<{ success: boolean; message?: string; errors?: string[]; customer?: Customer }> {
   try {
     const response = await fetch(`${API_URL}/customers/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // Incluir cookies
       body: JSON.stringify(data),
     });
 
     const result = await response.json();
 
     if (response.ok) {
-      setCurrentCustomer(result.customer);
+      updateCustomerCache(result.customer);
       return { success: true, customer: result.customer };
     } else {
-      return { success: false, message: result.error || 'Error al registrar' };
+      return {
+        success: false,
+        message: result.error || 'Error al registrar',
+        errors: result.errors
+      };
     }
   } catch (error) {
     console.error('Register error:', error);
@@ -99,13 +149,14 @@ export async function login(email: string, password: string): Promise<{ success:
     const response = await fetch(`${API_URL}/customers/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // Incluir cookies
       body: JSON.stringify({ email, password }),
     });
 
     const result = await response.json();
 
     if (response.ok) {
-      setCurrentCustomer(result.customer);
+      updateCustomerCache(result.customer);
       return { success: true, customer: result.customer };
     } else {
       return { success: false, message: result.error || 'Error al iniciar sesión' };
@@ -117,10 +168,65 @@ export async function login(email: string, password: string): Promise<{ success:
 }
 
 /**
- * Cerrar sesión
+ * Cerrar sesión (llama al servidor para invalidar la cookie)
  */
-export function logout(): void {
-  clearCurrentCustomer();
+export async function logout(): Promise<void> {
+  try {
+    await fetch(`${API_URL}/customers/auth/logout`, {
+      method: 'POST',
+      credentials: 'include', // Incluir cookies
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+  } finally {
+    clearCustomerCache();
+  }
+}
+
+/**
+ * Cambiar contraseña
+ */
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message?: string; errors?: string[] }> {
+  try {
+    const response = await fetch(`${API_URL}/customers/auth/change-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // Incluir cookies
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      return { success: true, message: result.message };
+    } else {
+      return {
+        success: false,
+        message: result.error || 'Error al cambiar contraseña',
+        errors: result.errors
+      };
+    }
+  } catch (error) {
+    console.error('Change password error:', error);
+    return { success: false, message: 'Error de conexión' };
+  }
+}
+
+/**
+ * Refrescar sesión (extender expiración)
+ */
+export async function refreshSession(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_URL}/customers/auth/session`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.error('Refresh session error:', error);
+    return false;
+  }
 }
 
 /**
@@ -129,4 +235,11 @@ export function logout(): void {
 export function getCustomerFullName(customer: Customer | null): string {
   if (!customer) return '';
   return `${customer.firstName} ${customer.lastName}`;
+}
+
+/**
+ * Obtener cliente del cache (síncrono, puede ser null si no se ha cargado)
+ */
+export function getCachedCustomer(): Customer | null {
+  return cachedCustomer;
 }

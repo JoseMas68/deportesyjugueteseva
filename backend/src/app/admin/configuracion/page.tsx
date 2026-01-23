@@ -2,9 +2,17 @@ import { prisma } from '@/lib/prisma'
 import ConfigForm from '@/components/admin/ConfigForm'
 
 export default async function ConfiguracionPage() {
-  // Obtener configuracion actual
+  // Obtener configuracion actual (excluyendo configuración de Verifactu que se muestra en su propia sección)
   const [siteConfig, paymentMethods] = await Promise.all([
     prisma.siteConfig.findMany({
+      where: {
+        NOT: {
+          OR: [
+            { key: { startsWith: 'verifactu_' } },
+            { key: { startsWith: 'company_' } },
+          ],
+        },
+      },
       orderBy: [{ group: 'asc' }, { key: 'asc' }],
     }),
     prisma.paymentMethodConfig.findMany({

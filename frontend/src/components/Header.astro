@@ -299,8 +299,8 @@ const hobbies = [
   });
 
   // Actualizar UI según estado de autenticación
-  function updateUserMenu() {
-    const customer = getCurrentCustomer();
+  async function updateUserMenu() {
+    const customer = await getCurrentCustomer();
     const loginLink = document.getElementById('login-link');
     const accountLink = document.getElementById('account-link');
     const userName = document.getElementById('user-name');

@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
+
+// Esquema de validación para crear reseña
+const createReviewSchema = z.object({
+  productId: z.string().min(1, 'Product ID is required'),
+  customerId: z.string().optional(),
+  authorName: z.string().min(1, 'Author name is required').max(100).trim(),
+  authorEmail: z.string().email('Invalid email format'),
+  rating: z.number().int().min(1).max(5),
+  title: z.string().max(200).trim().optional(),
+  comment: z.string().min(10, 'Comment must be at least 10 characters').max(2000).trim(),
+  pros: z.string().max(500).trim().optional(),
+  cons: z.string().max(500).trim().optional(),
+  orderId: z.string().optional(),
+  images: z.array(z.string().url()).max(5).optional().default([]),
+});
 
 // GET /api/reviews?productId=xxx - Obtener reseñas de un producto
 export async function GET(request: NextRequest) {
@@ -94,6 +110,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+
+    // Validar con Zod
+    const validationResult = createReviewSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', errors: validationResult.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
     const {
       productId,
       customerId,
@@ -105,23 +131,8 @@ export async function POST(request: NextRequest) {
       pros,
       cons,
       orderId,
-      images = [],
-    } = body;
-
-    // Validaciones
-    if (!productId || !authorName || !authorEmail || !rating || !comment) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    if (rating < 1 || rating > 5) {
-      return NextResponse.json(
-        { error: 'Rating must be between 1 and 5' },
-        { status: 400 }
-      );
-    }
+      images,
+    } = validationResult.data;
 
     // Verificar si el producto existe
     const product = await prisma.product.findUnique({

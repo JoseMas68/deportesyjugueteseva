@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { setCustomerSessionCookie, validatePasswordStrength } from '@/lib/customer-session';
+
+// Número de salt rounds para bcrypt (12 es el recomendado para seguridad)
+const BCRYPT_SALT_ROUNDS = 12;
 
 // POST /api/customers/auth/register - Registrar nuevo cliente
 export async function POST(request: NextRequest) {
@@ -8,10 +12,43 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password, firstName, lastName, phone, acceptsMarketing } = body;
 
-    // Validaciones
+    // Validaciones básicas
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
         { error: 'Faltan campos requeridos' },
+        { status: 400 }
+      );
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'El formato del email no es válido' },
+        { status: 400 }
+      );
+    }
+
+    // Validar complejidad de la contraseña
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.valid) {
+      return NextResponse.json(
+        { error: passwordValidation.errors[0], errors: passwordValidation.errors },
+        { status: 400 }
+      );
+    }
+
+    // Validar longitud de nombres
+    if (firstName.length < 2 || firstName.length > 50) {
+      return NextResponse.json(
+        { error: 'El nombre debe tener entre 2 y 50 caracteres' },
+        { status: 400 }
+      );
+    }
+
+    if (lastName.length < 2 || lastName.length > 50) {
+      return NextResponse.json(
+        { error: 'El apellido debe tener entre 2 y 50 caracteres' },
         { status: 400 }
       );
     }
@@ -28,21 +65,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash de la contraseña
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash de la contraseña con salt rounds aumentado
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
-    // Crear el cliente (guardamos la contraseña en notas por simplicidad)
-    // En producción deberías usar Supabase Auth o similar
+    // Crear el cliente con contraseña hasheada
     const customer = await prisma.customer.create({
       data: {
         email: email.toLowerCase(),
-        firstName,
-        lastName,
-        phone: phone || null,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone: phone?.trim() || null,
         acceptsMarketing: acceptsMarketing || false,
         isActive: true,
-        // Guardamos el hash en notes temporalmente
-        notes: `password_hash:${hashedPassword}`,
+        passwordHash: hashedPassword,
       },
       select: {
         id: true,
@@ -55,6 +90,16 @@ export async function POST(request: NextRequest) {
         acceptsMarketing: true,
         createdAt: true,
       },
+    });
+
+    // Establecer cookie de sesión segura automáticamente al registrarse
+    await setCustomerSessionCookie({
+      id: customer.id,
+      email: customer.email,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      isVip: customer.isVip,
+      loyaltyPoints: customer.loyaltyPoints,
     });
 
     return NextResponse.json({

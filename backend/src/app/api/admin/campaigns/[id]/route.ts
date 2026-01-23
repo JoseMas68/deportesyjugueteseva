@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getAdminSession } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prisma, Prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
 interface RouteParams {
@@ -93,11 +93,17 @@ export async function PUT(
       )
     }
 
+    const { targetFilters, scheduledAt, ...rest } = validated
     const campaign = await prisma.emailCampaign.update({
       where: { id },
       data: {
-        ...validated,
-        scheduledAt: validated.scheduledAt ? new Date(validated.scheduledAt) : undefined,
+        ...rest,
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
+        targetFilters: targetFilters === null
+          ? Prisma.DbNull
+          : targetFilters === undefined
+            ? undefined
+            : targetFilters,
       },
     })
 

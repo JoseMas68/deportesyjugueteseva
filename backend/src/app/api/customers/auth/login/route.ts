@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { setCustomerSessionCookie } from '@/lib/customer-session';
 
 // POST /api/customers/auth/login - Iniciar sesión
 export async function POST(request: NextRequest) {
@@ -25,10 +26,14 @@ export async function POST(request: NextRequest) {
         firstName: true,
         lastName: true,
         phone: true,
+        gender: true,
+        taxId: true,
+        birthDate: true,
         isActive: true,
         isVip: true,
         loyaltyPoints: true,
-        notes: true,
+        passwordHash: true,
+        notes: true, // Para compatibilidad con cuentas antiguas
         acceptsMarketing: true,
         createdAt: true,
       },
@@ -41,8 +46,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar contraseña (extraer del campo notes)
-    const passwordHash = customer.notes?.split('password_hash:')[1] || '';
+    // Verificar contraseña - primero intentar con el campo dedicado, luego con notes (compatibilidad)
+    let passwordHash = customer.passwordHash;
+
+    // Compatibilidad con cuentas antiguas que tienen el hash en notes
+    if (!passwordHash && customer.notes) {
+      const notesMatch = customer.notes.match(/password_hash:(.+)/);
+      if (notesMatch) {
+        passwordHash = notesMatch[1];
+      }
+    }
 
     if (!passwordHash) {
       return NextResponse.json(
@@ -60,8 +73,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // No devolver el hash
-    const { notes, ...customerData } = customer;
+    // Actualizar lastLoginAt
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: { lastLoginAt: new Date() }
+    });
+
+    // Establecer cookie de sesión segura
+    await setCustomerSessionCookie({
+      id: customer.id,
+      email: customer.email,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      isVip: customer.isVip,
+      loyaltyPoints: customer.loyaltyPoints,
+    });
+
+    // No devolver el hash ni notes
+    const { passwordHash: _, notes, ...customerData } = customer;
 
     return NextResponse.json({
       message: 'Inicio de sesión exitoso',

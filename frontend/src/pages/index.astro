@@ -4,10 +4,10 @@ import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import ProductSlider from '@/components/ProductSlider.astro';
 import CategorySlider from '@/components/CategorySlider.astro';
-import { getProducts, getFeaturedCategories } from '@/lib/api';
+import { getProducts, getFeaturedCategories, type Product, type Category } from '@/lib/api';
 
 // Obtener categorías destacadas desde la API
-let categoriasDestacadas: Array<any> = [];
+let categoriasDestacadas: Category[] = [];
 try {
   const { categories } = await getFeaturedCategories();
   categoriasDestacadas = categories;
@@ -17,7 +17,7 @@ try {
 }
 
 // Obtener productos destacados desde la API
-let productosMasVendidos = [];
+let productosMasVendidos: Product[] = [];
 try {
   const { products } = await getProducts({
     featured: true,

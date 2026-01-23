@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
+
+// Esquema de validación para agregar a wishlist
+const addToWishlistSchema = z.object({
+  customerId: z.string().min(1, 'Customer ID is required'),
+  productId: z.string().min(1, 'Product ID is required'),
+});
 
 // GET /api/wishlist?customerId=xxx - Obtener wishlist de un cliente
 export async function GET(request: NextRequest) {
@@ -46,14 +53,17 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { customerId, productId } = body;
 
-    if (!customerId || !productId) {
+    // Validar con Zod
+    const validationResult = addToWishlistSchema.safeParse(body);
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Customer ID and Product ID are required' },
+        { error: 'Validation failed', errors: validationResult.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+
+    const { customerId, productId } = validationResult.data;
 
     // Verificar si el producto existe
     const product = await prisma.product.findUnique({

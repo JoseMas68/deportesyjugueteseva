@@ -292,8 +292,8 @@ const menuItems = [
   let editingAddressId: string | null = null;
 
   // Verificar autenticación
-  function checkAuth() {
-    const customer = getCurrentCustomer();
+  async function checkAuth() {
+    const customer = await getCurrentCustomer();
     if (!customer) {
       window.location.href = '/login';
       return false;
@@ -302,8 +302,8 @@ const menuItems = [
   }
 
   // Cargar datos del usuario en el sidebar
-  function loadUserData() {
-    const customer = getCurrentCustomer();
+  async function loadUserData() {
+    const customer = await getCurrentCustomer();
     if (!customer) return;
 
     const userName = document.getElementById('user-name');
@@ -320,7 +320,7 @@ const menuItems = [
 
   // Cargar direcciones
   async function loadAddresses() {
-    const customer = getCurrentCustomer();
+    const customer = await getCurrentCustomer();
     if (!customer) return;
 
     const loading = document.getElementById('loading');
@@ -456,11 +456,11 @@ const menuItems = [
   };
 
   // Al cargar la página
-  document.addEventListener('DOMContentLoaded', () => {
-    if (!checkAuth()) return;
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!(await checkAuth())) return;
 
-    loadUserData();
-    loadAddresses();
+    await loadUserData();
+    await loadAddresses();
 
     // Botones para abrir modal
     document.getElementById('add-address-btn')?.addEventListener('click', showModal);
@@ -485,7 +485,7 @@ const menuItems = [
     addressForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const customer = getCurrentCustomer();
+      const customer = await getCurrentCustomer();
       if (!customer) return;
 
       const formData = new FormData(addressForm);

@@ -1,0 +1,192 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+---
+
+<Layout title="Envíos y Devoluciones - Deportes y Juguetes Eva" description="Información sobre envíos, plazos de entrega y política de devoluciones">
+  <Header />
+
+  <main class="bg-background-light min-h-screen py-12">
+    <div class="container mx-auto px-4">
+      <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 md:p-12">
+        <h1 class="text-3xl md:text-4xl font-display font-bold text-secondary mb-8">Envíos y Devoluciones</h1>
+
+        <div class="prose prose-lg max-w-none text-gray-700">
+          <!-- ENVÍOS -->
+          <section class="mb-12">
+            <h2 class="text-2xl font-bold text-secondary mb-6 flex items-center gap-2">
+              <span class="material-icons text-primary">local_shipping</span>
+              Información de Envíos
+            </h2>
+
+            <h3 class="text-lg font-semibold text-secondary mt-6 mb-3">Zonas de envío</h3>
+            <p>Realizamos envíos a toda la península española y Baleares. Para Canarias, Ceuta y Melilla, consulte disponibilidad y tarifas especiales.</p>
+
+            <h3 class="text-lg font-semibold text-secondary mt-6 mb-3">Gastos de envío</h3>
+            <div class="overflow-x-auto mt-4">
+              <table class="min-w-full border border-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Destino</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Pedido &lt; 50€</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Pedido ≥ 50€</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-t">
+                    <td class="px-4 py-3 text-sm">Península</td>
+                    <td class="px-4 py-3 text-sm">4,95€</td>
+                    <td class="px-4 py-3 text-sm font-semibold text-green-600">GRATIS</td>
+                  </tr>
+                  <tr class="border-t">
+                    <td class="px-4 py-3 text-sm">Baleares</td>
+                    <td class="px-4 py-3 text-sm">7,95€</td>
+                    <td class="px-4 py-3 text-sm">4,95€</td>
+                  </tr>
+                  <tr class="border-t">
+                    <td class="px-4 py-3 text-sm">Canarias, Ceuta, Melilla</td>
+                    <td class="px-4 py-3 text-sm" colspan="2">Consultar</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 class="text-lg font-semibold text-secondary mt-6 mb-3">Plazos de entrega</h3>
+            <ul class="list-disc pl-6 space-y-2">
+              <li><strong>Península:</strong> 2-4 días laborables</li>
+              <li><strong>Baleares:</strong> 3-5 días laborables</li>
+              <li><strong>Canarias:</strong> 5-10 días laborables</li>
+            </ul>
+            <p class="mt-4 text-sm text-gray-500">* Los plazos son estimados y comienzan a contar desde la confirmación del pedido. Pueden variar en periodos de alta demanda (Navidad, rebajas, etc.).</p>
+
+            <h3 class="text-lg font-semibold text-secondary mt-6 mb-3">Seguimiento del pedido</h3>
+            <p>Una vez enviado su pedido, recibirá un email con el número de seguimiento para que pueda rastrear su paquete en tiempo real.</p>
+
+            <h3 class="text-lg font-semibold text-secondary mt-6 mb-3">Recogida en tienda</h3>
+            <p>También puede optar por recoger su pedido en nuestra tienda física sin gastos de envío:</p>
+            <div class="bg-gray-50 p-4 rounded-lg mt-4">
+              <p class="font-semibold">Deportes y Juguetes Eva</p>
+              <p>C/San Pascual 19</p>
+              <p>12540 Vila-Real (Castellón)</p>
+              <p class="mt-2">Tel: 694 521 238</p>
+            </div>
+          </section>
+
+          <!-- DEVOLUCIONES -->
+          <section class="mb-12">
+            <h2 class="text-2xl font-bold text-secondary mb-6 flex items-center gap-2">
+              <span class="material-icons text-primary">assignment_return</span>
+              Política de Devoluciones
+            </h2>
+
+            <h3 class="text-lg font-semibold text-secondary mt-6 mb-3">Plazo de devolución</h3>
+            <p>Dispone de <strong>14 días naturales</strong> desde la recepción del pedido para ejercer su derecho de desistimiento, sin necesidad de justificación.</p>
+
+            <h3 class="text-lg font-semibold text-secondary mt-6 mb-3">Condiciones para la devolución</h3>
+            <p>Para que la devolución sea aceptada, el producto debe:</p>
+            <ul class="list-disc pl-6 mt-4 space-y-2">
+              <li>Estar en su embalaje original y en perfecto estado.</li>
+              <li>No haber sido usado (salvo para comprobar su naturaleza, características y funcionamiento).</li>
+              <li>Incluir todos los accesorios, etiquetas y documentación original.</li>
+              <li>Acompañarse del ticket o factura de compra.</li>
+            </ul>
+
+            <h3 class="text-lg font-semibold text-secondary mt-6 mb-3">Productos excluidos</h3>
+            <p>No se admiten devoluciones en los siguientes casos:</p>
+            <ul class="list-disc pl-6 mt-4 space-y-2">
+              <li>Productos personalizados o grabados.</li>
+              <li>Productos precintados que hayan sido desprecintados (por razones de higiene).</li>
+              <li>Productos que se deterioren o caduquen con rapidez.</li>
+              <li>Ropa interior y bañadores (por razones de higiene).</li>
+            </ul>
+
+            <h3 class="text-lg font-semibold text-secondary mt-6 mb-3">Cómo realizar una devolución</h3>
+            <ol class="list-decimal pl-6 space-y-3 mt-4">
+              <li>
+                <strong>Contacte con nosotros:</strong> Llámenos al 694 521 238 o envíenos un email indicando su número de pedido y los productos que desea devolver.
+              </li>
+              <li>
+                <strong>Empaquete el producto:</strong> Utilice el embalaje original o uno similar que proteja adecuadamente el producto.
+              </li>
+              <li>
+                <strong>Envíe el paquete:</strong> Le indicaremos la dirección de devolución y las opciones de envío disponibles.
+              </li>
+              <li>
+                <strong>Reciba su reembolso:</strong> Una vez comprobado el estado del producto, procederemos al reembolso en un plazo máximo de 14 días.
+              </li>
+            </ol>
+
+            <h3 class="text-lg font-semibold text-secondary mt-6 mb-3">Gastos de devolución</h3>
+            <ul class="list-disc pl-6 mt-4 space-y-2">
+              <li><strong>Desistimiento:</strong> Los gastos de devolución corren a cargo del cliente.</li>
+              <li><strong>Producto defectuoso o error nuestro:</strong> Nosotros asumimos los gastos de devolución.</li>
+            </ul>
+
+            <h3 class="text-lg font-semibold text-secondary mt-6 mb-3">Reembolsos</h3>
+            <p>El reembolso se realizará utilizando el mismo método de pago empleado en la compra:</p>
+            <ul class="list-disc pl-6 mt-4 space-y-2">
+              <li><strong>Tarjeta:</strong> Abono en la misma tarjeta (3-10 días según entidad bancaria).</li>
+              <li><strong>PayPal:</strong> Abono en su cuenta PayPal (24-48 horas).</li>
+              <li><strong>Transferencia:</strong> Transferencia a su cuenta bancaria (3-5 días).</li>
+            </ul>
+          </section>
+
+          <!-- CAMBIOS -->
+          <section class="mb-12">
+            <h2 class="text-2xl font-bold text-secondary mb-6 flex items-center gap-2">
+              <span class="material-icons text-primary">swap_horiz</span>
+              Cambios de Producto
+            </h2>
+
+            <p>Si desea cambiar un producto por otra talla, color o modelo diferente:</p>
+            <ol class="list-decimal pl-6 space-y-3 mt-4">
+              <li>Contacte con nosotros indicando el cambio deseado.</li>
+              <li>Le indicaremos la disponibilidad y los pasos a seguir.</li>
+              <li>Si hay diferencia de precio, se abonará o reembolsará según corresponda.</li>
+            </ol>
+            <p class="mt-4">Para cambios en tienda, simplemente acuda con el producto y el ticket de compra.</p>
+          </section>
+
+          <!-- PRODUCTOS DEFECTUOSOS -->
+          <section class="mb-8">
+            <h2 class="text-2xl font-bold text-secondary mb-6 flex items-center gap-2">
+              <span class="material-icons text-primary">build</span>
+              Productos Defectuosos o Dañados
+            </h2>
+
+            <p>Si recibe un producto defectuoso o dañado:</p>
+            <ol class="list-decimal pl-6 space-y-3 mt-4">
+              <li>Contacte con nosotros en un plazo de 48 horas desde la recepción.</li>
+              <li>Envíenos fotos del producto y del embalaje si está dañado.</li>
+              <li>Le enviaremos un producto de sustitución o procederemos al reembolso, según prefiera.</li>
+              <li>Nosotros nos encargamos de recoger el producto defectuoso sin coste para usted.</li>
+            </ol>
+
+            <div class="bg-yellow-50 border-l-4 border-primary p-4 mt-6">
+              <p class="font-semibold text-secondary">Recuerde:</p>
+              <p class="mt-2">Todos nuestros productos tienen una garantía legal de 3 años. Si detecta cualquier defecto de fabricación durante este periodo, contacte con nosotros.</p>
+            </div>
+          </section>
+
+          <!-- CONTACTO -->
+          <section class="mb-8 bg-gray-50 rounded-lg p-6">
+            <h2 class="text-xl font-bold text-secondary mb-4">¿Tiene alguna duda?</h2>
+            <p>Estamos aquí para ayudarle:</p>
+            <div class="mt-4 space-y-2">
+              <p><strong>Teléfono:</strong> <a href="tel:+34694521238" class="text-primary hover:underline">694 521 238</a></p>
+              <p><strong>Dirección:</strong> C/San Pascual 19, 12540 Vila-Real (Castellón)</p>
+              <p><strong>Horario de atención:</strong> Lunes a Viernes de 10:00 a 13:30 y de 17:00 a 20:30, Sábados de 10:00 a 13:30</p>
+            </div>
+          </section>
+
+          <p class="text-sm text-gray-500 mt-8 pt-8 border-t">
+            Última actualización: Enero 2026
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>

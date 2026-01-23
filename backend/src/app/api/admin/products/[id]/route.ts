@@ -27,6 +27,7 @@ const updateProductSchema = z.object({
   compareAtPrice: z.number().positive().optional().nullable(),
   stock: z.number().int().min(0).optional(),
   sku: z.string().optional(),
+  barcode: z.string().optional(), // Código de barras EAN-13
   categoryId: z.string().optional(),
   images: z.array(z.string()).optional(),
   thumbnailUrl: z.string().optional().nullable(),

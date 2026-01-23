@@ -109,6 +109,7 @@ model Product {
   compareAtPrice   Decimal? @db.Decimal(10, 2) // Precio antes de descuento
   stock            Int      @default(0)
   sku              String?  @unique
+  barcode          String?  @unique // Código de barras EAN-13 del fabricante
 
   // Imágenes (URLs de Supabase Storage)
   images       String[]
@@ -155,6 +156,7 @@ model Product {
   @@index([categoryId])
   @@index([brandId])
   @@index([slug])
+  @@index([barcode])
   @@index([isActive])
   @@index([isFeatured])
   @@index([sportType])
@@ -175,9 +177,10 @@ model ProductVariant {
   material String? // Material: Algodón, Poliéster, etc.
 
   // Precio y stock de la variante
-  price Decimal? @db.Decimal(10, 2) // Si null, usa el precio del producto
-  stock Int      @default(0)
-  sku   String?  @unique
+  price   Decimal? @db.Decimal(10, 2) // Si null, usa el precio del producto
+  stock   Int      @default(0)
+  sku     String?  @unique
+  barcode String?  @unique // Código de barras EAN-13 (cada variante puede tener el suyo)
 
   // Imagen específica de esta variante
   imageUrl String?
@@ -189,6 +192,7 @@ model ProductVariant {
   @@index([productId])
   @@index([size])
   @@index([color])
+  @@index([barcode])
 }
 
 // ============ PEDIDOS ============
@@ -413,6 +417,7 @@ model Customer {
   totalOrders Int       @default(0)
   totalSpent  Decimal   @default(0) @db.Decimal(10, 2)
   lastOrderAt DateTime?
+  lastLoginAt DateTime? // Último inicio de sesión
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -879,4 +884,298 @@ model PageBlock {
   @@index([pageId])
   @@index([type])
   @@index([displayOrder])
+}
+
+// ============ TPV - PUNTO DE VENTA ============
+enum PosPaymentMethod {
+  CASH      // Efectivo
+  CARD      // Tarjeta
+  BIZUM     // Bizum
+  MIXED     // Pago mixto (efectivo + tarjeta)
+}
+
+enum PosSaleStatus {
+  COMPLETED   // Venta completada
+  REFUNDED    // Devuelta completamente
+  PARTIAL_REFUND // Devolución parcial
+  VOIDED      // Anulada (antes de cerrar caja)
+}
+
+// Sesión de caja (turno de trabajo)
+model PosCashSession {
+  id        String   @id @default(cuid())
+
+  // Usuario que abre la caja
+  adminId   String
+  adminName String
+
+  // Fondo inicial y cierre
+  openingAmount  Decimal   @db.Decimal(10, 2) // Fondo de caja al abrir
+  closingAmount  Decimal?  @db.Decimal(10, 2) // Total en caja al cerrar
+  expectedAmount Decimal?  @db.Decimal(10, 2) // Lo que debería haber (calculado)
+  difference     Decimal?  @db.Decimal(10, 2) // Diferencia (descuadre)
+
+  // Desglose del cierre
+  closingCash    Decimal?  @db.Decimal(10, 2)
+  closingCard    Decimal?  @db.Decimal(10, 2)
+  closingBizum   Decimal?  @db.Decimal(10, 2)
+
+  // Notas
+  openingNotes  String?  @db.Text
+  closingNotes  String?  @db.Text
+
+  // Timestamps
+  openedAt  DateTime  @default(now())
+  closedAt  DateTime?
+
+  // Ventas de esta sesión
+  sales PosSale[]
+
+  // Movimientos de caja (entradas/salidas de efectivo)
+  movements PosCashMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([adminId])
+  @@index([openedAt])
+  @@index([closedAt])
+}
+
+// Movimientos de caja (entradas/salidas que no son ventas)
+model PosCashMovement {
+  id        String @id @default(cuid())
+  sessionId String
+  session   PosCashSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  type      String  // 'in' (entrada) o 'out' (salida)
+  amount    Decimal @db.Decimal(10, 2)
+  reason    String  // "Cambio para caja", "Pago a proveedor", etc.
+
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([type])
+}
+
+// Venta en tienda física
+model PosSale {
+  id          String   @id @default(cuid())
+  saleNumber  String   @unique // TPV-20260119-0001
+
+  // Sesión de caja
+  sessionId   String
+  session     PosCashSession @relation(fields: [sessionId], references: [id])
+
+  // Items vendidos
+  items       PosSaleItem[]
+
+  // Totales
+  subtotal    Decimal  @db.Decimal(10, 2)
+  discount    Decimal  @default(0) @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+
+  // Pago
+  paymentMethod PosPaymentMethod
+  cashReceived  Decimal? @db.Decimal(10, 2) // Efectivo recibido
+  cashChange    Decimal? @db.Decimal(10, 2) // Cambio devuelto
+  cardAmount    Decimal? @db.Decimal(10, 2) // Parte pagada con tarjeta
+  bizumAmount   Decimal? @db.Decimal(10, 2) // Parte pagada con Bizum
+
+  // Cliente (opcional)
+  customerId    String?
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+
+  // Estado
+  status      PosSaleStatus @default(COMPLETED)
+
+  // Ticket impreso
+  ticketPrinted Boolean @default(false)
+
+  // Notas
+  notes String? @db.Text
+
+  // Devoluciones asociadas
+  refunds PosSaleRefund[]
+
+  // Registro Verifactu (si está habilitado)
+  verifactuRecord VerifactuRecord?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sessionId])
+  @@index([saleNumber])
+  @@index([status])
+  @@index([createdAt])
+  @@index([customerId])
+}
+
+// Items de una venta TPV
+model PosSaleItem {
+  id        String  @id @default(cuid())
+  saleId    String
+  sale      PosSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  // Producto
+  productId   String
+  variantId   String?
+
+  // Snapshot del producto (por si cambia)
+  productName    String
+  productBarcode String?
+  productSku     String?
+  variantInfo    String? // "Talla M, Color Azul"
+
+  // Cantidades y precios
+  quantity   Int
+  unitPrice  Decimal @db.Decimal(10, 2)
+  discount   Decimal @default(0) @db.Decimal(10, 2) // Descuento por item
+  totalPrice Decimal @db.Decimal(10, 2)
+
+  // Para devoluciones parciales
+  refundedQuantity Int @default(0)
+
+  @@index([saleId])
+  @@index([productId])
+}
+
+// Devoluciones
+model PosSaleRefund {
+  id        String  @id @default(cuid())
+  saleId    String
+  sale      PosSale @relation(fields: [saleId], references: [id])
+
+  // Número de devolución
+  refundNumber String @unique // DEV-20260119-0001
+
+  // Monto devuelto
+  amount    Decimal @db.Decimal(10, 2)
+
+  // Método de devolución
+  refundMethod String // 'cash', 'card', 'voucher' (vale de compra)
+
+  // Si genera vale de compra
+  voucherCode   String?
+  voucherAmount Decimal? @db.Decimal(10, 2)
+
+  // Razón
+  reason String? @db.Text
+
+  // Admin que procesa
+  processedBy String
+
+  createdAt DateTime @default(now())
+
+  @@index([saleId])
+  @@index([refundNumber])
+  @@index([voucherCode])
+}
+
+// Vales de compra (generados por devoluciones)
+model PosVoucher {
+  id          String   @id @default(cuid())
+  code        String   @unique // Vale-XXXX
+  amount      Decimal  @db.Decimal(10, 2)
+  usedAmount  Decimal  @default(0) @db.Decimal(10, 2)
+
+  // Origen
+  originRefundId String?
+
+  // Cliente
+  customerName  String?
+  customerPhone String?
+
+  // Validez
+  expiresAt DateTime?
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+}
+
+// ============ VERIFACTU - FACTURACIÓN ELECTRÓNICA AEAT ============
+enum VerifactuStatus {
+  PENDING     // Pendiente de envío
+  SUBMITTED   // Enviado a AEAT
+  ACCEPTED    // Aceptado por AEAT
+  REJECTED    // Rechazado por AEAT
+  CANCELLED   // Anulado
+}
+
+enum VerifactuInvoiceType {
+  F1  // Factura completa
+  F2  // Factura simplificada (ticket)
+  R1  // Factura rectificativa (por error fundado de derecho)
+  R2  // Factura rectificativa (por error en importe)
+  R3  // Factura rectificativa (por devolución)
+  R4  // Factura rectificativa (resto de casos)
+  R5  // Factura rectificativa (facturas simplificadas)
+}
+
+// Registro de facturación para Verifactu
+model VerifactuRecord {
+  id                String   @id @default(cuid())
+
+  // Identificación de la factura
+  invoiceNumber     String   @unique  // Serie + Número (TPV-20260119-0001)
+  invoiceDate       DateTime
+  invoiceType       VerifactuInvoiceType @default(F2)  // F2 = Simplificada (ticket)
+
+  // Datos del emisor
+  issuerNif         String
+  issuerName        String
+
+  // Datos del receptor (opcional para facturas simplificadas)
+  recipientNif      String?
+  recipientName     String?
+
+  // Importes
+  baseAmount        Decimal  @db.Decimal(10, 2)  // Base imponible
+  taxRate           Decimal  @db.Decimal(5, 2)   // Tipo IVA (21.00, 10.00, 4.00, 0.00)
+  taxAmount         Decimal  @db.Decimal(10, 2)  // Cuota de IVA
+  totalAmount       Decimal  @db.Decimal(10, 2)  // Total factura
+
+  // Encadenamiento de hash (clave de Verifactu)
+  previousHash      String?  // Hash del registro anterior (null si es el primero)
+  currentHash       String   // SHA-256 de este registro
+  hashInput         String   @db.Text  // Datos usados para generar el hash (para auditoría)
+
+  // Código QR
+  qrContent         String   @db.Text  // URL de verificación para el QR
+
+  // Estado de envío a AEAT
+  status            VerifactuStatus @default(PENDING)
+  aeatResponse      Json?    // Respuesta completa de AEAT
+  aeatErrorCode     String?  // Código de error si fue rechazado
+  aeatErrorMessage  String?  // Mensaje de error
+  submittedAt       DateTime?
+
+  // Relación con venta TPV (opcional, puede ser factura manual)
+  saleId            String?  @unique
+  sale              PosSale? @relation(fields: [saleId], references: [id])
+
+  // Contenido XML enviado a AEAT
+  xmlContent        String   @db.Text
+
+  // Para facturas rectificativas: referencia a la original
+  originalInvoiceId String?
+  originalInvoice   VerifactuRecord? @relation("RectificativeInvoices", fields: [originalInvoiceId], references: [id])
+  rectifications    VerifactuRecord[] @relation("RectificativeInvoices")
+
+  // Metadatos
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([invoiceNumber])
+  @@index([invoiceDate])
+  @@index([status])
+  @@index([issuerNif])
+  @@index([saleId])
+  @@index([createdAt])
 }

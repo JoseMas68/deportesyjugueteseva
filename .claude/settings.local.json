@@ -14,7 +14,9 @@
       "Bash(npm run build:*)",
       "Bash(npx prisma generate:*)",
       "Bash(npx prisma migrate dev:*)",
-      "Bash(npx prisma db push)"
+      "Bash(npx prisma db push)",
+      "Bash(npm install:*)",
+      "Bash(node update-bento.js:*)"
     ]
   }
 }
