@@ -1,11 +1,12 @@
 import type { NextConfig } from 'next'
 
 // Orígenes permitidos para CORS (frontend y desarrollo)
+// En producción, NEXT_PUBLIC_SITE_URL tiene prioridad
 const allowedOrigins = [
+  process.env.NEXT_PUBLIC_SITE_URL,
   'http://localhost:4321',
   'http://localhost:3000',
-  process.env.NEXT_PUBLIC_SITE_URL,
-].filter(Boolean)
+].filter(Boolean) as string[]
 
 const nextConfig: NextConfig = {
   images: {
