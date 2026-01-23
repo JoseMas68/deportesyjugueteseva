@@ -90,8 +90,8 @@ const bulletActiveColor = accentColor === 'accent' ? 'accent-bullets' : '';
 
       new Swiper(`.${sliderId}`, {
         modules: [Navigation, Pagination, Autoplay],
-        slidesPerView: 1,
-        spaceBetween: 20,
+        slidesPerView: 2,
+        spaceBetween: 10,
         loop: enableLoop,
         autoplay: enableLoop ? {
           delay: 4000,
@@ -106,11 +106,15 @@ const bulletActiveColor = accentColor === 'accent' ? 'accent-bullets' : '';
           prevEl: `.${sliderId}-prev`,
         },
         breakpoints: {
-          480: {
+          400: {
             slidesPerView: 2,
             spaceBetween: 12,
           },
-          640: {
+          540: {
+            slidesPerView: 3,
+            spaceBetween: 12,
+          },
+          768: {
             slidesPerView: 3,
             spaceBetween: 14,
           },
