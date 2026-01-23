@@ -5,7 +5,18 @@ import { prisma } from '@/lib/prisma'
 import { isFeatureEnabled, FEATURE_FLAGS } from '@/lib/features'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Inicialización lazy de Resend para evitar errores en build time
+let resendInstance: Resend | null = null
+
+function getResend(): Resend {
+  if (!resendInstance) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY is not configured')
+    }
+    resendInstance = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resendInstance
+}
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -111,7 +122,7 @@ export async function POST(
         const unsubscribeUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/unsubscribe?email=${encodeURIComponent(recipient.email)}`
         personalizedBody = personalizedBody.replace(/\{unsubscribe_url\}/g, unsubscribeUrl)
 
-        const result = await resend.emails.send({
+        const result = await getResend().emails.send({
           from: 'Deportes y Juguetes Eva <noreply@deportesyjugueteseva.com>',
           to: recipient.email,
           subject: campaign.subject,

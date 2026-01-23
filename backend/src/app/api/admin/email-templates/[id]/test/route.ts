@@ -4,7 +4,18 @@ import { getAdminSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Inicialización lazy de Resend para evitar errores en build time
+let resendInstance: Resend | null = null
+
+function getResend(): Resend {
+  if (!resendInstance) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY is not configured')
+    }
+    resendInstance = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resendInstance
+}
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -106,7 +117,7 @@ export async function POST(
     `
 
     // Enviar email
-    const result = await resend.emails.send({
+    const result = await getResend().emails.send({
       from: 'Deportes y Juguetes Eva <noreply@deportesyjugueteseva.com>',
       to: email,
       subject: `[TEST] ${subject}`,

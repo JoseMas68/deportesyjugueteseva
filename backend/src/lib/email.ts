@@ -5,7 +5,18 @@ import { EmailType, Order, OrderItem, Product } from '@prisma/client'
 // Re-exportar EmailType para uso en otros archivos
 export { EmailType }
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Inicialización lazy de Resend para evitar errores en build time
+let resendInstance: Resend | null = null
+
+function getResend(): Resend {
+  if (!resendInstance) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY is not configured')
+    }
+    resendInstance = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resendInstance
+}
 
 type OrderWithItems = Order & {
   items: (OrderItem & { product: Product })[]
@@ -36,7 +47,7 @@ export async function sendEmail(
     const html = replacePlaceholders(template.body, order)
 
     // 3. Enviar con Resend
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: 'Deportes y Juguetes Eva <noreply@deportesyjugueteseva.com>',
       to: recipientEmail,
       subject,
