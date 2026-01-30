@@ -9,7 +9,7 @@ const shippingMethods = [
   {
     id: 'pickup',
     name: 'Recogida en Tienda (Gratis)',
-    description: 'Recoge tu pedido en nuestra tienda de Carcaixent',
+    description: 'Recoge tu pedido en nuestra tienda de Vila-real',
     price: 0,
     recommended: true,
     isPickup: true
@@ -567,6 +567,153 @@ const storeAddress = {
   let currentPaymentMethod = 'CASH';
   let isPickup = true; // Recogida en tienda por defecto
   let cartItems: CartItem[] = [];
+  let savedAddresses: any[] = [];
+
+  // Cargar datos del cliente logueado
+  interface Customer {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone: string | null;
+  }
+
+  const getLoggedCustomer = (): Customer | null => {
+    try {
+      const data = localStorage.getItem('customer_data');
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const getToken = (): string | null => {
+    return localStorage.getItem('customer_token');
+  };
+
+  // Pre-rellenar formulario con datos del cliente
+  const prefillCustomerData = (customer: Customer) => {
+    const emailInput = document.getElementById('email') as HTMLInputElement;
+    const firstNameInput = document.getElementById('first-name') as HTMLInputElement;
+    const lastNameInput = document.getElementById('last-name') as HTMLInputElement;
+    const phoneInput = document.getElementById('phone') as HTMLInputElement;
+
+    if (emailInput && customer.email) emailInput.value = customer.email;
+    if (firstNameInput && customer.firstName) firstNameInput.value = customer.firstName;
+    if (lastNameInput && customer.lastName) lastNameInput.value = customer.lastName;
+    if (phoneInput && customer.phone) phoneInput.value = customer.phone;
+
+    // Ocultar link "Inicia Sesión" si ya está logueado
+    const loginLink = document.querySelector('a[href="/login"]');
+    if (loginLink) {
+      loginLink.textContent = `Hola, ${customer.firstName}`;
+      (loginLink as HTMLAnchorElement).href = '/cuenta';
+    }
+  };
+
+  // Cargar direcciones guardadas del cliente
+  const loadSavedAddresses = async (token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/customers/addresses`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        savedAddresses = data.addresses || [];
+        renderSavedAddresses();
+      }
+    } catch (error) {
+      console.error('Error loading addresses:', error);
+    }
+  };
+
+  // Renderizar selector de direcciones guardadas
+  const renderSavedAddresses = () => {
+    if (savedAddresses.length === 0) return;
+
+    const addressSection = document.getElementById('shipping-address-section');
+    if (!addressSection) return;
+
+    // Evitar duplicar el selector
+    if (document.getElementById('saved-addresses')) return;
+
+    // Crear selector de direcciones
+    const selectorHtml = `
+      <div id="saved-addresses" class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p class="text-sm font-bold text-blue-800 mb-3">
+          <i class="material-icons text-sm align-middle mr-1">bookmark</i>
+          Direcciones guardadas
+        </p>
+        <div class="space-y-2">
+          ${savedAddresses.map((addr, i) => `
+            <label class="saved-address-option flex items-start gap-3 p-3 bg-white rounded border border-gray-200 cursor-pointer hover:border-blue-400 transition-colors" data-index="${i}">
+              <input type="radio" name="saved-address" value="${i}" class="mt-1" ${addr.isDefault ? 'checked' : ''} />
+              <div class="flex-1 text-sm">
+                <p class="font-medium text-secondary">${addr.label || 'Dirección ' + (i + 1)}${addr.isDefault ? ' (Predeterminada)' : ''}</p>
+                <p class="text-gray-600">${addr.firstName} ${addr.lastName}</p>
+                <p class="text-gray-600">${addr.address}${addr.addressLine2 ? ', ' + addr.addressLine2 : ''}</p>
+                <p class="text-gray-600">${addr.postalCode} ${addr.city}${addr.province ? ', ' + addr.province : ''}</p>
+              </div>
+            </label>
+          `).join('')}
+          <label class="saved-address-option flex items-center gap-3 p-3 bg-white rounded border border-gray-200 cursor-pointer hover:border-blue-400 transition-colors">
+            <input type="radio" name="saved-address" value="new" class="mt-0" />
+            <span class="text-sm text-gray-600">Usar otra dirección</span>
+          </label>
+        </div>
+      </div>
+    `;
+
+    // Insertar después del título h2
+    const title = addressSection.querySelector('h2');
+    if (title) {
+      title.insertAdjacentHTML('afterend', selectorHtml);
+    } else {
+      addressSection.insertAdjacentHTML('afterbegin', selectorHtml);
+    }
+
+    // Manejar selección de direcciones
+    const addressOptions = document.querySelectorAll('.saved-address-option');
+    const manualFields = addressSection.querySelector('.grid') as HTMLElement;
+
+    // Función para aplicar dirección seleccionada
+    const applyAddress = (value: string) => {
+      if (value === 'new') {
+        manualFields?.classList.remove('hidden');
+        // Limpiar campos
+        (document.getElementById('address') as HTMLInputElement).value = '';
+        (document.getElementById('apartment') as HTMLInputElement).value = '';
+        (document.getElementById('city') as HTMLInputElement).value = '';
+        (document.getElementById('postal-code') as HTMLInputElement).value = '';
+        (document.getElementById('province') as HTMLInputElement).value = '';
+      } else {
+        manualFields?.classList.add('hidden');
+        // Pre-rellenar con la dirección seleccionada
+        const addr = savedAddresses[parseInt(value)];
+        (document.getElementById('address') as HTMLInputElement).value = addr.address;
+        (document.getElementById('apartment') as HTMLInputElement).value = addr.addressLine2 || '';
+        (document.getElementById('city') as HTMLInputElement).value = addr.city;
+        (document.getElementById('postal-code') as HTMLInputElement).value = addr.postalCode;
+        (document.getElementById('province') as HTMLInputElement).value = addr.province || '';
+      }
+    };
+
+    addressOptions.forEach(opt => {
+      opt.addEventListener('click', () => {
+        const radio = opt.querySelector('input[type="radio"]') as HTMLInputElement;
+        radio.checked = true;
+        applyAddress(radio.value);
+      });
+    });
+
+    // Si hay una dirección por defecto seleccionada, aplicarla
+    const defaultAddress = savedAddresses.findIndex(addr => addr.isDefault);
+    if (defaultAddress !== -1) {
+      applyAddress(String(defaultAddress));
+    }
+  };
 
   // Función para actualizar visibilidad de secciones según método de envío
   const updateShippingUI = (pickup: boolean) => {
@@ -665,6 +812,17 @@ const storeAddress = {
     cartItems = loadCart();
     renderCartItems(cartItems);
     updateTotals(cartItems, currentShippingCost, currentDiscountPercent);
+
+    // Pre-rellenar datos del cliente si está logueado
+    const customer = getLoggedCustomer();
+    if (customer) {
+      prefillCustomerData(customer);
+      // Cargar direcciones guardadas
+      const token = getToken();
+      if (token) {
+        loadSavedAddresses(token);
+      }
+    }
 
     // Inicializar UI (recogida en tienda por defecto)
     updateShippingUI(true);
