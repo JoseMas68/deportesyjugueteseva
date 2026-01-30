@@ -2,6 +2,24 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createMiddlewareClient } from '@/lib/supabase-middleware'
 
+// ============ CORS ============
+const allowedOrigins = [
+  process.env.NEXT_PUBLIC_SITE_URL,
+  'http://localhost:4321',
+  'http://localhost:3000',
+].filter(Boolean) as string[]
+
+function getCorsHeaders(origin: string | null) {
+  const allowedOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0]
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400',
+  }
+}
+
 // ============ RATE LIMITING ============
 // Rate limiter simple en memoria (para producción usar Redis)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
@@ -61,6 +79,16 @@ const adminRoutes = ['/admin', '/api/admin']
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const origin = request.headers.get('origin')
+
+  // ============ CORS PREFLIGHT ============
+  // Manejar solicitudes OPTIONS (preflight) para CORS
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, {
+      status: 204,
+      headers: getCorsHeaders(origin),
+    })
+  }
 
   // ============ RATE LIMITING ============
   // Aplicar rate limiting a rutas sensibles
@@ -87,6 +115,15 @@ export async function middleware(request: NextRequest) {
   // Permitir acceso a rutas publicas
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
   if (isPublicRoute) {
+    // Añadir headers CORS para rutas API públicas
+    if (pathname.startsWith('/api/')) {
+      const response = NextResponse.next()
+      const corsHeaders = getCorsHeaders(origin)
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        response.headers.set(key, value)
+      })
+      return response
+    }
     return NextResponse.next()
   }
 
@@ -108,10 +145,26 @@ export async function middleware(request: NextRequest) {
 
     // Usuario autenticado, permitir acceso
     // La verificacion de AdminUser se hace en el servidor (auth.ts)
+    // Añadir headers CORS para rutas API de admin
+    if (pathname.startsWith('/api/')) {
+      const corsHeaders = getCorsHeaders(origin)
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        response.headers.set(key, value)
+      })
+    }
     return response
   }
 
   // Otras rutas, permitir acceso
+  // Añadir headers CORS para rutas API
+  if (pathname.startsWith('/api/')) {
+    const response = NextResponse.next()
+    const corsHeaders = getCorsHeaders(origin)
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
+    return response
+  }
   return NextResponse.next()
 }
 
