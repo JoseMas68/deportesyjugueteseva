@@ -93,14 +93,20 @@ export async function POST(request: NextRequest) {
     });
 
     // Establecer cookie de sesión segura automáticamente al registrarse
-    await setCustomerSessionCookie({
-      id: customer.id,
-      email: customer.email,
-      firstName: customer.firstName,
-      lastName: customer.lastName,
-      isVip: customer.isVip,
-      loyaltyPoints: customer.loyaltyPoints,
-    });
+    // Envolvemos en try-catch para que un fallo de cookie no rompa el registro
+    try {
+      await setCustomerSessionCookie({
+        id: customer.id,
+        email: customer.email,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        isVip: customer.isVip,
+        loyaltyPoints: customer.loyaltyPoints,
+      });
+    } catch (cookieError) {
+      console.error('Error setting session cookie (non-fatal):', cookieError);
+      // No fallamos el registro si la cookie falla
+    }
 
     return NextResponse.json({
       message: 'Cuenta creada exitosamente',
@@ -108,8 +114,22 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (error) {
     console.error('Error creating customer:', error);
+
+    let errorMessage = 'Error al crear la cuenta';
+
+    if (error instanceof Error) {
+      console.error('Error details:', error.message, error.stack);
+
+      // Errores comunes de Prisma/DB
+      if (error.message.includes('connect') || error.message.includes('ECONNREFUSED')) {
+        errorMessage = 'Error de conexión con la base de datos';
+      } else if (error.message.includes('Unique constraint')) {
+        errorMessage = 'Este email ya está registrado';
+      }
+    }
+
     return NextResponse.json(
-      { error: 'Error al crear la cuenta' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

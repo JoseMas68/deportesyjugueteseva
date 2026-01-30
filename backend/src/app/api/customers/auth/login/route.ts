@@ -80,14 +80,18 @@ export async function POST(request: NextRequest) {
     });
 
     // Establecer cookie de sesión segura
-    await setCustomerSessionCookie({
-      id: customer.id,
-      email: customer.email,
-      firstName: customer.firstName,
-      lastName: customer.lastName,
-      isVip: customer.isVip,
-      loyaltyPoints: customer.loyaltyPoints,
-    });
+    try {
+      await setCustomerSessionCookie({
+        id: customer.id,
+        email: customer.email,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        isVip: customer.isVip,
+        loyaltyPoints: customer.loyaltyPoints,
+      });
+    } catch (cookieError) {
+      console.error('Error setting session cookie (non-fatal):', cookieError);
+    }
 
     // No devolver el hash ni notes
     const { passwordHash: _, notes, ...customerData } = customer;
@@ -98,6 +102,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error logging in:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', error.message, error.stack);
+    }
     return NextResponse.json(
       { error: 'Error al iniciar sesión' },
       { status: 500 }
