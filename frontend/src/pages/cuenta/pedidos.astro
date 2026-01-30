@@ -106,7 +106,7 @@ const menuItems = [
 </Layout>
 
 <script>
-  import { getCurrentCustomer, logout, getCustomerFullName } from '@/lib/auth';
+  import { getCurrentCustomer, logout, getCustomerFullName, getToken } from '@/lib/auth';
   import { toastError, toastInfo } from '@/lib/toast';
 
   const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
@@ -226,8 +226,11 @@ const menuItems = [
     const ordersList = document.getElementById('orders-list');
 
     try {
+      const token = getToken();
       const response = await fetch(`${API_URL}/customers/orders`, {
-        credentials: 'include', // Incluir cookie de sesión
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
       });
 
       if (!response.ok) {

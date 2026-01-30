@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { setCustomerSessionCookie, validatePasswordStrength } from '@/lib/customer-session';
+import { createSessionToken, validatePasswordStrength } from '@/lib/customer-session';
 
 // Número de salt rounds para bcrypt (12 es el recomendado para seguridad)
 const BCRYPT_SALT_ROUNDS = 12;
@@ -92,25 +92,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Establecer cookie de sesión segura automáticamente al registrarse
-    // Envolvemos en try-catch para que un fallo de cookie no rompa el registro
-    try {
-      await setCustomerSessionCookie({
-        id: customer.id,
-        email: customer.email,
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        isVip: customer.isVip,
-        loyaltyPoints: customer.loyaltyPoints,
-      });
-    } catch (cookieError) {
-      console.error('Error setting session cookie (non-fatal):', cookieError);
-      // No fallamos el registro si la cookie falla
-    }
+    // Crear token JWT para la sesión
+    const token = await createSessionToken({
+      id: customer.id,
+      email: customer.email,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      isVip: customer.isVip,
+      loyaltyPoints: customer.loyaltyPoints,
+    });
 
     return NextResponse.json({
       message: 'Cuenta creada exitosamente',
       customer,
+      token, // El frontend guardará esto en localStorage
     }, { status: 201 });
   } catch (error) {
     console.error('Error creating customer:', error);

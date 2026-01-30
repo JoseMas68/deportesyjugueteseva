@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { setCustomerSessionCookie } from '@/lib/customer-session';
+import { createSessionToken } from '@/lib/customer-session';
 
 // POST /api/customers/auth/login - Iniciar sesión
 export async function POST(request: NextRequest) {
@@ -79,19 +79,15 @@ export async function POST(request: NextRequest) {
       data: { lastLoginAt: new Date() }
     });
 
-    // Establecer cookie de sesión segura
-    try {
-      await setCustomerSessionCookie({
-        id: customer.id,
-        email: customer.email,
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        isVip: customer.isVip,
-        loyaltyPoints: customer.loyaltyPoints,
-      });
-    } catch (cookieError) {
-      console.error('Error setting session cookie (non-fatal):', cookieError);
-    }
+    // Crear token JWT para la sesión
+    const token = await createSessionToken({
+      id: customer.id,
+      email: customer.email,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      isVip: customer.isVip,
+      loyaltyPoints: customer.loyaltyPoints,
+    });
 
     // No devolver el hash ni notes
     const { passwordHash: _, notes, ...customerData } = customer;
@@ -99,6 +95,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: 'Inicio de sesión exitoso',
       customer: customerData,
+      token, // El frontend guardará esto en localStorage
     });
   } catch (error) {
     console.error('Error logging in:', error);

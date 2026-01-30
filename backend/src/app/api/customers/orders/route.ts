@@ -1,16 +1,27 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCustomerSession } from '@/lib/customer-session';
+import { verifySessionToken } from '@/lib/customer-session';
 
 // GET /api/customers/orders - Obtener pedidos del cliente autenticado
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Verificar sesión del cliente
-    const session = await getCustomerSession();
+    // Obtener token del header Authorization
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'No autenticado' },
+        { status: 401 }
+      );
+    }
+
+    // Verificar token
+    const session = await verifySessionToken(token);
 
     if (!session) {
       return NextResponse.json(
-        { error: 'No autenticado' },
+        { error: 'Token inválido' },
         { status: 401 }
       );
     }

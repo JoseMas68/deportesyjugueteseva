@@ -1,4 +1,4 @@
-// Gestión de autenticación de clientes con cookies httpOnly
+// Gestión de autenticación de clientes con JWT en localStorage
 
 export interface Customer {
   id: string;
@@ -16,76 +16,60 @@ export interface Customer {
 }
 
 const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
-
-// Cache local de la sesión (solo para evitar llamadas repetidas en la misma carga de página)
-let cachedCustomer: Customer | null = null;
-let cacheTimestamp = 0;
-const CACHE_DURATION = 60000; // 1 minuto
+const TOKEN_KEY = 'customer_token';
+const CUSTOMER_KEY = 'customer_data';
 
 /**
- * Obtiene el cliente actual desde el servidor (verifica la cookie de sesión)
+ * Guarda el token y datos del cliente en localStorage
+ */
+function saveSession(token: string, customer: Customer): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(CUSTOMER_KEY, JSON.stringify(customer));
+  window.dispatchEvent(new CustomEvent('customer-updated', { detail: customer }));
+}
+
+/**
+ * Obtiene el token de localStorage
+ */
+export function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+/**
+ * Obtiene el cliente actual desde localStorage
  */
 export async function getCurrentCustomer(): Promise<Customer | null> {
   if (typeof window === 'undefined') return null;
 
-  // Usar cache si es reciente
-  const now = Date.now();
-  if (cachedCustomer && (now - cacheTimestamp) < CACHE_DURATION) {
-    return cachedCustomer;
-  }
+  const customerData = localStorage.getItem(CUSTOMER_KEY);
+  if (!customerData) return null;
 
   try {
-    const response = await fetch(`${API_URL}/customers/auth/session`, {
-      method: 'GET',
-      credentials: 'include', // Incluir cookies
-    });
-
-    if (!response.ok) {
-      cachedCustomer = null;
-      return null;
-    }
-
-    const data = await response.json();
-
-    if (data.authenticated && data.customer) {
-      cachedCustomer = data.customer;
-      cacheTimestamp = now;
-      return data.customer;
-    }
-
-    cachedCustomer = null;
-    return null;
-  } catch (error) {
-    console.error('Error getting session:', error);
-    cachedCustomer = null;
+    return JSON.parse(customerData) as Customer;
+  } catch {
     return null;
   }
 }
 
 /**
- * Actualiza el cache local del cliente (llamar después de login/registro exitoso)
+ * Actualiza el cache local del cliente
  */
 export function updateCustomerCache(customer: Customer): void {
-  cachedCustomer = customer;
-  cacheTimestamp = Date.now();
-
-  // Disparar evento personalizado
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('customer-updated', { detail: customer }));
-  }
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(CUSTOMER_KEY, JSON.stringify(customer));
+  window.dispatchEvent(new CustomEvent('customer-updated', { detail: customer }));
 }
 
 /**
- * Limpia el cache local
+ * Limpia la sesión
  */
 export function clearCustomerCache(): void {
-  cachedCustomer = null;
-  cacheTimestamp = 0;
-
-  // Disparar evento
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('customer-logout'));
-  }
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(CUSTOMER_KEY);
+  window.dispatchEvent(new CustomEvent('customer-logout'));
 }
 
 /**
@@ -97,11 +81,11 @@ export async function isAuthenticated(): Promise<boolean> {
 }
 
 /**
- * Verifica autenticación de forma síncrona usando el cache
- * (útil para renderizado inicial, pero puede estar desactualizado)
+ * Verifica autenticación de forma síncrona
  */
 export function isAuthenticatedSync(): boolean {
-  return cachedCustomer !== null;
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(TOKEN_KEY) !== null;
 }
 
 /**
@@ -119,14 +103,13 @@ export async function register(data: {
     const response = await fetch(`${API_URL}/customers/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // Incluir cookies
       body: JSON.stringify(data),
     });
 
     const result = await response.json();
 
-    if (response.ok) {
-      updateCustomerCache(result.customer);
+    if (response.ok && result.token) {
+      saveSession(result.token, result.customer);
       return { success: true, customer: result.customer };
     } else {
       return {
@@ -149,14 +132,13 @@ export async function login(email: string, password: string): Promise<{ success:
     const response = await fetch(`${API_URL}/customers/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // Incluir cookies
       body: JSON.stringify({ email, password }),
     });
 
     const result = await response.json();
 
-    if (response.ok) {
-      updateCustomerCache(result.customer);
+    if (response.ok && result.token) {
+      saveSession(result.token, result.customer);
       return { success: true, customer: result.customer };
     } else {
       return { success: false, message: result.error || 'Error al iniciar sesión' };
@@ -168,19 +150,10 @@ export async function login(email: string, password: string): Promise<{ success:
 }
 
 /**
- * Cerrar sesión (llama al servidor para invalidar la cookie)
+ * Cerrar sesión
  */
 export async function logout(): Promise<void> {
-  try {
-    await fetch(`${API_URL}/customers/auth/logout`, {
-      method: 'POST',
-      credentials: 'include', // Incluir cookies
-    });
-  } catch (error) {
-    console.error('Logout error:', error);
-  } finally {
-    clearCustomerCache();
-  }
+  clearCustomerCache();
 }
 
 /**
@@ -188,10 +161,13 @@ export async function logout(): Promise<void> {
  */
 export async function changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message?: string; errors?: string[] }> {
   try {
+    const token = getToken();
     const response = await fetch(`${API_URL}/customers/auth/change-password`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // Incluir cookies
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({ currentPassword, newPassword }),
     });
 
@@ -213,23 +189,6 @@ export async function changePassword(currentPassword: string, newPassword: strin
 }
 
 /**
- * Refrescar sesión (extender expiración)
- */
-export async function refreshSession(): Promise<boolean> {
-  try {
-    const response = await fetch(`${API_URL}/customers/auth/session`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-
-    return response.ok;
-  } catch (error) {
-    console.error('Refresh session error:', error);
-    return false;
-  }
-}
-
-/**
  * Obtener nombre completo del cliente
  */
 export function getCustomerFullName(customer: Customer | null): string {
@@ -238,8 +197,28 @@ export function getCustomerFullName(customer: Customer | null): string {
 }
 
 /**
- * Obtener cliente del cache (síncrono, puede ser null si no se ha cargado)
+ * Obtener cliente del cache (síncrono)
  */
 export function getCachedCustomer(): Customer | null {
-  return cachedCustomer;
+  if (typeof window === 'undefined') return null;
+  const data = localStorage.getItem(CUSTOMER_KEY);
+  if (!data) return null;
+  try {
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Hacer petición autenticada (añade el token automáticamente)
+ */
+export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+  const token = getToken();
+  const headers = {
+    ...options.headers,
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  };
+
+  return fetch(url, { ...options, headers });
 }
