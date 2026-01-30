@@ -442,7 +442,7 @@ const storeAddress = {
     totalPrice: number;
   }
 
-  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 
   // Dirección de la tienda para recogida
   const storeAddress = {
@@ -739,7 +739,7 @@ const storeAddress = {
       if (!code) return;
 
       try {
-        const response = await fetch(`${API_URL}/api/coupons/validate`, {
+        const response = await fetch(`${API_URL}/coupons/validate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code })
@@ -840,7 +840,7 @@ const storeAddress = {
         };
 
         // Llamar al API
-        const response = await fetch(`${API_URL}/api/checkout`, {
+        const response = await fetch(`${API_URL}/checkout`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(orderData)
