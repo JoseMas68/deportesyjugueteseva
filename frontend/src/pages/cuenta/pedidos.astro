@@ -255,94 +255,44 @@ const menuItems = [
       // Renderizar pedidos
       ordersList!.innerHTML = orders.map(order => {
         const total = parseFloat(order.total);
-        const subtotal = parseFloat(order.subtotal);
-        const shippingCost = parseFloat(order.shippingCost);
-        const discount = parseFloat(order.discount);
 
         return `
-        <div class="border border-gray-200 rounded-lg overflow-hidden">
-          <!-- Cabecera del pedido -->
-          <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h3 class="font-bold text-secondary">${order.orderNumber}</h3>
-                <p class="text-sm text-gray-600">Realizado el ${formatDate(order.createdAt)}</p>
-                <p class="text-xs text-gray-500 mt-1">${translatePaymentMethod(order.paymentMethod)}</p>
-              </div>
-              <div class="flex items-center gap-4">
-                <span class="px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(order.status)}">
-                  ${translateStatus(order.status)}
-                </span>
-                <span class="text-lg font-bold text-secondary">${total.toFixed(2)}€</span>
-              </div>
+        <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-shadow">
+          <!-- Cabecera compacta -->
+          <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-2 bg-gray-50 border-b border-gray-200">
+            <div class="flex items-center gap-3">
+              <span class="font-bold text-secondary text-sm">${order.orderNumber}</span>
+              <span class="text-xs text-gray-500">${formatDate(order.createdAt)}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.status)}">
+                ${translateStatus(order.status)}
+              </span>
+              <span class="font-bold text-secondary">${total.toFixed(2)}€</span>
             </div>
           </div>
 
-          <!-- Items del pedido -->
-          <div class="p-6 space-y-4">
-            ${order.items.map(item => {
-              const itemTotal = parseFloat(String(item.totalPrice));
-              const itemUnit = parseFloat(String(item.unitPrice));
-              return `
-              <div class="flex gap-4">
-                <div class="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                  ${item.productImage
-                    ? `<img src="${item.productImage}" alt="${item.productName}" class="w-full h-full object-cover" />`
-                    : `<div class="w-full h-full flex items-center justify-center"><i class="material-icons text-gray-400">image</i></div>`
-                  }
+          <!-- Items compactos -->
+          <div class="px-4 py-3">
+            <div class="flex flex-wrap gap-2">
+              ${order.items.slice(0, 4).map(item => `
+                <div class="flex items-center gap-2 bg-gray-50 rounded px-2 py-1">
+                  <div class="w-8 h-8 bg-white rounded overflow-hidden flex-shrink-0 border border-gray-200">
+                    ${item.productImage
+                      ? `<img src="${item.productImage}" alt="" class="w-full h-full object-cover" />`
+                      : `<div class="w-full h-full flex items-center justify-center"><i class="material-icons text-gray-300 text-sm">image</i></div>`
+                    }
+                  </div>
+                  <span class="text-xs text-gray-700 max-w-[120px] truncate">${item.productName}</span>
+                  <span class="text-xs text-gray-500">x${item.quantity}</span>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <h4 class="font-medium text-secondary truncate">${item.productName}</h4>
-                  ${item.variantSize || item.variantColor ? `
-                    <p class="text-sm text-gray-600">
-                      ${item.variantSize ? `Talla: ${item.variantSize}` : ''}
-                      ${item.variantSize && item.variantColor ? ' • ' : ''}
-                      ${item.variantColor ? `Color: ${item.variantColor}` : ''}
-                    </p>
-                  ` : ''}
-                  <p class="text-sm text-gray-600">Cantidad: ${item.quantity}</p>
-                </div>
-                <div class="text-right">
-                  <p class="font-bold text-secondary">${itemTotal.toFixed(2)}€</p>
-                  <p class="text-sm text-gray-600">${itemUnit.toFixed(2)}€ c/u</p>
-                </div>
-              </div>
-            `}).join('')}
-
-            <!-- Resumen de precios -->
-            <div class="border-t border-gray-200 pt-4 mt-4 space-y-2 text-sm">
-              <div class="flex justify-between text-gray-600">
-                <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}€</span>
-              </div>
-              ${shippingCost > 0 ? `
-              <div class="flex justify-between text-gray-600">
-                <span>Envío</span>
-                <span>${shippingCost.toFixed(2)}€</span>
-              </div>
-              ` : `
-              <div class="flex justify-between text-green-600">
-                <span>Envío</span>
-                <span>Gratis</span>
-              </div>
-              `}
-              ${discount > 0 ? `
-              <div class="flex justify-between text-green-600">
-                <span>Descuento</span>
-                <span>-${discount.toFixed(2)}€</span>
-              </div>
-              ` : ''}
-              <div class="flex justify-between font-bold text-secondary text-base pt-2 border-t border-gray-100">
-                <span>Total</span>
-                <span>${total.toFixed(2)}€</span>
-              </div>
+              `).join('')}
+              ${order.items.length > 4 ? `<span class="text-xs text-gray-500 self-center">+${order.items.length - 4} más</span>` : ''}
             </div>
-          </div>
-
-          <!-- Información de envío -->
-          <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-            <p class="text-sm font-medium text-gray-700 mb-1">Dirección de envío:</p>
-            <p class="text-sm text-gray-600">${order.shippingAddress}, ${order.shippingPostalCode} ${order.shippingCity}${order.shippingProvince ? `, ${order.shippingProvince}` : ''}</p>
+            <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
+              <span><i class="material-icons text-xs align-middle">location_on</i> ${order.shippingCity}</span>
+              <span>${translatePaymentMethod(order.paymentMethod)}</span>
+            </div>
           </div>
         </div>
       `}).join('');
