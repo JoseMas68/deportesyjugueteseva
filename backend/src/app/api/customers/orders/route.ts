@@ -1,22 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getCustomerSession } from '@/lib/customer-session';
 
-// GET /api/customers/orders?email=xxx - Obtener pedidos de un cliente
-export async function GET(request: NextRequest) {
+// GET /api/customers/orders - Obtener pedidos del cliente autenticado
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const email = searchParams.get('email');
+    // Verificar sesión del cliente
+    const session = await getCustomerSession();
 
-    if (!email) {
+    if (!session) {
       return NextResponse.json(
-        { error: 'Email is required' },
-        { status: 400 }
+        { error: 'No autenticado' },
+        { status: 401 }
       );
     }
 
     const orders = await prisma.order.findMany({
       where: {
-        userEmail: email.toLowerCase(),
+        userEmail: session.email.toLowerCase(),
       },
       include: {
         items: {

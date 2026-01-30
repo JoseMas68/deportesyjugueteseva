@@ -109,7 +109,7 @@ const menuItems = [
   import { getCurrentCustomer, logout, getCustomerFullName } from '@/lib/auth';
   import { toastError, toastInfo } from '@/lib/toast';
 
-  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 
   interface OrderItem {
     id: string;
@@ -221,17 +221,22 @@ const menuItems = [
 
   // Cargar pedidos
   async function loadOrders() {
-    const customer = await getCurrentCustomer();
-    if (!customer) return;
-
     const loading = document.getElementById('loading');
     const noOrders = document.getElementById('no-orders');
     const ordersList = document.getElementById('orders-list');
 
     try {
-      const response = await fetch(`${API_URL}/customers/orders?email=${encodeURIComponent(customer.email)}`);
+      const response = await fetch(`${API_URL}/customers/orders`, {
+        credentials: 'include', // Incluir cookie de sesión
+      });
 
-      if (!response.ok) throw new Error('Error al cargar pedidos');
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        throw new Error('Error al cargar pedidos');
+      }
 
       const orders: Order[] = await response.json();
 

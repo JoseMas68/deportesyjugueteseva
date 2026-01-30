@@ -400,7 +400,7 @@ npm run dev
 5. ✅ ~~**Filtros de Productos**~~ - COMPLETADO (multiselección con checkboxes, transiciones suaves)
 6. ✅ ~~**Panel de Cliente**~~ - COMPLETADO (cuenta, perfil, direcciones, favoritos)
 7. ❌ **Checkout Real**: Integrar con Stripe y API de pedidos
-8. ❌ **Pedidos Reales**: Conectar panel de cliente con API de pedidos del backend
+8. ✅ **Pedidos Reales**: Conectar panel de cliente con API de pedidos del backend - COMPLETADO
 
 ### Integraciones Pendientes
 - Stripe Payment Intent real (actualmente simulado en API)
