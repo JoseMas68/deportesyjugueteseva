@@ -252,50 +252,94 @@ const menuItems = [
 
       ordersList?.classList.remove('hidden');
 
-      // Renderizar pedidos
-      ordersList!.innerHTML = orders.map(order => {
+      // Renderizar pedidos tipo acordeón
+      ordersList!.innerHTML = orders.map((order, index) => {
         const total = parseFloat(order.total);
+        const subtotal = parseFloat(order.subtotal);
+        const shippingCost = parseFloat(order.shippingCost);
 
         return `
-        <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-shadow">
-          <!-- Cabecera compacta -->
-          <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-2 bg-gray-50 border-b border-gray-200">
-            <div class="flex items-center gap-3">
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
+          <!-- Cabecera clickeable -->
+          <button
+            class="order-accordion-btn w-full px-4 py-3 flex items-center justify-between gap-2 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+            data-order-id="${order.id}"
+          >
+            <div class="flex items-center gap-3 flex-wrap">
               <span class="font-bold text-secondary text-sm">${order.orderNumber}</span>
-              <span class="text-xs text-gray-500">${formatDate(order.createdAt)}</span>
-            </div>
-            <div class="flex items-center gap-2">
               <span class="px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.status)}">
                 ${translateStatus(order.status)}
               </span>
-              <span class="font-bold text-secondary">${total.toFixed(2)}€</span>
             </div>
-          </div>
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-gray-500">${formatDate(order.createdAt)}</span>
+              <span class="font-bold text-secondary">${total.toFixed(2)}€</span>
+              <i class="material-icons text-gray-400 text-sm order-chevron transition-transform">expand_more</i>
+            </div>
+          </button>
 
-          <!-- Items compactos -->
-          <div class="px-4 py-3">
-            <div class="flex flex-wrap gap-2">
-              ${order.items.slice(0, 4).map(item => `
-                <div class="flex items-center gap-2 bg-gray-50 rounded px-2 py-1">
-                  <div class="w-8 h-8 bg-white rounded overflow-hidden flex-shrink-0 border border-gray-200">
+          <!-- Contenido expandible -->
+          <div class="order-accordion-content hidden" data-order-id="${order.id}">
+            <!-- Productos -->
+            <div class="px-4 py-3 border-t border-gray-100 space-y-2">
+              ${order.items.map(item => {
+                const itemTotal = parseFloat(String(item.totalPrice));
+                return `
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                     ${item.productImage
                       ? `<img src="${item.productImage}" alt="" class="w-full h-full object-cover" />`
                       : `<div class="w-full h-full flex items-center justify-center"><i class="material-icons text-gray-300 text-sm">image</i></div>`
                     }
                   </div>
-                  <span class="text-xs text-gray-700 max-w-[120px] truncate">${item.productName}</span>
-                  <span class="text-xs text-gray-500">x${item.quantity}</span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-800 truncate">${item.productName}</p>
+                    <p class="text-xs text-gray-500">Cant: ${item.quantity}</p>
+                  </div>
+                  <span class="text-sm font-medium text-secondary">${itemTotal.toFixed(2)}€</span>
                 </div>
-              `).join('')}
-              ${order.items.length > 4 ? `<span class="text-xs text-gray-500 self-center">+${order.items.length - 4} más</span>` : ''}
+              `}).join('')}
             </div>
-            <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
-              <span><i class="material-icons text-xs align-middle">location_on</i> ${order.shippingCity}</span>
-              <span>${translatePaymentMethod(order.paymentMethod)}</span>
+
+            <!-- Totales -->
+            <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-sm">
+              <div class="flex justify-between text-gray-600 mb-1">
+                <span>Subtotal</span>
+                <span>${subtotal.toFixed(2)}€</span>
+              </div>
+              <div class="flex justify-between text-gray-600 mb-1">
+                <span>Envío</span>
+                <span>${shippingCost > 0 ? shippingCost.toFixed(2) + '€' : 'Gratis'}</span>
+              </div>
+              <div class="flex justify-between font-bold text-secondary pt-1 border-t border-gray-200">
+                <span>Total</span>
+                <span>${total.toFixed(2)}€</span>
+              </div>
+              <div class="mt-2 pt-2 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
+                <span><i class="material-icons text-xs align-middle">location_on</i> ${order.shippingAddress}, ${order.shippingCity}</span>
+                <span>${translatePaymentMethod(order.paymentMethod)}</span>
+              </div>
             </div>
           </div>
         </div>
       `}).join('');
+
+      // Añadir event listeners para acordeón
+      document.querySelectorAll('.order-accordion-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const orderId = (btn as HTMLElement).dataset.orderId;
+          const content = document.querySelector(`.order-accordion-content[data-order-id="${orderId}"]`);
+          const chevron = btn.querySelector('.order-chevron');
+
+          if (content?.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            chevron?.classList.add('rotate-180');
+          } else {
+            content?.classList.add('hidden');
+            chevron?.classList.remove('rotate-180');
+          }
+        });
+      });
 
     } catch (error) {
       console.error('Error loading orders:', error);
