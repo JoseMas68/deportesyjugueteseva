@@ -7,20 +7,55 @@ import Footer from '@/components/Footer.astro';
 
 const shippingMethods = [
   {
-    id: 'express',
-    name: 'Envío Express (24h)',
-    description: 'Recíbelo mañana',
-    price: 5.90,
-    recommended: true
+    id: 'pickup',
+    name: 'Recogida en Tienda (Gratis)',
+    description: 'Recoge tu pedido en nuestra tienda de Carcaixent',
+    price: 0,
+    recommended: true,
+    isPickup: true
   },
   {
     id: 'standard',
     name: 'Envío Estándar (3-5 días)',
     description: 'Entrega en 3-5 días laborables',
-    price: 0,
-    recommended: false
+    price: 4.99,
+    recommended: false,
+    isPickup: false
+  },
+  {
+    id: 'express',
+    name: 'Envío Express (24-48h)',
+    description: 'Recíbelo en 1-2 días',
+    price: 7.90,
+    recommended: false,
+    isPickup: false
   }
 ];
+
+const paymentMethods = [
+  {
+    id: 'CASH',
+    name: 'Pago en Tienda',
+    description: 'Paga cuando recojas tu pedido',
+    icon: 'store',
+    forPickupOnly: true
+  },
+  {
+    id: 'TRANSFER',
+    name: 'Transferencia Bancaria',
+    description: 'Te enviaremos los datos por email',
+    icon: 'account_balance',
+    forPickupOnly: false
+  }
+];
+
+const storeAddress = {
+  address: 'Avda. Germanies, 39',
+  city: 'Carcaixent',
+  postalCode: '46740',
+  province: 'Valencia',
+  country: 'España'
+};
 ---
 
 <Layout title="Checkout - Deportes y Juguetes Eva" description="Finaliza tu compra">
@@ -104,8 +139,8 @@ const shippingMethods = [
               </div>
             </section>
 
-            <!-- Dirección de Envío -->
-            <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <!-- Dirección de Envío (se oculta si es recogida en tienda) -->
+            <section id="shipping-address-section" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hidden">
               <h2 class="text-xl font-display font-bold text-secondary mb-6">Dirección de Envío</h2>
 
               <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
@@ -136,7 +171,6 @@ const shippingMethods = [
                     id="address"
                     placeholder="Calle, número, piso..."
                     type="text"
-                    required
                   />
                 </div>
 
@@ -155,7 +189,6 @@ const shippingMethods = [
                     class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-3"
                     id="city"
                     type="text"
-                    required
                   />
                 </div>
 
@@ -165,7 +198,6 @@ const shippingMethods = [
                     class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-3"
                     id="postal-code"
                     type="text"
-                    required
                   />
                 </div>
 
@@ -175,7 +207,6 @@ const shippingMethods = [
                     class="block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm py-3"
                     id="province"
                     type="text"
-                    required
                   />
                 </div>
 
@@ -198,7 +229,7 @@ const shippingMethods = [
 
               <div class="space-y-4">
                 {shippingMethods.map((method) => (
-                  <label class={`shipping-option relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-all ${method.recommended ? 'border-green-600 bg-green-50 ring-1 ring-green-600' : 'border-gray-200 hover:border-gray-300'}`} data-price={method.price}>
+                  <label class={`shipping-option relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-all ${method.recommended ? 'border-green-600 bg-green-50 ring-1 ring-green-600' : 'border-gray-200 hover:border-gray-300'}`} data-price={method.price} data-pickup={method.isPickup}>
                     <input
                       checked={method.recommended}
                       class="sr-only"
@@ -208,7 +239,11 @@ const shippingMethods = [
                     />
                     <span class="flex flex-1">
                       <span class="flex flex-col">
-                        <span class="block text-sm font-bold text-secondary">{method.name}</span>
+                        <span class="block text-sm font-bold text-secondary flex items-center gap-2">
+                          {method.isPickup && <i class="material-icons text-lg">store</i>}
+                          {!method.isPickup && <i class="material-icons text-lg">local_shipping</i>}
+                          {method.name}
+                        </span>
                         <span class="mt-1 flex items-center text-sm text-gray-500">{method.description}</span>
                         {method.recommended && (
                           <span class="mt-2 text-xs font-semibold text-green-600">Recomendado</span>
@@ -232,14 +267,82 @@ const shippingMethods = [
                   </label>
                 ))}
               </div>
+
+              <!-- Info de dirección de tienda para recogida -->
+              <div id="pickup-address" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p class="text-sm font-bold text-green-800 mb-2">Dirección de recogida:</p>
+                <address class="not-italic text-sm text-green-700">
+                  <p>Deportes y Juguetes Eva</p>
+                  <p>Avda. Germanies, 39</p>
+                  <p>46740 Carcaixent (Valencia)</p>
+                </address>
+                <p class="text-xs text-green-600 mt-2">
+                  <i class="material-icons text-xs align-middle">schedule</i>
+                  Horario: L-V 10:00-13:30 y 17:00-20:30, S 10:00-13:30
+                </p>
+              </div>
             </section>
 
-            <!-- Botón Continuar -->
+            <!-- Método de Pago -->
+            <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 class="text-xl font-display font-bold text-secondary mb-6">Método de Pago</h2>
+
+              <div class="space-y-4" id="payment-methods">
+                {paymentMethods.map((method, index) => (
+                  <label class={`payment-option relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-all ${index === 0 ? 'border-green-600 bg-green-50 ring-1 ring-green-600' : 'border-gray-200 hover:border-gray-300'}`} data-method={method.id} data-pickup-only={method.forPickupOnly}>
+                    <input
+                      checked={index === 0}
+                      class="sr-only"
+                      name="payment-method"
+                      type="radio"
+                      value={method.id}
+                    />
+                    <span class="flex flex-1 items-center gap-4">
+                      <i class={`material-icons text-2xl ${index === 0 ? 'text-green-600' : 'text-gray-400'}`}>{method.icon}</i>
+                      <span class="flex flex-col">
+                        <span class="block text-sm font-bold text-secondary">{method.name}</span>
+                        <span class="mt-1 text-sm text-gray-500">{method.description}</span>
+                      </span>
+                    </span>
+                    <span class={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${index === 0 ? 'border-green-600 bg-green-600' : 'border-gray-300'}`}>
+                      {index === 0 && <span class="w-2 h-2 rounded-full bg-white"></span>}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              <!-- Información adicional según método -->
+              <div id="transfer-info" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg hidden">
+                <p class="text-sm text-blue-800">
+                  <i class="material-icons text-sm align-middle mr-1">info</i>
+                  Una vez confirmes el pedido, te enviaremos los datos bancarios a tu email. El pedido se preparará cuando recibamos el pago.
+                </p>
+              </div>
+
+              <div id="cash-info" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p class="text-sm text-green-800">
+                  <i class="material-icons text-sm align-middle mr-1">store</i>
+                  Podrás pagar en efectivo o con tarjeta cuando recojas tu pedido en la tienda.
+                </p>
+              </div>
+            </section>
+
+            <!-- Resumen antes de confirmar -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p class="text-sm text-yellow-800">
+                <i class="material-icons text-sm align-middle mr-1">info</i>
+                Al confirmar el pedido, recibirás un email con los detalles y las instrucciones según el método de pago seleccionado.
+              </p>
+            </div>
+
+            <!-- Botón Confirmar Pedido -->
             <button
               type="submit"
-              class="w-full bg-secondary hover:bg-black text-white font-black py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 uppercase tracking-wide"
+              id="submit-btn"
+              class="w-full bg-secondary hover:bg-black text-white font-black py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 uppercase tracking-wide flex items-center justify-center gap-2"
             >
-              Continuar al Pago
+              <span id="submit-text">Confirmar Pedido</span>
+              <div id="submit-spinner" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
             </button>
           </form>
         </div>
@@ -339,6 +442,17 @@ const shippingMethods = [
     totalPrice: number;
   }
 
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+
+  // Dirección de la tienda para recogida
+  const storeAddress = {
+    address: 'Avda. Germanies, 39',
+    city: 'Carcaixent',
+    postalCode: '46740',
+    province: 'Valencia',
+    country: 'España'
+  };
+
   // Cargar carrito desde localStorage (key: eva_cart)
   const loadCart = (): CartItem[] => {
     try {
@@ -347,6 +461,12 @@ const shippingMethods = [
     } catch {
       return [];
     }
+  };
+
+  // Limpiar carrito
+  const clearCart = () => {
+    localStorage.removeItem('eva_cart');
+    window.dispatchEvent(new CustomEvent('cart-updated'));
   };
 
   // Calcular totales
@@ -442,9 +562,103 @@ const shippingMethods = [
   };
 
   // Variables globales
-  let currentShippingCost = 5.90;
+  let currentShippingCost = 0; // Recogida en tienda por defecto
   let currentDiscountPercent = 0;
+  let currentPaymentMethod = 'CASH';
+  let isPickup = true; // Recogida en tienda por defecto
   let cartItems: CartItem[] = [];
+
+  // Función para actualizar visibilidad de secciones según método de envío
+  const updateShippingUI = (pickup: boolean) => {
+    isPickup = pickup;
+    const addressSection = document.getElementById('shipping-address-section');
+    const pickupAddressInfo = document.getElementById('pickup-address');
+    const paymentOptions = document.querySelectorAll('.payment-option');
+
+    if (pickup) {
+      addressSection?.classList.add('hidden');
+      pickupAddressInfo?.classList.remove('hidden');
+      // Mostrar solo "Pago en Tienda" y "Transferencia"
+      paymentOptions.forEach((opt) => {
+        const el = opt as HTMLElement;
+        el.classList.remove('hidden');
+      });
+      // Auto-seleccionar "Pago en Tienda"
+      selectPaymentMethod('CASH');
+    } else {
+      addressSection?.classList.remove('hidden');
+      pickupAddressInfo?.classList.add('hidden');
+      // Ocultar "Pago en Tienda" si no es recogida
+      paymentOptions.forEach((opt) => {
+        const el = opt as HTMLElement;
+        const forPickupOnly = el.dataset.pickupOnly === 'true';
+        if (forPickupOnly) {
+          el.classList.add('hidden');
+        }
+      });
+      // Auto-seleccionar "Transferencia" si el actual es CASH
+      if (currentPaymentMethod === 'CASH') {
+        selectPaymentMethod('TRANSFER');
+      }
+    }
+  };
+
+  // Función para seleccionar método de pago
+  const selectPaymentMethod = (method: string) => {
+    currentPaymentMethod = method;
+    const paymentOptions = document.querySelectorAll('.payment-option');
+    const transferInfo = document.getElementById('transfer-info');
+    const cashInfo = document.getElementById('cash-info');
+
+    paymentOptions.forEach((opt) => {
+      const el = opt as HTMLElement;
+      const radio = el.querySelector('input[type="radio"]') as HTMLInputElement;
+      const icon = el.querySelector('i.material-icons');
+      const circle = el.querySelector('.h-5.w-5.rounded-full');
+
+      if (el.dataset.method === method) {
+        el.classList.remove('border-gray-200');
+        el.classList.add('border-green-600', 'bg-green-50', 'ring-1', 'ring-green-600');
+        if (radio) radio.checked = true;
+        if (icon) {
+          icon.classList.remove('text-gray-400');
+          icon.classList.add('text-green-600');
+        }
+        if (circle) {
+          circle.classList.remove('border-gray-300');
+          circle.classList.add('border-green-600', 'bg-green-600');
+          if (!circle.querySelector('.w-2.h-2')) {
+            const dot = document.createElement('span');
+            dot.className = 'w-2 h-2 rounded-full bg-white';
+            circle.appendChild(dot);
+          }
+        }
+      } else {
+        el.classList.remove('border-green-600', 'bg-green-50', 'ring-1', 'ring-green-600');
+        el.classList.add('border-gray-200');
+        if (radio) radio.checked = false;
+        if (icon) {
+          icon.classList.remove('text-green-600');
+          icon.classList.add('text-gray-400');
+        }
+        if (circle) {
+          circle.classList.remove('border-green-600', 'bg-green-600');
+          circle.classList.add('border-gray-300');
+          const dot = circle.querySelector('.w-2.h-2');
+          dot?.remove();
+        }
+      }
+    });
+
+    // Mostrar info según método
+    if (method === 'TRANSFER') {
+      transferInfo?.classList.remove('hidden');
+      cashInfo?.classList.add('hidden');
+    } else {
+      transferInfo?.classList.add('hidden');
+      cashInfo?.classList.remove('hidden');
+    }
+  };
 
   // Inicializar
   document.addEventListener('DOMContentLoaded', () => {
@@ -452,20 +666,25 @@ const shippingMethods = [
     renderCartItems(cartItems);
     updateTotals(cartItems, currentShippingCost, currentDiscountPercent);
 
+    // Inicializar UI (recogida en tienda por defecto)
+    updateShippingUI(true);
+
     // Manejo de selección de método de envío
     const shippingOptions = document.querySelectorAll('.shipping-option');
 
     shippingOptions.forEach((option) => {
       option.addEventListener('click', () => {
-        const price = parseFloat((option as HTMLElement).dataset.price || '0');
+        const el = option as HTMLElement;
+        const price = parseFloat(el.dataset.price || '0');
+        const pickup = el.dataset.pickup === 'true';
         currentShippingCost = price;
 
-        // Actualizar estilos
+        // Actualizar estilos de shipping
         shippingOptions.forEach((opt) => {
           opt.classList.remove('border-green-600', 'bg-green-50', 'ring-1', 'ring-green-600');
           opt.classList.add('border-gray-200');
 
-          const radioCircle = opt.querySelector('.h-4.w-4.rounded-full');
+          const radioCircle = opt.querySelector('.absolute.top-4.right-4');
           if (radioCircle) {
             radioCircle.classList.remove('border-green-600', 'bg-green-600');
             radioCircle.classList.add('border-gray-300');
@@ -478,11 +697,10 @@ const shippingMethods = [
         option.classList.remove('border-gray-200');
         option.classList.add('border-green-600', 'bg-green-50', 'ring-1', 'ring-green-600');
 
-        const radioCircle = option.querySelector('.h-4.w-4.rounded-full');
+        const radioCircle = option.querySelector('.absolute.top-4.right-4');
         if (radioCircle) {
           radioCircle.classList.remove('border-gray-300');
           radioCircle.classList.add('border-green-600', 'bg-green-600');
-
           if (!radioCircle.querySelector('.w-2.h-2')) {
             const dot = document.createElement('span');
             dot.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white';
@@ -490,8 +708,22 @@ const shippingMethods = [
           }
         }
 
+        // Actualizar UI según pickup
+        updateShippingUI(pickup);
+
         // Actualizar totales
         updateTotals(cartItems, currentShippingCost, currentDiscountPercent);
+      });
+    });
+
+    // Manejo de selección de método de pago
+    const paymentOptions = document.querySelectorAll('.payment-option');
+    paymentOptions.forEach((option) => {
+      option.addEventListener('click', () => {
+        const el = option as HTMLElement;
+        if (!el.classList.contains('hidden')) {
+          selectPaymentMethod(el.dataset.method || 'CASH');
+        }
       });
     });
 
@@ -507,7 +739,7 @@ const shippingMethods = [
       if (!code) return;
 
       try {
-        const response = await fetch(`${import.meta.env.PUBLIC_API_URL || 'http://localhost:3000'}/api/coupons/validate`, {
+        const response = await fetch(`${API_URL}/api/coupons/validate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code })
@@ -547,59 +779,93 @@ const shippingMethods = [
         return;
       }
 
+      const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+      const submitText = document.getElementById('submit-text');
+      const submitSpinner = document.getElementById('submit-spinner');
+
       // Recoger datos del formulario
-      const formData = {
-        email: (document.getElementById('email') as HTMLInputElement)?.value,
-        firstName: (document.getElementById('first-name') as HTMLInputElement)?.value,
-        lastName: (document.getElementById('last-name') as HTMLInputElement)?.value,
-        address: (document.getElementById('address') as HTMLInputElement)?.value,
-        apartment: (document.getElementById('apartment') as HTMLInputElement)?.value,
-        city: (document.getElementById('city') as HTMLInputElement)?.value,
-        postalCode: (document.getElementById('postal-code') as HTMLInputElement)?.value,
-        province: (document.getElementById('province') as HTMLInputElement)?.value,
-        phone: (document.getElementById('phone') as HTMLInputElement)?.value,
-        newsletter: (document.getElementById('newsletter') as HTMLInputElement)?.checked,
-        shippingMethod: (document.querySelector('input[name="shipping-method"]:checked') as HTMLInputElement)?.value
-      };
+      const email = (document.getElementById('email') as HTMLInputElement)?.value?.trim();
+      const firstName = (document.getElementById('first-name') as HTMLInputElement)?.value?.trim();
+      const lastName = (document.getElementById('last-name') as HTMLInputElement)?.value?.trim();
+      const phone = (document.getElementById('phone') as HTMLInputElement)?.value?.trim();
+
+      // Dirección: usar tienda si es recogida, sino los campos del formulario
+      let shippingAddress, shippingCity, shippingPostalCode, shippingProvince;
+      if (isPickup) {
+        shippingAddress = storeAddress.address;
+        shippingCity = storeAddress.city;
+        shippingPostalCode = storeAddress.postalCode;
+        shippingProvince = storeAddress.province;
+      } else {
+        shippingAddress = (document.getElementById('address') as HTMLInputElement)?.value?.trim();
+        const apartment = (document.getElementById('apartment') as HTMLInputElement)?.value?.trim();
+        if (apartment) shippingAddress += ', ' + apartment;
+        shippingCity = (document.getElementById('city') as HTMLInputElement)?.value?.trim();
+        shippingPostalCode = (document.getElementById('postal-code') as HTMLInputElement)?.value?.trim();
+        shippingProvince = (document.getElementById('province') as HTMLInputElement)?.value?.trim();
+      }
 
       // Validar campos requeridos
-      const requiredFields = form.querySelectorAll('[required]');
-      let isValid = true;
-
-      requiredFields.forEach((field) => {
-        const input = field as HTMLInputElement;
-        if (!input.value.trim()) {
-          isValid = false;
-          input.classList.add('border-red-500');
-        } else {
-          input.classList.remove('border-red-500');
-        }
-      });
-
-      if (!isValid) {
-        alert('Por favor, completa todos los campos requeridos');
+      if (!email || !firstName || !lastName || !phone) {
+        alert('Por favor, completa todos los campos de contacto');
         return;
       }
 
-      // Guardar datos de envío en sessionStorage para la página de pago
-      const { subtotal, discountAmount, tax, total } = calculateTotals(cartItems, currentShippingCost, currentDiscountPercent);
+      if (!isPickup && (!shippingAddress || !shippingCity || !shippingPostalCode)) {
+        alert('Por favor, completa todos los campos de dirección');
+        return;
+      }
 
-      const checkoutData = {
-        ...formData,
-        items: cartItems,
-        subtotal,
-        discount: discountAmount,
-        discountPercent: currentDiscountPercent,
-        shipping: currentShippingCost,
-        tax,
-        total
-      };
+      // Mostrar spinner
+      if (submitBtn) submitBtn.disabled = true;
+      if (submitText) submitText.textContent = 'Procesando...';
+      if (submitSpinner) submitSpinner.classList.remove('hidden');
 
-      sessionStorage.setItem('checkoutData', JSON.stringify(checkoutData));
+      try {
+        // Preparar datos para el API
+        const orderData = {
+          userEmail: email,
+          userName: `${firstName} ${lastName}`,
+          userPhone: phone,
+          shippingAddress,
+          shippingCity,
+          shippingPostalCode,
+          shippingProvince,
+          shippingCountry: 'España',
+          items: cartItems.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity
+          })),
+          paymentMethod: currentPaymentMethod
+        };
 
-      // En producción, aquí se enviaría al backend para crear la orden
-      // Por ahora, redirigir a confirmación (en el futuro sería a una página de pago)
-      window.location.href = '/confirmacion';
+        // Llamar al API
+        const response = await fetch(`${API_URL}/api/checkout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          // Limpiar carrito
+          clearCart();
+
+          // Redirigir a confirmación
+          window.location.href = `/confirmacion?orderId=${result.order.id}`;
+        } else {
+          throw new Error(result.error || 'Error al crear el pedido');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert(error instanceof Error ? error.message : 'Error al procesar el pedido. Por favor, inténtalo de nuevo.');
+
+        // Restaurar botón
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitText) submitText.textContent = 'Confirmar Pedido';
+        if (submitSpinner) submitSpinner.classList.add('hidden');
+      }
     });
   });
 </script>
