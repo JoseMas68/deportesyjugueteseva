@@ -133,7 +133,7 @@ export default function NuevaEtiquetaPage() {
                 onChange={(e) => setSlug(e.target.value)}
                 className="input font-mono"
                 placeholder="ej: rebajas"
-                pattern="^[a-z0-9-]+$"
+                pattern="[a-z0-9-]+"
                 required
               />
             </div>

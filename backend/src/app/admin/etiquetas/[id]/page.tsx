@@ -211,7 +211,7 @@ export default function EditarEtiquetaPage() {
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 className="input font-mono"
-                pattern="^[a-z0-9-]+$"
+                pattern="[a-z0-9-]+"
                 required
               />
             </div>

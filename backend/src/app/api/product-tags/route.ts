@@ -43,14 +43,14 @@ export async function GET(request: NextRequest) {
 // Schema de validación
 const createTagSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  slug: z.string().optional(),
-  description: z.string().optional(),
-  color: z.string().optional(),
-  icon: z.string().optional(),
+  slug: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  color: z.string().optional().nullable(),
+  icon: z.string().optional().nullable(),
   isActive: z.boolean().default(true),
   sortOrder: z.number().default(0),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  startDate: z.string().optional().nullable(),
+  endDate: z.string().optional().nullable(),
 })
 
 // POST /api/product-tags - Crear nueva etiqueta
