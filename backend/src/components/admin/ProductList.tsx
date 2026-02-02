@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -27,6 +27,12 @@ interface Product {
   variants: ProductVariant[]
 }
 
+interface ProductTag {
+  id: string
+  name: string
+  color: string | null
+}
+
 interface ProductListProps {
   products: Product[]
 }
@@ -35,6 +41,27 @@ export default function ProductList({ products }: ProductListProps) {
   const router = useRouter()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
+  const [showTagModal, setShowTagModal] = useState(false)
+  const [availableTags, setAvailableTags] = useState<ProductTag[]>([])
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
+  const [tagAction, setTagAction] = useState<'add' | 'remove' | 'set'>('add')
+  const [applyingTags, setApplyingTags] = useState(false)
+
+  // Cargar etiquetas disponibles
+  useEffect(() => {
+    async function loadTags() {
+      try {
+        const response = await fetch('/api/product-tags?active=true')
+        if (response.ok) {
+          const data = await response.json()
+          setAvailableTags(data)
+        }
+      } catch (error) {
+        console.error('Error loading tags:', error)
+      }
+    }
+    loadTags()
+  }, [])
 
   const allSelected = products.length > 0 && selectedIds.size === products.length
   const someSelected = selectedIds.size > 0
@@ -95,6 +122,49 @@ export default function ProductList({ products }: ProductListProps) {
     }
   }
 
+  const handleBulkTags = async () => {
+    if (selectedIds.size === 0 || selectedTagIds.size === 0) return
+
+    setApplyingTags(true)
+    try {
+      const response = await fetch('/api/admin/products/bulk-tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productIds: Array.from(selectedIds),
+          tagIds: Array.from(selectedTagIds),
+          action: tagAction,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al aplicar etiquetas')
+      }
+
+      alert(data.message)
+      setSelectedIds(new Set())
+      setSelectedTagIds(new Set())
+      setShowTagModal(false)
+      router.refresh()
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Error al aplicar etiquetas')
+    } finally {
+      setApplyingTags(false)
+    }
+  }
+
+  const toggleTag = (tagId: string) => {
+    const newSet = new Set(selectedTagIds)
+    if (newSet.has(tagId)) {
+      newSet.delete(tagId)
+    } else {
+      newSet.add(tagId)
+    }
+    setSelectedTagIds(newSet)
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       {/* Barra de acciones masivas */}
@@ -110,6 +180,14 @@ export default function ProductList({ products }: ProductListProps) {
             >
               Cancelar
             </button>
+            {availableTags.length > 0 && (
+              <button
+                onClick={() => setShowTagModal(true)}
+                className="btn btn-outline btn-sm"
+              >
+                Etiquetas
+              </button>
+            )}
             <button
               onClick={() => handleBulkAction('trash')}
               disabled={deleting}
@@ -249,6 +327,119 @@ export default function ProductList({ products }: ProductListProps) {
           )}
         </tbody>
       </table>
+
+      {/* Modal de etiquetas */}
+      {showTagModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Asignar etiquetas
+              </h3>
+              <button
+                onClick={() => {
+                  setShowTagModal(false)
+                  setSelectedTagIds(new Set())
+                }}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-4">
+              {selectedIds.size} producto{selectedIds.size > 1 ? 's' : ''} seleccionado{selectedIds.size > 1 ? 's' : ''}
+            </p>
+
+            {/* Acción */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Accion</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setTagAction('add')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                    tagAction === 'add'
+                      ? 'bg-green-100 text-green-700 border-2 border-green-500'
+                      : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'
+                  }`}
+                >
+                  Añadir
+                </button>
+                <button
+                  onClick={() => setTagAction('remove')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                    tagAction === 'remove'
+                      ? 'bg-red-100 text-red-700 border-2 border-red-500'
+                      : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'
+                  }`}
+                >
+                  Quitar
+                </button>
+                <button
+                  onClick={() => setTagAction('set')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                    tagAction === 'set'
+                      ? 'bg-blue-100 text-blue-700 border-2 border-blue-500'
+                      : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'
+                  }`}
+                >
+                  Reemplazar
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {tagAction === 'add' && 'Añade las etiquetas seleccionadas a los productos'}
+                {tagAction === 'remove' && 'Quita las etiquetas seleccionadas de los productos'}
+                {tagAction === 'set' && 'Reemplaza todas las etiquetas por las seleccionadas'}
+              </p>
+            </div>
+
+            {/* Lista de etiquetas */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Etiquetas</label>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {availableTags.map((tag) => (
+                  <label key={tag.id} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg">
+                    <input
+                      type="checkbox"
+                      checked={selectedTagIds.has(tag.id)}
+                      onChange={() => toggleTag(tag.id)}
+                      className="w-5 h-5 rounded border-gray-300 text-yellow-500 focus:ring-yellow-400"
+                    />
+                    <span
+                      className="px-3 py-1 rounded-full text-sm font-medium text-white"
+                      style={{ backgroundColor: tag.color || '#6B7280' }}
+                    >
+                      {tag.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Botones */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowTagModal(false)
+                  setSelectedTagIds(new Set())
+                }}
+                className="flex-1 btn btn-outline"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleBulkTags}
+                disabled={selectedTagIds.size === 0 || applyingTags}
+                className="flex-1 btn btn-primary disabled:opacity-50"
+              >
+                {applyingTags ? 'Aplicando...' : 'Aplicar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

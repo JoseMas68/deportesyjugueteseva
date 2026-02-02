@@ -38,6 +38,7 @@ const updateProductSchema = z.object({
   isActive: z.boolean().optional(),
   hasVariants: z.boolean().optional(),
   variants: z.array(variantSchema).optional(),
+  tagIds: z.array(z.string()).optional(),
 })
 
 interface RouteParams {
@@ -137,8 +138,8 @@ export async function PUT(
       }
     }
 
-    // Preparar datos para actualizar (sin variantes)
-    const { variants: newVariants, ...productData } = validated
+    // Preparar datos para actualizar (sin variantes ni tags)
+    const { variants: newVariants, tagIds, ...productData } = validated
 
     // Calcular stock total si tiene variantes
     if (validated.hasVariants && newVariants?.length) {
@@ -239,6 +240,24 @@ export async function PUT(
       await prisma.productVariant.deleteMany({
         where: { productId: id }
       })
+    }
+
+    // Manejar etiquetas si se proporcionan
+    if (tagIds !== undefined) {
+      // Eliminar todas las etiquetas existentes
+      await prisma.productsOnTags.deleteMany({
+        where: { productId: id }
+      })
+
+      // Crear nuevas relaciones de etiquetas
+      if (tagIds.length > 0) {
+        await prisma.productsOnTags.createMany({
+          data: tagIds.map(tagId => ({
+            productId: id,
+            tagId,
+          }))
+        })
+      }
     }
 
     // Obtener producto actualizado con variantes

@@ -3,8 +3,8 @@ import ProductForm from '@/components/admin/ProductForm'
 import Link from 'next/link'
 
 export default async function NuevoProductoPage() {
-  // Obtener categorias (solo subcategorias) y marcas
-  const [categories, brands] = await Promise.all([
+  // Obtener categorias (solo subcategorias), marcas y etiquetas
+  const [categories, brands, tags] = await Promise.all([
     prisma.category.findMany({
       where: { parentId: { not: null } },
       select: { id: true, name: true },
@@ -14,6 +14,11 @@ export default async function NuevoProductoPage() {
       where: { isActive: true },
       select: { id: true, name: true, slug: true },
       orderBy: { name: 'asc' },
+    }),
+    prisma.productTag.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, color: true },
+      orderBy: { sortOrder: 'asc' },
     })
   ])
 
@@ -36,7 +41,7 @@ export default async function NuevoProductoPage() {
       </div>
 
       {/* Formulario */}
-      <ProductForm categories={categories} brands={brands} />
+      <ProductForm categories={categories} brands={brands} tags={tags} />
     </div>
   )
 }

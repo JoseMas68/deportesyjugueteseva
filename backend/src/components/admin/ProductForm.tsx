@@ -14,6 +14,12 @@ interface Brand {
   slug: string
 }
 
+interface ProductTag {
+  id: string
+  name: string
+  color: string | null
+}
+
 interface ProductVariant {
   id?: string
   size?: string | null
@@ -47,15 +53,17 @@ interface Product {
   isActive: boolean
   hasVariants?: boolean
   variants?: ProductVariant[]
+  tagIds?: string[]
 }
 
 interface ProductFormProps {
   product?: Product
   categories: Category[]
   brands: Brand[]
+  tags?: ProductTag[]
 }
 
-export default function ProductForm({ product, categories, brands }: ProductFormProps) {
+export default function ProductForm({ product, categories, brands, tags = [] }: ProductFormProps) {
   const router = useRouter()
   const isEditing = !!product?.id
 
@@ -78,6 +86,7 @@ export default function ProductForm({ product, categories, brands }: ProductForm
     isActive: product?.isActive ?? true,
     hasVariants: product?.hasVariants || false,
     variants: product?.variants || [],
+    tagIds: product?.tagIds || [],
   })
 
   const [loading, setLoading] = useState(false)
@@ -838,6 +847,39 @@ export default function ProductForm({ product, categories, brands }: ProductForm
               </div>
             </div>
           </div>
+
+          {/* Etiquetas */}
+          {tags.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Etiquetas</h2>
+              <p className="text-sm text-gray-500 mb-3">
+                Añade etiquetas para promociones o estados especiales
+              </p>
+              <div className="space-y-2">
+                {tags.map((tag) => (
+                  <label key={tag.id} className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.tagIds?.includes(tag.id) || false}
+                      onChange={(e) => {
+                        const newTagIds = e.target.checked
+                          ? [...(formData.tagIds || []), tag.id]
+                          : (formData.tagIds || []).filter(id => id !== tag.id)
+                        setFormData({ ...formData, tagIds: newTagIds })
+                      }}
+                      className="w-5 h-5 rounded border-gray-300 text-yellow-500 focus:ring-yellow-400"
+                    />
+                    <span
+                      className="px-2 py-1 rounded-full text-xs font-medium text-white"
+                      style={{ backgroundColor: tag.color || '#6B7280' }}
+                    >
+                      {tag.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Acciones */}
           <div className="bg-white rounded-xl shadow-sm p-6">

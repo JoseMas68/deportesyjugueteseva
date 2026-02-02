@@ -38,6 +38,7 @@ const createProductSchema = z.object({
   isActive: z.boolean().default(true),
   hasVariants: z.boolean().default(false),
   variants: z.array(variantSchema).optional(),
+  tagIds: z.array(z.string()).optional(),
 })
 
 // GET - Listar productos
@@ -205,6 +206,13 @@ export async function POST(request: NextRequest) {
                 sku: v.sku && v.sku.trim() ? v.sku.trim() : null,
                 imageUrl: v.imageUrl || null,
                 isActive: v.isActive,
+              })),
+            }
+          : undefined,
+        tags: validated.tagIds?.length
+          ? {
+              create: validated.tagIds.map(tagId => ({
+                tagId,
               })),
             }
           : undefined,

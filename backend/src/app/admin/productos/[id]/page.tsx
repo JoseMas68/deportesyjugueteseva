@@ -10,18 +10,23 @@ interface PageProps {
 export default async function EditarProductoPage({ params }: PageProps) {
   const { id } = await params
 
-  // Obtener producto con variantes
+  // Obtener producto con variantes y etiquetas
   const product = await prisma.product.findUnique({
     where: { id },
-    include: { variants: true },
+    include: {
+      variants: true,
+      tags: {
+        select: { tagId: true }
+      }
+    },
   })
 
   if (!product) {
     notFound()
   }
 
-  // Obtener categorias (solo subcategorias) y marcas
-  const [categories, brands] = await Promise.all([
+  // Obtener categorias (solo subcategorias), marcas y etiquetas
+  const [categories, brands, tags] = await Promise.all([
     prisma.category.findMany({
       where: { parentId: { not: null } },
       select: { id: true, name: true },
@@ -31,6 +36,11 @@ export default async function EditarProductoPage({ params }: PageProps) {
       where: { isActive: true },
       select: { id: true, name: true, slug: true },
       orderBy: { name: 'asc' },
+    }),
+    prisma.productTag.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, color: true },
+      orderBy: { sortOrder: 'asc' },
     })
   ])
 
@@ -66,6 +76,7 @@ export default async function EditarProductoPage({ params }: PageProps) {
       imageUrl: v.imageUrl,
       isActive: v.isActive,
     })) || [],
+    tagIds: product.tags?.map(t => t.tagId) || [],
   }
 
   return (
@@ -87,7 +98,7 @@ export default async function EditarProductoPage({ params }: PageProps) {
       </div>
 
       {/* Formulario */}
-      <ProductForm product={formattedProduct} categories={categories} brands={brands} />
+      <ProductForm product={formattedProduct} categories={categories} brands={brands} tags={tags} />
     </div>
   )
 }
