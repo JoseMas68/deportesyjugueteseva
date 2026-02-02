@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -35,33 +35,19 @@ interface ProductTag {
 
 interface ProductListProps {
   products: Product[]
+  tags?: ProductTag[]
 }
 
-export default function ProductList({ products }: ProductListProps) {
+export default function ProductList({ products, tags = [] }: ProductListProps) {
   const router = useRouter()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
   const [showTagModal, setShowTagModal] = useState(false)
-  const [availableTags, setAvailableTags] = useState<ProductTag[]>([])
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
   const [tagAction, setTagAction] = useState<'add' | 'remove' | 'set'>('add')
   const [applyingTags, setApplyingTags] = useState(false)
 
-  // Cargar etiquetas disponibles
-  useEffect(() => {
-    async function loadTags() {
-      try {
-        const response = await fetch('/api/product-tags?active=true')
-        if (response.ok) {
-          const data = await response.json()
-          setAvailableTags(data)
-        }
-      } catch (error) {
-        console.error('Error loading tags:', error)
-      }
-    }
-    loadTags()
-  }, [])
+  // Usar las tags pasadas como prop directamente
 
   const allSelected = products.length > 0 && selectedIds.size === products.length
   const someSelected = selectedIds.size > 0
@@ -180,7 +166,7 @@ export default function ProductList({ products }: ProductListProps) {
             >
               Cancelar
             </button>
-            {availableTags.length > 0 && (
+            {tags.length > 0 && (
               <button
                 onClick={() => setShowTagModal(true)}
                 className="btn btn-outline btn-sm"
@@ -399,7 +385,7 @@ export default function ProductList({ products }: ProductListProps) {
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">Etiquetas</label>
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {availableTags.map((tag) => (
+                {tags.map((tag) => (
                   <label key={tag.id} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg">
                     <input
                       type="checkbox"

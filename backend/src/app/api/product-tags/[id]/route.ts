@@ -133,7 +133,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Verificar que existe
     const existing = await prisma.productTag.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        _count: { select: { products: true } }
+      }
     })
 
     if (!existing) {
@@ -143,15 +146,24 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
+    // Primero eliminar todas las relaciones con productos
+    await prisma.productsOnTags.deleteMany({
+      where: { tagId: id }
+    })
+
+    // Luego eliminar la etiqueta
     await prisma.productTag.delete({
       where: { id }
     })
 
-    return NextResponse.json({ success: true, message: 'Etiqueta eliminada' })
+    return NextResponse.json({
+      success: true,
+      message: `Etiqueta "${existing.name}" eliminada correctamente`
+    })
   } catch (error) {
     console.error('Error deleting product tag:', error)
     return NextResponse.json(
-      { error: 'Error al eliminar la etiqueta' },
+      { error: 'Error al eliminar la etiqueta. Intenta de nuevo.' },
       { status: 500 }
     )
   }

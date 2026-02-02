@@ -231,6 +231,7 @@ export default async function ProductosPage({
           price: Number(p.price),
           compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
         }))}
+        tags={tags}
       />
 
       {/* Paginacion */}
