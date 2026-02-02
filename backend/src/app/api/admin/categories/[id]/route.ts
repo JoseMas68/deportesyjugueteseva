@@ -119,3 +119,71 @@ export async function PUT(
     )
   }
 }
+
+// DELETE - Eliminar categoria (soft delete si tiene productos)
+export async function DELETE(
+  request: NextRequest,
+  { params }: RouteParams
+) {
+  try {
+    const admin = await getAdminSession()
+    if (!admin) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    const { id } = await params
+
+    // Verificar que la categoria existe
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: {
+        children: true,
+        _count: { select: { products: true } },
+      },
+    })
+
+    if (!category) {
+      return NextResponse.json(
+        { error: 'Categoria no encontrada' },
+        { status: 404 }
+      )
+    }
+
+    // No permitir eliminar si tiene subcategorías
+    if (category.children.length > 0) {
+      return NextResponse.json(
+        { error: 'No se puede eliminar una categoria con subcategorias. Elimina primero las subcategorias.' },
+        { status: 400 }
+      )
+    }
+
+    // Si tiene productos, hacer soft delete (desactivar)
+    if (category._count.products > 0) {
+      await prisma.category.update({
+        where: { id },
+        data: { isActive: false },
+      })
+
+      return NextResponse.json({
+        success: true,
+        message: `Categoria desactivada (tiene ${category._count.products} productos asociados)`,
+        softDelete: true,
+      })
+    }
+
+    // Si no tiene productos, eliminar permanentemente
+    await prisma.category.delete({ where: { id } })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Categoria eliminada permanentemente',
+      softDelete: false,
+    })
+  } catch (error) {
+    console.error('Error deleting category:', error)
+    return NextResponse.json(
+      { error: 'Error al eliminar categoria' },
+      { status: 500 }
+    )
+  }
+}

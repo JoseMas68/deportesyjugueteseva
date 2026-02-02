@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import ProductList from '@/components/admin/ProductList'
 
 interface SearchParams {
   page?: string
@@ -22,8 +23,10 @@ export default async function ProductosPage({
   const status = params.status || ''
   const stock = params.stock || ''
 
-  // Construir filtros
-  const where: Record<string, unknown> = {}
+  // Construir filtros - excluir productos en papelera
+  const where: Record<string, unknown> = {
+    deletedAt: null,
+  }
 
   if (search) {
     where.OR = [
@@ -49,7 +52,7 @@ export default async function ProductosPage({
     where.stock = 0
   }
 
-  const [products, total, categories] = await Promise.all([
+  const [products, total, categories, trashedCount] = await Promise.all([
     prisma.product.findMany({
       where,
       include: {
@@ -73,6 +76,7 @@ export default async function ProductosPage({
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),
+    prisma.product.count({ where: { deletedAt: { not: null } } }),
   ])
 
   const totalPages = Math.ceil(total / limit)
@@ -104,15 +108,28 @@ export default async function ProductosPage({
           <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
           <p className="text-gray-500 mt-1">{total} productos en total</p>
         </div>
-        <Link
-          href="/admin/productos/nuevo"
-          className="btn btn-primary"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Nuevo Producto
-        </Link>
+        <div className="flex items-center gap-3">
+          {trashedCount > 0 && (
+            <Link
+              href="/admin/papelera"
+              className="btn btn-outline flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Papelera ({trashedCount})
+            </Link>
+          )}
+          <Link
+            href="/admin/productos/nuevo"
+            className="btn btn-primary"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nuevo Producto
+          </Link>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -178,147 +195,40 @@ export default async function ProductosPage({
       </div>
 
       {/* Tabla de productos */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>SKU</th>
-              <th>Categoria</th>
-              <th>Precio</th>
-              <th>Stock</th>
-              <th>Estado</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.length > 0 ? (
-              products.map((product) => (
-                <tr key={product.id}>
-                  <td>
-                    <div className="flex items-center gap-3">
-                      {product.thumbnailUrl ? (
-                        <img
-                          src={product.thumbnailUrl}
-                          alt={product.name}
-                          className="w-12 h-12 object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-medium text-gray-900">{product.name}</p>
-                        {product.brand && (
-                          <p className="text-sm text-gray-500">{product.brand.name}</p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="text-gray-500 font-mono text-sm">{product.sku}</td>
-                  <td className="text-gray-500">{product.category.name}</td>
-                  <td>
-                    <div>
-                      <span className="font-medium">{Number(product.price).toFixed(2)} EUR</span>
-                      {product.compareAtPrice && (
-                        <span className="text-sm text-gray-400 line-through ml-2">
-                          {Number(product.compareAtPrice).toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <div>
-                      <span className={`font-medium ${
-                        product.stock === 0
-                          ? 'text-red-600'
-                          : product.stock < 5
-                          ? 'text-yellow-600'
-                          : 'text-green-600'
-                      }`}>
-                        {product.stock}
-                      </span>
-                      {product.hasVariants && product.variants.length > 0 && (
-                        <div className="mt-1 text-xs text-gray-500 max-w-[200px]">
-                          {product.variants.slice(0, 3).map((v, i) => {
-                            const label = [v.size, v.color].filter(Boolean).join(' ') || `Var ${i + 1}`
-                            const stockClass = v.stock === 0 ? 'text-red-500' : v.stock < 3 ? 'text-yellow-600' : 'text-gray-600'
-                            return (
-                              <span key={v.id} className="inline-flex items-center mr-2">
-                                {v.colorHex && (
-                                  <span
-                                    className="w-2 h-2 rounded-full mr-1 border border-gray-300"
-                                    style={{ backgroundColor: v.colorHex }}
-                                  />
-                                )}
-                                <span className={stockClass}>{label}: {v.stock}</span>
-                              </span>
-                            )
-                          })}
-                          {product.variants.length > 3 && (
-                            <span className="text-gray-400">+{product.variants.length - 3} mas</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    {product.isActive ? (
-                      <span className="badge badge-success">Activo</span>
-                    ) : (
-                      <span className="badge badge-danger">Inactivo</span>
-                    )}
-                  </td>
-                  <td>
-                    <Link
-                      href={`/admin/productos/${product.id}`}
-                      className="text-yellow-600 hover:text-yellow-700 font-medium"
-                    >
-                      Editar
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-500">
-                  No se encontraron productos
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <ProductList
+        products={products.map(p => ({
+          ...p,
+          price: Number(p.price),
+          compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+        }))}
+      />
 
-        {/* Paginacion */}
-        {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-            <p className="text-sm text-gray-500">
-              Mostrando {(page - 1) * limit + 1} - {Math.min(page * limit, total)} de {total}
-            </p>
-            <div className="flex gap-2">
-              {page > 1 && (
-                <Link
-                  href={buildUrl({ page: String(page - 1) })}
-                  className="btn btn-outline btn-sm"
-                >
-                  Anterior
-                </Link>
-              )}
-              {page < totalPages && (
-                <Link
-                  href={buildUrl({ page: String(page + 1) })}
-                  className="btn btn-outline btn-sm"
-                >
-                  Siguiente
-                </Link>
-              )}
-            </div>
+      {/* Paginacion */}
+      {totalPages > 1 && (
+        <div className="bg-white rounded-xl shadow-sm px-6 py-4 flex items-center justify-between">
+          <p className="text-sm text-gray-500">
+            Mostrando {(page - 1) * limit + 1} - {Math.min(page * limit, total)} de {total}
+          </p>
+          <div className="flex gap-2">
+            {page > 1 && (
+              <Link
+                href={buildUrl({ page: String(page - 1) })}
+                className="btn btn-outline btn-sm"
+              >
+                Anterior
+              </Link>
+            )}
+            {page < totalPages && (
+              <Link
+                href={buildUrl({ page: String(page + 1) })}
+                className="btn btn-outline btn-sm"
+              >
+                Siguiente
+              </Link>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

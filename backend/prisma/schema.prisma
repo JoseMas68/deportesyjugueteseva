@@ -99,6 +99,44 @@ enum ProductType {
   MAQUETAS_BARCOS
 }
 
+// ============ ETIQUETAS DE PRODUCTO ============
+// Para estados/promociones: Rebajas, Navidad, Black Friday, Nuevo, etc.
+model ProductTag {
+  id          String   @id @default(cuid())
+  name        String   @unique // "Rebajas", "Navidad", "Black Friday"
+  slug        String   @unique
+  description String?
+  color       String?  // Color para mostrar en badges (hex)
+  icon        String?  // Icono Material Icons
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+
+  // Fechas opcionales para promociones temporales
+  startDate   DateTime?
+  endDate     DateTime?
+
+  products    ProductsOnTags[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([slug])
+}
+
+// Tabla intermedia para relación muchos a muchos
+model ProductsOnTags {
+  product     Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId   String
+  tag         ProductTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId       String
+  assignedAt  DateTime   @default(now())
+
+  @@id([productId, tagId])
+  @@index([productId])
+  @@index([tagId])
+}
+
 model Product {
   id               String   @id @default(cuid())
   name             String
@@ -147,13 +185,16 @@ model Product {
   // Relaciones
   orderItems OrderItem[]
   reviews    Review[]
+  tags       ProductsOnTags[]
 
   isActive    Boolean   @default(true)
+  deletedAt   DateTime? // Papelera de reciclaje - si tiene valor, está en la papelera
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([categoryId])
+  @@index([deletedAt])
   @@index([brandId])
   @@index([slug])
   @@index([barcode])

@@ -27,6 +27,7 @@ export default function EditarCategoriaPage() {
   const [isFeatured, setIsFeatured] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
 
@@ -73,6 +74,33 @@ export default function EditarCategoriaPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar')
       setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm('¿Eliminar esta categoria? Si tiene productos asociados, se desactivara en lugar de eliminarse.')) {
+      return
+    }
+
+    setDeleting(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/admin/categories/${id}`, {
+        method: 'DELETE',
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al eliminar')
+      }
+
+      router.push('/admin/categorias')
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al eliminar')
+      setDeleting(false)
     }
   }
 
@@ -128,19 +156,28 @@ export default function EditarCategoriaPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/admin/categorias"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Editar Categoria</h1>
-          <p className="text-gray-500 mt-1">{category.name}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/admin/categorias"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Editar Categoria</h1>
+            <p className="text-gray-500 mt-1">{category.name}</p>
+          </div>
         </div>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="btn btn-danger"
+        >
+          {deleting ? 'Eliminando...' : 'Eliminar'}
+        </button>
       </div>
 
       {error && (
