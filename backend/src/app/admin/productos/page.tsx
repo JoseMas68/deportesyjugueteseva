@@ -8,6 +8,7 @@ interface SearchParams {
   category?: string
   status?: string
   stock?: string
+  tag?: string
 }
 
 export default async function ProductosPage({
@@ -22,6 +23,7 @@ export default async function ProductosPage({
   const categoryFilter = params.category || ''
   const status = params.status || ''
   const stock = params.stock || ''
+  const tagFilter = params.tag || ''
 
   // Construir filtros - excluir productos en papelera
   const where: Record<string, unknown> = {
@@ -52,7 +54,13 @@ export default async function ProductosPage({
     where.stock = 0
   }
 
-  const [products, total, categories, trashedCount] = await Promise.all([
+  if (tagFilter) {
+    where.tags = {
+      some: { tagId: tagFilter }
+    }
+  }
+
+  const [products, total, categories, tags, trashedCount] = await Promise.all([
     prisma.product.findMany({
       where,
       include: {
@@ -76,6 +84,11 @@ export default async function ProductosPage({
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),
+    prisma.productTag.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, color: true },
+      orderBy: { sortOrder: 'asc' },
+    }),
     prisma.product.count({ where: { deletedAt: { not: null } } }),
   ])
 
@@ -88,6 +101,7 @@ export default async function ProductosPage({
     if (categoryFilter) url.set('category', categoryFilter)
     if (status) url.set('status', status)
     if (stock) url.set('stock', stock)
+    if (tagFilter) url.set('tag', tagFilter)
 
     Object.entries(newParams).forEach(([key, value]) => {
       if (value) {
@@ -182,11 +196,27 @@ export default async function ProductosPage({
             <option value="out">Sin stock</option>
           </select>
 
+          {/* Etiquetas */}
+          {tags.length > 0 && (
+            <select
+              name="tag"
+              defaultValue={tagFilter}
+              className="input w-auto"
+            >
+              <option value="">Todas las etiquetas</option>
+              {tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+          )}
+
           <button type="submit" className="btn btn-secondary">
             Filtrar
           </button>
 
-          {(search || categoryFilter || status || stock) && (
+          {(search || categoryFilter || status || stock || tagFilter) && (
             <Link href="/admin/productos" className="btn btn-outline">
               Limpiar
             </Link>
