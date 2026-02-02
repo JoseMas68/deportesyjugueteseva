@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAdminSession } from '@/lib/auth'
 import { z } from 'zod'
 
 interface RouteParams {
   params: Promise<{ id: string }>
 }
 
-// GET /api/products/[id]/tags - Obtener tags de un producto
+// GET /api/admin/products/[id]/tags - Obtener tags de un producto
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const admin = await getAdminSession()
+    if (!admin) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
     const { id } = await params
 
     const product = await prisma.product.findUnique({
@@ -45,9 +51,14 @@ const assignTagsSchema = z.object({
   tagIds: z.array(z.string())
 })
 
-// PUT /api/products/[id]/tags - Reemplazar todos los tags de un producto
+// PUT /api/admin/products/[id]/tags - Reemplazar todos los tags de un producto
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    const admin = await getAdminSession()
+    if (!admin) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
     const { id } = await params
     const body = await request.json()
     const { tagIds } = assignTagsSchema.parse(body)
@@ -108,9 +119,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// POST /api/products/[id]/tags - Añadir un tag a un producto
+// POST /api/admin/products/[id]/tags - Añadir un tag a un producto
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const admin = await getAdminSession()
+    if (!admin) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
     const { id } = await params
     const body = await request.json()
     const { tagId } = z.object({ tagId: z.string() }).parse(body)
@@ -172,9 +188,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// DELETE /api/products/[id]/tags - Eliminar un tag de un producto
+// DELETE /api/admin/products/[id]/tags - Eliminar un tag de un producto
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const admin = await getAdminSession()
+    if (!admin) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
     const { id } = await params
     const { searchParams } = new URL(request.url)
     const tagId = searchParams.get('tagId')
