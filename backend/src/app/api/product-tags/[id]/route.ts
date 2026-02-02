@@ -13,22 +13,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const tag = await prisma.productTag.findUnique({
       where: { id },
-      include: {
-        products: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-                thumbnailUrl: true,
-                price: true,
-                isActive: true,
-              }
-            }
-          }
-        }
-      }
     })
 
     if (!tag) {
@@ -38,13 +22,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Transformar productos
-    const tagWithProducts = {
-      ...tag,
-      products: tag.products.map(p => p.product)
-    }
-
-    return NextResponse.json(tagWithProducts)
+    return NextResponse.json(tag)
   } catch (error) {
     console.error('Error fetching product tag:', error)
     return NextResponse.json(
