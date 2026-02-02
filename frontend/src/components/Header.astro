@@ -2,30 +2,40 @@
 // VERSIÓN REDISEÑADA - Basada en HTML de muestra
 // Navegación horizontal simple + Top bar con info de contacto
 
-const deportes = [
-  { name: 'Running', slug: 'running', icon: 'directions_run' },
-  { name: 'Trail Running', slug: 'trail-running', icon: 'terrain' },
-  { name: 'Fútbol', slug: 'futbol', icon: 'sports_soccer' },
-  { name: 'Fitness', slug: 'fitness', icon: 'fitness_center' },
-  { name: 'Natación', slug: 'natacion', icon: 'pool' },
-  { name: 'Outdoor', slug: 'outdoor', icon: 'landscape' },
-  { name: 'Casual / Lifestyle', slug: 'casual', icon: 'checkroom' },
-];
+// Cargar categorías desde el backend
+const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
 
-const juguetes = [
-  { name: 'Infantiles (0-3 años)', slug: 'infantiles', icon: 'child_care' },
-  { name: 'Educativos', slug: 'educativos', icon: 'school' },
-  { name: 'Construcción', slug: 'construccion', icon: 'handyman' },
-  { name: 'Aire Libre', slug: 'aire-libre', icon: 'park' },
-  { name: 'Muñecas y Figuras', slug: 'munecas-figuras', icon: 'person' },
-];
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  children?: Category[];
+}
 
-const hobbies = [
-  { name: 'Scalextric', slug: 'scalextric', icon: 'speed' },
-  { name: 'Trenes Eléctricos', slug: 'trenes-electricos', icon: 'train' },
-  { name: 'Maquetas', slug: 'maquetas', icon: 'precision_manufacturing' },
-  { name: 'Modelismo', slug: 'modelismo', icon: 'palette' },
-];
+interface GroupedCategories {
+  deportes?: Category[];
+  juguetes?: Category[];
+  hobbies?: Category[];
+}
+
+let deportes: Category[] = [];
+let juguetes: Category[] = [];
+let hobbies: Category[] = [];
+
+try {
+  const response = await fetch(`${API_URL}/categories`);
+  if (response.ok) {
+    const data = await response.json();
+    const grouped: GroupedCategories = data.grouped || {};
+
+    // Extraer subcategorías de cada sección
+    deportes = grouped.deportes?.flatMap(cat => cat.children || []) || [];
+    juguetes = grouped.juguetes?.flatMap(cat => cat.children || []) || [];
+    hobbies = grouped.hobbies?.flatMap(cat => cat.children || []) || [];
+  }
+} catch (error) {
+  console.error('Error loading categories:', error);
+}
 ---
 
 <header>
@@ -144,17 +154,15 @@ const hobbies = [
             <!-- Megamenu Dropdown -->
             <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
               <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-64">
-                <div class="grid gap-2">
+                <div class="grid gap-1">
                   {deportes.map((cat) => (
-                    <a href={`/${cat.slug}`} class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-primary transition-colors group/item">
-                      <i class="material-icons text-secondary">{cat.icon}</i>
+                    <a href={`/${cat.slug}`} class="block px-4 py-2 rounded-lg hover:bg-primary transition-colors">
                       <span class="font-medium text-secondary">{cat.name}</span>
                     </a>
                   ))}
                   <div class="border-t border-gray-200 mt-2 pt-2">
-                    <a href="/buscar?categoria=deportes" class="flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
+                    <a href="/deportes" class="flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
                       Ver Todos
-                      <i class="material-icons text-sm">arrow_forward</i>
                     </a>
                   </div>
                 </div>
@@ -171,17 +179,15 @@ const hobbies = [
 
             <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
               <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-64">
-                <div class="grid gap-2">
+                <div class="grid gap-1">
                   {juguetes.map((cat) => (
-                    <a href={`/${cat.slug}`} class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-primary transition-colors group/item">
-                      <i class="material-icons text-secondary">{cat.icon}</i>
+                    <a href={`/${cat.slug}`} class="block px-4 py-2 rounded-lg hover:bg-primary transition-colors">
                       <span class="font-medium text-secondary">{cat.name}</span>
                     </a>
                   ))}
                   <div class="border-t border-gray-200 mt-2 pt-2">
-                    <a href="/buscar?categoria=juguetes" class="flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
+                    <a href="/juguetes" class="flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
                       Ver Todos
-                      <i class="material-icons text-sm">arrow_forward</i>
                     </a>
                   </div>
                 </div>
@@ -198,17 +204,15 @@ const hobbies = [
 
             <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
               <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-64">
-                <div class="grid gap-2">
+                <div class="grid gap-1">
                   {hobbies.map((cat) => (
-                    <a href={`/${cat.slug}`} class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-primary transition-colors group/item">
-                      <i class="material-icons text-secondary">{cat.icon}</i>
+                    <a href={`/${cat.slug}`} class="block px-4 py-2 rounded-lg hover:bg-primary transition-colors">
                       <span class="font-medium text-secondary">{cat.name}</span>
                     </a>
                   ))}
                   <div class="border-t border-gray-200 mt-2 pt-2">
-                    <a href="/buscar?categoria=hobbies" class="flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
+                    <a href="/hobbies" class="flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
                       Ver Todos
-                      <i class="material-icons text-sm">arrow_forward</i>
                     </a>
                   </div>
                 </div>
