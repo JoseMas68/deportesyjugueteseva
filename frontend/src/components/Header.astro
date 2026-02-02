@@ -145,80 +145,85 @@ try {
       <div class="container mx-auto px-4">
         <ul class="flex items-center justify-center">
           <!-- Deportes con Megamenu -->
-          <li class="group relative">
-            <button class="block px-6 py-4 font-bold text-secondary hover:-translate-y-0.5 transition-transform flex items-center gap-1">
-              Deportes
-              <i class="material-icons text-sm">expand_more</i>
-            </button>
+          {deportes.length > 0 && (
+            <li class="group relative">
+              <button class="block px-6 py-4 font-bold text-secondary hover:-translate-y-0.5 transition-transform flex items-center gap-1">
+                Deportes
+                <i class="material-icons text-sm">expand_more</i>
+              </button>
 
-            <!-- Megamenu Dropdown -->
-            <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-              <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-64">
-                <div class="grid gap-1">
-                  {deportes.map((cat) => (
-                    <a href={`/${cat.slug}`} class="block px-4 py-2 rounded-lg hover:bg-primary transition-colors">
-                      <span class="font-medium text-secondary">{cat.name}</span>
-                    </a>
-                  ))}
-                  <div class="border-t border-gray-200 mt-2 pt-2">
-                    <a href="/deportes" class="flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
-                      Ver Todos
-                    </a>
+              <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-64">
+                  <div class="grid gap-1">
+                    {deportes.map((cat) => (
+                      <a href={`/${cat.slug}`} class="block px-4 py-2 rounded-lg hover:bg-primary transition-colors">
+                        <span class="font-medium text-secondary">{cat.name}</span>
+                      </a>
+                    ))}
+                    <div class="border-t border-gray-200 mt-2 pt-2">
+                      <a href="/deportes" class="flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
+                        Ver Todos
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </li>
+            </li>
+          )}
 
           <!-- Juguetes con Megamenu -->
-          <li class="group relative">
-            <button class="block px-6 py-4 font-bold text-secondary hover:-translate-y-0.5 transition-transform flex items-center gap-1">
-              Juguetes
-              <i class="material-icons text-sm">expand_more</i>
-            </button>
+          {juguetes.length > 0 && (
+            <li class="group relative">
+              <button class="block px-6 py-4 font-bold text-secondary hover:-translate-y-0.5 transition-transform flex items-center gap-1">
+                Juguetes
+                <i class="material-icons text-sm">expand_more</i>
+              </button>
 
-            <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-              <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-64">
-                <div class="grid gap-1">
-                  {juguetes.map((cat) => (
-                    <a href={`/${cat.slug}`} class="block px-4 py-2 rounded-lg hover:bg-primary transition-colors">
-                      <span class="font-medium text-secondary">{cat.name}</span>
-                    </a>
-                  ))}
-                  <div class="border-t border-gray-200 mt-2 pt-2">
-                    <a href="/juguetes" class="flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
-                      Ver Todos
-                    </a>
+              <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-64">
+                  <div class="grid gap-1">
+                    {juguetes.map((cat) => (
+                      <a href={`/${cat.slug}`} class="block px-4 py-2 rounded-lg hover:bg-primary transition-colors">
+                        <span class="font-medium text-secondary">{cat.name}</span>
+                      </a>
+                    ))}
+                    <div class="border-t border-gray-200 mt-2 pt-2">
+                      <a href="/juguetes" class="flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
+                        Ver Todos
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </li>
+            </li>
+          )}
 
           <!-- Hobbies con Megamenu -->
-          <li class="group relative">
-            <button class="block px-6 py-4 font-bold text-secondary hover:-translate-y-0.5 transition-transform flex items-center gap-1">
-              Hobbies y Coleccionismo
-              <i class="material-icons text-sm">expand_more</i>
-            </button>
+          {hobbies.length > 0 && (
+            <li class="group relative">
+              <button class="block px-6 py-4 font-bold text-secondary hover:-translate-y-0.5 transition-transform flex items-center gap-1">
+                Hobbies y Coleccionismo
+                <i class="material-icons text-sm">expand_more</i>
+              </button>
 
-            <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-              <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-64">
-                <div class="grid gap-1">
-                  {hobbies.map((cat) => (
-                    <a href={`/${cat.slug}`} class="block px-4 py-2 rounded-lg hover:bg-primary transition-colors">
-                      <span class="font-medium text-secondary">{cat.name}</span>
-                    </a>
-                  ))}
-                  <div class="border-t border-gray-200 mt-2 pt-2">
-                    <a href="/hobbies" class="flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
-                      Ver Todos
-                    </a>
+              <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 w-64">
+                  <div class="grid gap-1">
+                    {hobbies.map((cat) => (
+                      <a href={`/${cat.slug}`} class="block px-4 py-2 rounded-lg hover:bg-primary transition-colors">
+                        <span class="font-medium text-secondary">{cat.name}</span>
+                      </a>
+                    ))}
+                    <div class="border-t border-gray-200 mt-2 pt-2">
+                      <a href="/hobbies" class="flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-primary rounded-lg font-bold hover:bg-black transition-colors">
+                        Ver Todos
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </li>
+            </li>
+          )}
 
           <!-- Ofertas (sin megamenu) -->
           <li>
@@ -236,48 +241,54 @@ try {
   <div id="mobile-menu" class="lg:hidden hidden bg-white border-t border-gray-200 shadow-lg">
     <div class="container mx-auto px-4 py-4">
       <ul class="space-y-2">
-        <li>
-          <a href="/deportes" class="block py-3 px-4 hover:bg-gray-100 rounded font-bold text-secondary">
-            Deportes
-          </a>
-          <ul class="pl-6 space-y-1">
-            {deportes.map((cat) => (
-              <li>
-                <a href={`/${cat.slug}`} class="block py-2 px-4 hover:bg-gray-100 rounded text-sm text-gray-600">
-                  {cat.name}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </li>
-        <li>
-          <a href="/juguetes" class="block py-3 px-4 hover:bg-gray-100 rounded font-bold text-secondary">
-            Juguetes
-          </a>
-          <ul class="pl-6 space-y-1">
-            {juguetes.map((cat) => (
-              <li>
-                <a href={`/${cat.slug}`} class="block py-2 px-4 hover:bg-gray-100 rounded text-sm text-gray-600">
-                  {cat.name}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </li>
-        <li>
-          <a href="/hobbies" class="block py-3 px-4 hover:bg-gray-100 rounded font-bold text-secondary">
-            Hobbies y Coleccionismo
-          </a>
-          <ul class="pl-6 space-y-1">
-            {hobbies.map((cat) => (
-              <li>
-                <a href={`/${cat.slug}`} class="block py-2 px-4 hover:bg-gray-100 rounded text-sm text-gray-600">
-                  {cat.name}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </li>
+        {deportes.length > 0 && (
+          <li>
+            <a href="/deportes" class="block py-3 px-4 hover:bg-gray-100 rounded font-bold text-secondary">
+              Deportes
+            </a>
+            <ul class="pl-6 space-y-1">
+              {deportes.map((cat) => (
+                <li>
+                  <a href={`/${cat.slug}`} class="block py-2 px-4 hover:bg-gray-100 rounded text-sm text-gray-600">
+                    {cat.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </li>
+        )}
+        {juguetes.length > 0 && (
+          <li>
+            <a href="/juguetes" class="block py-3 px-4 hover:bg-gray-100 rounded font-bold text-secondary">
+              Juguetes
+            </a>
+            <ul class="pl-6 space-y-1">
+              {juguetes.map((cat) => (
+                <li>
+                  <a href={`/${cat.slug}`} class="block py-2 px-4 hover:bg-gray-100 rounded text-sm text-gray-600">
+                    {cat.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </li>
+        )}
+        {hobbies.length > 0 && (
+          <li>
+            <a href="/hobbies" class="block py-3 px-4 hover:bg-gray-100 rounded font-bold text-secondary">
+              Hobbies y Coleccionismo
+            </a>
+            <ul class="pl-6 space-y-1">
+              {hobbies.map((cat) => (
+                <li>
+                  <a href={`/${cat.slug}`} class="block py-2 px-4 hover:bg-gray-100 rounded text-sm text-gray-600">
+                    {cat.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </li>
+        )}
         <li>
           <a href="/ofertas" class="block py-3 px-4 hover:bg-gray-100 rounded font-bold text-accent flex items-center gap-2">
             <i class="material-icons">local_offer</i>
